@@ -1,5 +1,22 @@
 <template>
   <div class="unit-detail-tabs">
+    <!-- 国家选择器 -->
+    <div class="faction-selector">
+      <div class="faction-title">选择国家</div>
+      <div class="faction-buttons">
+        <button 
+          v-for="faction in factions" 
+          :key="faction.id"
+          class="faction-btn"
+          :class="{ active: activeFaction === faction.id }"
+          @click="handleFactionChange(faction.id)"
+        >
+          <span class="faction-icon">{{ faction.icon }}</span>
+          <span class="faction-name">{{ faction.name }}</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Tab 头部 -->
     <div class="tab-header">
       <div 
@@ -81,25 +98,35 @@
 </template>
 
 <script>
-import { UNIT_CATEGORIES, getUnitsByType } from '@/config/unitsConfig'
+import { UNIT_CATEGORIES, getUnitsByFactionAndType } from '@/config/unitsConfig'
 
 export default {
   name: 'UnitDetailTabs',
   data() {
     return {
       activeTab: 'infantry',
-      unitCategories: UNIT_CATEGORIES
+      activeFaction: 'shu',
+      unitCategories: UNIT_CATEGORIES,
+      factions: [
+        { id: 'shu', name: '蜀国', icon: '🐉' },
+        { id: 'wei', name: '魏国', icon: '⚡' },
+        { id: 'wu', name: '吴国', icon: '🐅' }
+      ]
     }
   },
   computed: {
     currentUnits() {
-      return getUnitsByType(this.activeTab)
+      return getUnitsByFactionAndType(this.activeFaction, this.activeTab)
     }
   },
   methods: {
     handleTabChange(tabType) {
       this.activeTab = tabType
-      this.$emit('tab-change', tabType)
+      this.$emit('tab-change', { faction: this.activeFaction, unitType: tabType })
+    },
+    handleFactionChange(factionId) {
+      this.activeFaction = factionId
+      this.$emit('faction-change', { faction: factionId, unitType: this.activeTab })
     },
     handleUnitTrain(unit) {
       this.$emit('unit-train', unit)
@@ -114,6 +141,64 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+}
+
+/* 国家选择器样式 */
+.faction-selector {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 16px 20px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.faction-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.faction-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.faction-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.faction-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #FFB900;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.2);
+}
+
+.faction-btn.active {
+  background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
+  border-color: #FFB900;
+  color: #18181B;
+  box-shadow: 0 4px 16px rgba(255, 185, 0, 0.3);
+}
+
+.faction-icon {
+  font-size: 16px;
+}
+
+.faction-name {
+  font-weight: 600;
 }
 
 /* Tab 头部样式 */
@@ -182,26 +267,26 @@ export default {
 .units-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  padding: 24px;
+  gap: 16px;
+  padding: 16px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* 当只有1-3个卡片时不拉长 */
+/* 当只有1-3个卡片时不拉长，靠左展示 */
 .units-grid:has(.unit-card:nth-child(1):nth-last-child(1)) {
-  grid-template-columns: 280px;
-  justify-content: center;
+  grid-template-columns: 260px;
+  justify-content: start;
 }
 
 .units-grid:has(.unit-card:nth-child(2):nth-last-child(1)) {
-  grid-template-columns: repeat(2, 280px);
-  justify-content: center;
+  grid-template-columns: repeat(2, 260px);
+  justify-content: start;
 }
 
 .units-grid:has(.unit-card:nth-child(3):nth-last-child(1)) {
-  grid-template-columns: repeat(3, 280px);
-  justify-content: center;
+  grid-template-columns: repeat(3, 260px);
+  justify-content: start;
 }
 
 /* 兵种卡片 - 毛玻璃效果 */
@@ -210,21 +295,22 @@ export default {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  transition: all 0.3s ease;
+  gap: 10px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  min-height: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  min-height: 190px;
+  will-change: transform, box-shadow;
 }
 
 .unit-card:hover {
   background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(255, 185, 0, 0.3);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(255, 185, 0, 0.25);
   border-color: rgba(255, 185, 0, 0.4);
 }
 
@@ -232,22 +318,22 @@ export default {
 .unit-title-bar {
   background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
   color: #18181B;
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 16px rgba(255, 185, 0, 0.3);
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.2);
 }
 
 .unit-icon {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .unit-name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   margin: 0;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -257,31 +343,37 @@ export default {
 .unit-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 8px;
   flex: 1;
 }
 
 .stat-item {
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  padding: 12px 8px;
+  border-radius: 6px;
+  padding: 8px 6px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(255, 185, 0, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.15);
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   color: #666;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   display: block;
 }
 
 .stat-value {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   color: #18181B;
   display: block;
@@ -293,19 +385,19 @@ export default {
   justify-content: space-between;
   align-items: center;
   background: rgba(255, 255, 255, 0.9);
-  padding: 10px 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 6px 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .count-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   font-weight: 600;
 }
 
 .count-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   color: #FFB900;
 }
@@ -315,24 +407,26 @@ export default {
   background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
   color: #18181B;
   border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(255, 185, 0, 0.3);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.2);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  will-change: transform, box-shadow;
 }
 
 .recruit-button:hover {
   background: linear-gradient(135deg, #FFA000 0%, #FF8F00 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 185, 0, 0.4);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.3);
 }
 
 .recruit-button:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(1.02);
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
