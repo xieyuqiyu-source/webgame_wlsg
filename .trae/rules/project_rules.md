@@ -16,6 +16,7 @@
 1. 本项目是文字放置类游戏。
 2. 本项目名字叫武林三国。
 3. 本项目基于 Vue3 + JavaScript + Pinia + VueRouter + Vite + Tailwindcss + NaiveUI
+4. 色系 绿色：#237C48  黄色：#FFB900 红色：#FF6367 黑色：#18181B。
 
 ## 🗂️ 目录结构规范
 

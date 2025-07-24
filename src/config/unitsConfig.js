@@ -31,132 +31,169 @@ export const UNIT_CATEGORIES = {
   }
 }
 
-//=== 兵种配置数据
-//=== 每个兵种包含：描述、名字、攻击、步防、骑防、速度、运载量、所属兵种
+//=== 蜀国兵种配置数据
+//=== 每个兵种包含：兵种、进攻、步防、骑御、速度、耗粮、运输、木材、泥土、铁矿、粮食、总造价
 export const UNITS_CONFIG = {
   // 步兵营
-  spearman: {
-    name: '长矛兵',
-    description: '装备长矛的基础步兵，对骑兵有额外伤害',
-    attack: 15,
-    infantryDefense: 20,  // 步防
-    cavalryDefense: 25,   // 骑防
-    speed: 4,
-    carryCapacity: 25,    // 运载量
+  greedyWolf: {
+    name: '贪狼营',
+    description: '蜀国精锐步兵，攻守兼备的基础作战单位',
+    attack: 8,
+    infantryDefense: 4,  // 步防
+    cavalryDefense: 1,   // 骑防
+    speed: 7,
+    carryCapacity: 120,    // 运载量
     unitType: UNIT_TYPES.INFANTRY,  // 所属兵种
-    cost: { wood: 50, iron: 30, food: 20 },
+    cost: { wood: 190, soil: 150, iron: 80, food: 80 },
+    totalCost: 500,
     trainTime: 60,
     icon: '🛡️'
   },
-  swordsman: {
-    name: '剑士',
-    description: '装备剑盾的精锐步兵，攻防平衡',
-    attack: 25,
-    infantryDefense: 18,
-    cavalryDefense: 15,
-    speed: 5,
-    carryCapacity: 30,
+  qilinGuard: {
+    name: '麒麟卫',
+    description: '蜀国重装步兵，具有强大的防御能力',
+    attack: 2,
+    infantryDefense: 7,
+    cavalryDefense: 12,
+    speed: 7,
+    carryCapacity: 80,
     unitType: UNIT_TYPES.INFANTRY,
-    cost: { wood: 30, iron: 60, food: 30 },
+    cost: { wood: 290, soil: 140, iron: 170, food: 80 },
+    totalCost: 680,
     trainTime: 90,
     icon: '⚔️'
   },
-  archer: {
-    name: '弓箭手',
-    description: '远程攻击单位，射程优势明显',
-    attack: 20,
-    infantryDefense: 10,
-    cavalryDefense: 8,
+  azureDragon: {
+    name: '青龙军',
+    description: '蜀国精英步兵，攻击力强劲',
+    attack: 12,
+    infantryDefense: 6,
+    cavalryDefense: 6,
     speed: 6,
-    carryCapacity: 20,
+    carryCapacity: 100,
     unitType: UNIT_TYPES.INFANTRY,
-    cost: { wood: 80, iron: 20, food: 25 },
+    cost: { wood: 260, soil: 240, iron: 340, food: 140 },
+    totalCost: 980,
+    trainTime: 120,
+    icon: '🐉'
+  },
+  flyingKite: {
+    name: '飞鸢',
+    description: '蜀国轻装侦察兵，速度极快',
+    attack: 0,
+    infantryDefense: 2,
+    cavalryDefense: 1,
+    speed: 9,
+    carryCapacity: 0,
+    unitType: UNIT_TYPES.INFANTRY,
+    cost: { wood: 320, soil: 200, iron: 100, food: 100 },
+    totalCost: 720,
     trainTime: 75,
-    icon: '🏹'
+    icon: '🪁'
   },
   
   // 骑兵营
-  lightCavalry: {
-    name: '轻骑兵',
-    description: '快速机动的侦察骑兵，适合骚扰和追击',
-    attack: 22,
-    infantryDefense: 12,
-    cavalryDefense: 15,
-    speed: 12,
-    carryCapacity: 40,
+  xiLiangCavalry: {
+    name: '西凉铁骑',
+    description: '蜀国重装骑兵，冲击力惊人',
+    attack: 11,
+    infantryDefense: 20,
+    cavalryDefense: 8,
+    speed: 10,
+    carryCapacity: 220,
     unitType: UNIT_TYPES.CAVALRY,
-    cost: { wood: 40, iron: 50, food: 80 },
-    trainTime: 100,
+    cost: { wood: 740, soil: 540, iron: 580, food: 150 },
+    totalCost: 2010,
+    trainTime: 180,
     icon: '🐎'
   },
-  heavyCavalry: {
-    name: '重骑兵',
-    description: '重装冲锋骑兵，具有强大的冲击力',
-    attack: 40,
-    infantryDefense: 25,
-    cavalryDefense: 30,
-    speed: 8,
-    carryCapacity: 60,
+  southernElephant: {
+    name: '南蛮象',
+    description: '蜀国战象部队，攻防俱佳的重型单位',
+    attack: 30,
+    infantryDefense: 10,
+    cavalryDefense: 15,
+    speed: 9,
+    carryCapacity: 160,
     unitType: UNIT_TYPES.CAVALRY,
-    cost: { wood: 60, iron: 100, food: 120 },
-    trainTime: 180,
-    icon: '🏇'
+    cost: { wood: 900, soil: 1030, iron: 960, food: 160 },
+    totalCost: 3050,
+    trainTime: 240,
+    icon: '🐘'
   },
   
   // 攻城武器
-  catapult: {
-    name: '投石车',
-    description: '远程攻城器械，对建筑物造成巨大伤害',
-    attack: 80,
-    infantryDefense: 5,
-    cavalryDefense: 3,
-    speed: 2,
+  siegeTower: {
+    name: '临冲车',
+    description: '蜀国攻城器械，专门用于攻城作战',
+    attack: 13,
+    infantryDefense: 6,
+    cavalryDefense: 16,
+    speed: 4,
     carryCapacity: 0,
     unitType: UNIT_TYPES.SIEGE,
-    cost: { wood: 200, iron: 150, food: 50 },
+    cost: { wood: 2000, soil: 600, iron: 700, food: 140 },
+    totalCost: 1640,
     trainTime: 300,
     icon: '🏗️'
   },
-  batteringRam: {
-    name: '攻城锤',
-    description: '专门破坏城门的重型攻城器械',
-    attack: 100,
-    infantryDefense: 8,
-    cavalryDefense: 5,
-    speed: 1,
+  thunderBolt: {
+    name: '霹天雷',
+    description: '蜀国火药武器，具有强大的爆炸威力',
+    attack: 10,
+    infantryDefense: 12,
+    cavalryDefense: 2,
+    speed: 3,
     carryCapacity: 0,
     unitType: UNIT_TYPES.SIEGE,
-    cost: { wood: 300, iron: 100, food: 30 },
-    trainTime: 240,
-    icon: '🔨'
+    cost: { wood: 1800, soil: 2400, iron: 1200, food: 120 },
+    totalCost: 5520,
+    trainTime: 360,
+    icon: '💥'
   },
   
   // 特殊兵种
-  ninja: {
-    name: '忍者',
-    description: '隐秘行动的特殊兵种，具有潜行和暗杀能力',
-    attack: 35,
-    infantryDefense: 15,
-    cavalryDefense: 20,
-    speed: 10,
-    carryCapacity: 15,
+  woodenOx: {
+    name: '木牛流马',
+    description: '蜀国运输工具，具有超强的运载能力',
+    attack: 20,
+    infantryDefense: 160,
+    cavalryDefense: 160,
+    speed: 5,
+    carryCapacity: 9999,
     unitType: UNIT_TYPES.SPECIAL,
-    cost: { wood: 80, iron: 120, food: 100 },
-    trainTime: 200,
-    icon: '🥷'
+    cost: { wood: 14400, soil: 11000, iron: 11600, food: 13000 },
+    totalCost: 50000,
+    trainTime: 600,
+    icon: '🐂'
   },
-  warElephant: {
-    name: '战象',
-    description: '巨型战争单位，具有极高的攻击力和防御力',
-    attack: 60,
-    infantryDefense: 40,
-    cavalryDefense: 45,
-    speed: 3,
-    carryCapacity: 100,
+  hanRoyalty: {
+    name: '汉室宗亲',
+    description: '蜀国贵族部队，拥有极高的战斗素养',
+    attack: 80,
+    infantryDefense: 120,
+    cavalryDefense: 80,
+    speed: 4,
+    carryCapacity: 0,
     unitType: UNIT_TYPES.SPECIAL,
-    cost: { wood: 150, iron: 200, food: 300 },
-    trainTime: 400,
-    icon: '🐘'
+    cost: { wood: 71000, soil: 53200, iron: 50000, food: 54400 },
+    totalCost: 228600,
+    trainTime: 1200,
+    icon: '👑'
+  },
+  weiMerchant: {
+    name: '蜀国商人',
+    description: '蜀国商贸人员，专门负责贸易运输',
+    attack: 0,
+    infantryDefense: 0,
+    cavalryDefense: 0,
+    speed: 12,
+    carryCapacity: 2000,
+    unitType: UNIT_TYPES.SPECIAL,
+    cost: { wood: 0, soil: 0, iron: 0, food: 0 },
+    totalCost: 0,
+    trainTime: 0,
+    icon: '💰'
   }
 }
 
