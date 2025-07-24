@@ -1,5 +1,7 @@
 //=== 游戏配置文件 - 定义建筑升级和资源产出公式
 
+import { calculateFactionBonus } from './factionConfig.js'
+
 /**
  * 建筑类型枚举
  */
@@ -107,20 +109,28 @@ export const WAREHOUSE_CONFIG = {
 
 /**
  * 计算建筑每小时产出
- * 🔧 使用手动配置的产量表
+ * 🔧 使用手动配置的产量表，支持阵营经济加成
  * @param {string} buildingType - 建筑类型
  * @param {number} level - 建筑等级
+ * @param {string} factionType - 阵营类型（可选）
  * @returns {number} 每小时产出量
  */
-export const calculateProduction = (buildingType, level) => {
+export const calculateProduction = (buildingType, level, factionType = null) => {
   const config = BUILDING_CONFIG[buildingType]
   if (!config || !config.productionByLevel) return 0
   
   // 确保等级在有效范围内
   if (level < 0 || level >= config.productionByLevel.length) return 0
   
-  // 返回基础产量
-  return config.productionByLevel[level]
+  // 获取基础产量
+  let baseProduction = config.productionByLevel[level]
+  
+  // 应用阵营经济加成
+  if (factionType) {
+    baseProduction = calculateFactionBonus(factionType, 'economy', baseProduction)
+  }
+  
+  return baseProduction
 }
 
 /**

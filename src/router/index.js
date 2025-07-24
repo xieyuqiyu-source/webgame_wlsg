@@ -6,6 +6,7 @@ import CityView from '@/views/city/index.vue'
 import MilitaryView from '@/views/military/index.vue'
 import MapView from '@/views/map/index.vue'
 import SettingsView from '@/views/settings/index.vue'
+import NotificationTest from '@/views/NotificationTest.vue'
 
 //=== createRouter 创建路由实例
 const router = createRouter({
@@ -35,6 +36,11 @@ const router = createRouter({
       path: '/settings',
       name: 'Settings',
       component: SettingsView
+    },
+    {
+      path: '/notification-test',
+      name: 'NotificationTest',
+      component: NotificationTest
     }
   ]
 })

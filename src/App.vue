@@ -5,12 +5,14 @@ import { useGameTimer } from './hooks/useGameTimer'
 import { onMounted, ref } from 'vue'
 import { useGameStore } from './store/modules/gameStore'
 import UserInitDialog from './components/UserInitDialog.vue'
+import GlobalNotification from './components/GlobalNotification.vue'
 
 export default {
   name: 'App',
   components: {
     StagewiseToolbar,
-    UserInitDialog
+    UserInitDialog,
+    GlobalNotification
   },
   setup() {
     const gameStore = useGameStore()
@@ -63,6 +65,9 @@ export default {
       :allow-close="false"
       @submit="handleUserInfoSubmit"
     />
+    
+    <!-- 全局通知组件 -->
+    <GlobalNotification />
     
     <!-- stagewise AI开发工具栏 - 仅开发模式显示 -->
     <StagewiseToolbar 

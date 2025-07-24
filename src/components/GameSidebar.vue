@@ -60,7 +60,13 @@
         <div class="section">
           <div class="section-header">城池生产力</div>
           <div class="production-list">
-            <div class="production-item" v-for="production in productions" :key="production.name">
+            <div 
+              class="production-item" 
+              v-for="production in productions" 
+              :key="production.name"
+              @mouseenter="showProductionTooltip = production.type"
+              @mouseleave="showProductionTooltip = null"
+            >
               <div class="production-info">
                 <img v-if="production.icon" :src="production.icon" :alt="production.name" class="production-icon" />
                 <div v-else class="production-icon production-icon-fallback"></div>
@@ -69,6 +75,27 @@
               <div class="production-details">
                 <span class="production-rate">{{ production.rate }} 每小时</span>
               </div>
+              
+              <!-- 生产力详情提示框 -->
+              <Transition name="tooltip-fade">
+                <div v-if="showProductionTooltip === production.type" class="production-tooltip">
+                  <div class="tooltip-arrow"></div>
+                  <!-- <div class="tooltip-header">{{ production.name }}产量详情</div> -->
+                  <div class="tooltip-content">
+                    <div class="tooltip-item">
+                      <span class="tooltip-label">基础产量: <span class="tooltip-value">{{ production.baseProduction }} 每小时</span></span>
+                     
+                    </div>
+                    <div class="tooltip-item" v-if="gameStore.userFaction">
+                      <span class="tooltip-label">阵营加成: <span class="tooltip-value" :class="production.bonusClass">{{ production.bonusText }}</span></span>
+                      
+                    </div>
+                    <div class="tooltip-item total">
+                      <span class="tooltip-label">总产量: <span class="tooltip-value text-yellow-400">{{ production.rate }} 每小时</span></span>
+                    </div>
+                  </div>
+                </div>
+              </Transition>
             </div>
           </div>
         </div>
@@ -93,12 +120,12 @@
                 <!-- 进度条背景 -->
                 <div 
                   v-if="isWarehouseUpgrading" 
-                  class="absolute inset-0 bg-blue-500 transition-all duration-100 ease-linear"
+                  class="absolute inset-0 bg-green-500 transition-all duration-100 ease-linear"
                   :style="{ width: warehouseUpgradeProgress + '%' }"
                 ></div>
                 
                 <!-- 按钮文字 -->
-                <span class="relative z-10">
+                <span class="relative z-10 color-white">
                   <template v-if="isWarehouseUpgrading">
                     升级中... {{ Math.round(warehouseUpgradeProgress) }}%
                   </template>
@@ -107,18 +134,15 @@
                   </template>
                 </span>
               </button>
-              
-              <!-- 升级时间显示 -->
-              <div v-if="isWarehouseUpgrading" class="text-xs text-blue-400 text-center mt-1">
-                剩余时间: {{ formatTime(warehouseUpgradeTimeLeft) }}
-              </div>
-              
               <!-- 浮动提醒 -->
               <div v-if="showTooltip && (!gameStore.canUpgradeWarehouse || isWarehouseUpgrading)" class="upgrade-tooltip">
                 <div class="tooltip-arrow"></div>
                 <div class="tooltip-header">升级条件</div>
                 <div v-if="isWarehouseUpgrading" class="tooltip-content">
                   <div class="tooltip-item upgrading">仓库正在升级中...</div>
+                  <div class="tooltip-item">
+                    <div class="text-green-400 text-center mt-1">剩余时间: {{ formatTime(warehouseUpgradeTimeLeft) }}</div>
+                  </div>
                 </div>
                 <div v-else-if="gameStore.warehouseLevel >= 12" class="tooltip-content">
                   <div class="tooltip-item max-level">仓库已达到最大等级</div>
@@ -190,6 +214,14 @@
             </div>
             <span class="nav-label">设置</span>
           </div>
+          <div class="nav-button" @click="handleNavClick('notification-test')">
+            <div class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 6.5C21 8.43 19.43 10 17.5 10S14 8.43 14 6.5 15.57 3 17.5 3 21 4.57 21 6.5ZM10 6.5C10 8.43 8.43 10 6.5 10S3 8.43 3 6.5 4.57 3 6.5 3 10 4.57 10 6.5ZM12 8C15.31 8 18 10.69 18 14V16L20 18V19H4V18L6 16V14C6 10.69 8.69 8 12 8ZM10 20H14C14 21.1 13.1 22 12 22S10 21.1 10 20Z"/>
+              </svg>
+            </div>
+            <span class="nav-label">通知</span>
+          </div>
         </div>
       </div>
     </div>
@@ -200,8 +232,9 @@
 import { RESOURCE_ICONS, getResourceIcon, getResourceName } from '@/config/resources.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { computed, ref, onMounted, onUnmounted, watchEffect } from 'vue'
-import { calculateWarehouseUpgradeTime, calculateWarehouseUpgradeCost } from '@/config/gameConfig.js'
+import { calculateWarehouseUpgradeTime, calculateWarehouseUpgradeCost, calculateProduction, BUILDING_TYPES } from '@/config/gameConfig.js'
 import { formatCivilization, formatTime } from '@/utils/formatters.js'
+import { getFactionConfig } from '@/config/factionConfig.js'
 
 export default {
   name: 'GameSidebar',
@@ -210,11 +243,38 @@ export default {
     const gameStore = useGameStore()
     
     // 仓库升级相关状态
-    const isWarehouseUpgrading = ref(false)
-    const warehouseUpgradeTimeLeft = ref(0)
-    const warehouseUpgradeProgress = ref(0)
     const showTooltip = ref(false)
-    let warehouseUpgradeTimer = null
+    // 生产力提示框状态
+    const showProductionTooltip = ref(null)
+    let progressTimer = null
+    
+    //=== 仓库升级状态（从gameStore获取）
+    const isWarehouseUpgrading = computed(() => {
+      return gameStore.isWarehouseUpgrading
+    })
+    
+    // 响应式时间戳，用于强制更新计算属性
+    const currentTime = ref(Date.now())
+    
+    //=== 仓库升级进度
+    const warehouseUpgradeProgress = computed(() => {
+      if (!gameStore.warehouseUpgrade) return 0
+      // 使用响应式时间戳确保计算属性能够更新
+      const now = currentTime.value
+      const elapsed = now - gameStore.warehouseUpgrade.startTime
+      const progress = Math.min((elapsed / gameStore.warehouseUpgrade.duration) * 100, 100)
+      return progress
+    })
+    
+    //=== 仓库升级剩余时间
+    const warehouseUpgradeTimeLeft = computed(() => {
+      if (!gameStore.warehouseUpgrade) return 0
+      // 使用响应式时间戳确保计算属性能够更新
+      const now = currentTime.value
+      const elapsed = now - gameStore.warehouseUpgrade.startTime
+      const remaining = Math.max(0, gameStore.warehouseUpgrade.duration - elapsed)
+      return Math.ceil(remaining / 1000)
+    })
     
     //=== 计算资源数据
     const resources = computed(() => {
@@ -231,12 +291,62 @@ export default {
     //=== 计算生产力数据
     const productions = computed(() => {
       const resourceTypes = ['wood', 'soil', 'iron', 'food']
-      return resourceTypes.map(type => ({
-        name: getResourceName(type),
-        type,
-        icon: getResourceIcon(type),
-        rate: Math.floor(gameStore.hourlyProduction[type] || 0)
-      }))
+      return resourceTypes.map(type => {
+        // 计算基础产量（不含阵营加成）
+        let baseProduction = 0
+        const buildingTypeMap = {
+          'wood': BUILDING_TYPES.WOOD_MILL,
+          'soil': BUILDING_TYPES.SOIL_MINE,
+          'iron': BUILDING_TYPES.IRON_MINE,
+          'food': BUILDING_TYPES.FARM
+        }
+        
+        const buildingType = buildingTypeMap[type]
+        if (buildingType && gameStore.buildings[buildingType]) {
+          gameStore.buildings[buildingType].forEach(level => {
+            if (level > 0) {
+              // 计算不含阵营加成的基础产量
+              baseProduction += calculateProduction(buildingType, level, null)
+            }
+          })
+        }
+        
+        // 获取总产量（含阵营加成）
+        const totalProduction = Math.floor(gameStore.hourlyProduction[type] || 0)
+        
+        // 计算阵营加成信息
+        let bonusText = '无加成'
+        let bonusClass = 'text-gray-400'
+        
+        if (gameStore.userFaction) {
+          const factionConfig = getFactionConfig(gameStore.userFaction)
+          if (factionConfig && factionConfig.traits) {
+            const economyBonus = factionConfig.traits.economyBonus || 1.0
+            const bonusPercent = Math.round((economyBonus - 1) * 100)
+            
+            if (bonusPercent > 0) {
+              bonusText = `+${bonusPercent}% (${factionConfig.name})`
+              bonusClass = 'text-green-400'
+            } else if (bonusPercent < 0) {
+              bonusText = `${bonusPercent}% (${factionConfig.name})`
+              bonusClass = 'text-red-400'
+            } else {
+              bonusText = '无加成'
+              bonusClass = 'text-gray-400'
+            }
+          }
+        }
+        
+        return {
+          name: getResourceName(type),
+          type,
+          icon: getResourceIcon(type),
+          rate: totalProduction,
+          baseProduction: Math.floor(baseProduction),
+          bonusText,
+          bonusClass
+        }
+      })
     })
     
     //=== 计算仓库升级成本
@@ -257,31 +367,45 @@ export default {
       }
     }
     
-    // 开始仓库升级倒计时
-    const startWarehouseUpgradeTimer = (duration) => {
-      isWarehouseUpgrading.value = true
-      warehouseUpgradeTimeLeft.value = duration
-      const totalDuration = duration
-      
-      warehouseUpgradeTimer = setInterval(() => {
-        warehouseUpgradeTimeLeft.value--
-        warehouseUpgradeProgress.value = ((totalDuration - warehouseUpgradeTimeLeft.value) / totalDuration) * 100
-        
-        if (warehouseUpgradeTimeLeft.value <= 0) {
-          clearInterval(warehouseUpgradeTimer)
-          isWarehouseUpgrading.value = false
-          warehouseUpgradeProgress.value = 0
-          // 升级完成，更新仓库等级
-          gameStore.completeWarehouseUpgrade()
-        }
-      }, 1000)
+    //=== 启动进度定时器
+    const startProgressTimer = () => {
+      if (progressTimer) {
+        clearInterval(progressTimer)
+      }
+      progressTimer = setInterval(() => {
+        // 更新响应式时间戳，触发计算属性重新计算
+        currentTime.value = Date.now()
+      }, 100)
     }
+    
+    //=== 停止进度定时器
+    const stopProgressTimer = () => {
+      if (progressTimer) {
+        clearInterval(progressTimer)
+        progressTimer = null
+      }
+    }
+    
+    //=== 监听升级状态变化
+    const watchUpgradeStatus = () => {
+      if (isWarehouseUpgrading.value) {
+        startProgressTimer()
+      } else {
+        stopProgressTimer()
+      }
+    }
+    
+    onMounted(() => {
+      watchUpgradeStatus()
+      // 监听升级状态变化
+      watchEffect(() => {
+        watchUpgradeStatus()
+      })
+    })
     
     // 清理定时器
     onUnmounted(() => {
-      if (warehouseUpgradeTimer) {
-        clearInterval(warehouseUpgradeTimer)
-      }
+      stopProgressTimer()
     })
     
     return {
@@ -292,11 +416,11 @@ export default {
       warehouseUpgradeTimeLeft,
       warehouseUpgradeProgress,
       showTooltip,
+      showProductionTooltip,
       warehouseUpgradeCost,
       getResourceName,
       formatTime,
-      formatCivilization,
-      startWarehouseUpgradeTimer
+      formatCivilization
     }
   },
   data() {
@@ -337,7 +461,8 @@ export default {
         'city': '/city',
         'military': '/military', 
         'map': '/map',
-        'settings': '/settings' // 设置按钮跳转到设置页面
+        'settings': '/settings', // 设置按钮跳转到设置页面
+        'notification-test': '/notification-test' // 通知测试页面
       }
       
       const targetRoute = routeMap[navType]
@@ -488,7 +613,13 @@ export default {
 }
 
 .production-item {
-  @apply flex justify-between items-center px-3;
+  @apply flex justify-between items-center px-3 relative;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.production-item:hover {
+  background-color: rgba(55, 65, 81, 0.3);
 }
 
 .production-info {
@@ -526,6 +657,82 @@ export default {
   @apply flex items-center justify-center;
   width: 20px;
   height: 20px;
+}
+
+/* 生产力提示框样式 */
+.production-tooltip {
+  @apply absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50;
+  @apply border border-green-500/50 rounded-md shadow-2xl;
+  @apply text-white text-sm;
+  min-width: 200px;
+  max-width: 280px;
+  /* 毛玻璃效果 */
+  background: rgba(31, 41, 55, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.production-tooltip .tooltip-arrow {
+  @apply absolute top-full left-1/2 transform -translate-x-1/2;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(16, 185, 129, 0.5);
+}
+
+.production-tooltip .tooltip-header {
+  @apply px-3 py-2 text-white font-medium rounded-t-md;
+  background: rgba(34, 197, 94, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 12px;
+}
+
+.production-tooltip .tooltip-content {
+  @apply p-3 space-y-2;
+}
+
+.production-tooltip .tooltip-item {
+  @apply flex justify-between items-center;
+  font-size: 11px;
+  line-height: 16px;
+  /* 不换行 */
+}
+
+.production-tooltip .tooltip-item.total {
+  @apply border-t border-white/20 pt-2 mt-2;
+  font-weight: 500;
+}
+
+.production-tooltip .tooltip-label {
+  @apply text-gray-300;
+}
+
+.production-tooltip .tooltip-value {
+  @apply text-white font-medium;
+}
+
+/* 淡入淡出动画 */
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tooltip-fade-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px) scale(0.95);
+}
+
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px) scale(0.95);
+}
+
+.tooltip-fade-enter-to,
+.tooltip-fade-leave-from {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
 /* 仓库管理样式 */

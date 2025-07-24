@@ -15,6 +15,7 @@ import {
 import { calculateCivilization, getCivilizationLevel } from '../../config/civilizationConfig.js'
 import { getUserUUID } from '../../utils/uuid.js'
 import { FACTION_TYPES, getFactionConfig } from '../../config/factionConfig.js'
+import { useNotificationStore } from './notificationStore.js'
 
 export const useGameStore = defineStore('game', {
   state: () => ({
@@ -93,7 +94,8 @@ export const useGameStore = defineStore('game', {
         // 遍历该类型的所有5个建筑
         buildingLevels.forEach(level => {
           if (level > 0) { // 只计算已建造的建筑（等级大于0）
-            const productionAmount = calculateProduction(buildingType, level)
+            // 传入玩家阵营信息以应用经济加成
+            const productionAmount = calculateProduction(buildingType, level, state.userFaction)
             
             // 根据建筑类型确定产出的资源类型
             if (buildingType === BUILDING_TYPES.WOOD_MILL) {
@@ -250,6 +252,19 @@ export const useGameStore = defineStore('game', {
             const oldAmount = this.resources[resourceType]
             const newAmount = Math.min(this.resources[resourceType] + integerProduced, capacity)
             
+            // 检查是否达到仓库上限并发送通知
+            if (oldAmount < capacity && newAmount >= capacity) {
+              const notificationStore = useNotificationStore()
+              const resourceNames = {
+                [RESOURCE_TYPES.WOOD]: '木材',
+                [RESOURCE_TYPES.SOIL]: '泥土',
+                [RESOURCE_TYPES.IRON]: '铁矿',
+                [RESOURCE_TYPES.FOOD]: '粮食'
+              }
+              const resourceName = resourceNames[resourceType] || resourceType
+              notificationStore.addResourceFullNotification(resourceName)
+            }
+            
             // 确保触发响应式更新
             this.$patch((state) => {
               state.resources[resourceType] = newAmount
@@ -273,6 +288,24 @@ export const useGameStore = defineStore('game', {
      */
     upgradeBuilding(buildingType, buildingIndex = 0) {
       if (!this.canUpgradeBuilding(buildingType, buildingIndex)) {
+        // 检查具体失败原因并发送通知
+        if (this.buildingUpgrades[buildingType][buildingIndex] !== null) {
+          const notificationStore = useNotificationStore()
+          notificationStore.addInfoNotification('升级进行中', '该建筑正在升级中，请等待完成', 3000)
+        } else if (this.buildings[buildingType][buildingIndex] >= 10) {
+          const notificationStore = useNotificationStore()
+          notificationStore.addInfoNotification('已达最高等级', '该建筑已达到最高等级', 3000)
+        } else {
+          const notificationStore = useNotificationStore()
+          const buildingNames = {
+            [BUILDING_TYPES.WOOD_MILL]: '木材厂',
+            [BUILDING_TYPES.SOIL_MINE]: '泥土矿',
+            [BUILDING_TYPES.IRON_MINE]: '铁矿场',
+            [BUILDING_TYPES.FARM]: '农场'
+          }
+          const buildingName = buildingNames[buildingType] || '建筑'
+          notificationStore.addResourceInsufficientNotification(`升级${buildingName}`)
+        }
         return false
       }
       
@@ -315,13 +348,36 @@ export const useGameStore = defineStore('game', {
       
       // 清除文明度缓存
       this._clearCivilizationCache()
-    },
+      
+      // 发送升级完成通知
+      const notificationStore = useNotificationStore()
+      const buildingNames = {
+        [BUILDING_TYPES.WOOD_MILL]: '木材厂',
+        [BUILDING_TYPES.SOIL_MINE]: '泥土矿',
+        [BUILDING_TYPES.IRON_MINE]: '铁矿场',
+        [BUILDING_TYPES.FARM]: '农场'
+      }
+      const buildingName = buildingNames[buildingType] || '建筑'
+      notificationStore.addBuildingUpgradeCompleteNotification(
+         `${buildingName}(${buildingIndex + 1})`,
+         upgrade.targetLevel
+       )
+     },
     
     /**
      * 升级仓库
      */
     upgradeWarehouse() {
       if (!this.canUpgradeWarehouse) {
+        // 检查具体失败原因并发送通知
+        const notificationStore = useNotificationStore()
+        if (this.warehouseUpgrade !== null) {
+          notificationStore.addInfoNotification('升级进行中', '仓库正在升级中，请等待完成', 3000)
+        } else if (this.warehouseLevel >= WAREHOUSE_CONFIG.maxLevel) {
+          notificationStore.addInfoNotification('已达最高等级', '仓库已达到最高等级', 3000)
+        } else {
+          notificationStore.addResourceInsufficientNotification('升级仓库')
+        }
         return false
       }
       
@@ -364,6 +420,10 @@ export const useGameStore = defineStore('game', {
       
       // 清除文明度缓存
       this._clearCivilizationCache()
+      
+      // 发送仓库升级完成通知
+      const notificationStore = useNotificationStore()
+      notificationStore.addWarehouseUpgradeCompleteNotification(upgrade.targetLevel)
     },
     
     /**
