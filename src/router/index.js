@@ -1,0 +1,42 @@
+import { createRouter, createWebHistory } from 'vue-router'
+
+// 导入页面组件
+import GameDemo from '@/views/GameDemo.vue'
+import CityView from '@/views/city/index.vue'
+import MilitaryView from '@/views/military/index.vue'
+import MapView from '@/views/map/index.vue'
+import SettingsView from '@/views/settings/index.vue'
+
+//=== createRouter 创建路由实例
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      name: 'GameDemo',
+      component: GameDemo
+    },
+    {
+      path: '/city',
+      name: 'City',
+      component: CityView
+    },
+    {
+      path: '/military',
+      name: 'Military', 
+      component: MilitaryView
+    },
+    {
+      path: '/map',
+      name: 'Map',
+      component: MapView
+    },
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: SettingsView
+    }
+  ]
+})
+
+export default router

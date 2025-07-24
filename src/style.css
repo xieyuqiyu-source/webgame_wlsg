@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 武林三国游戏基础样式 */
+:root {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: url('./assets/logo.png') center center / cover no-repeat,
+              linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  font-size: 12px;
+}
+
+/* 确保html和body完全覆盖 */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+#app {
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* 游戏UI组件基础样式 */
+@layer components {
+  .game-card {
+    @apply bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/20;
+  }
+
+  .game-button {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 transform hover:scale-105;
+  }
+
+  .game-button-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700;
+  }
+
+  .game-button-secondary {
+    @apply bg-gradient-to-r from-secondary-500 to-secondary-600 text-white hover:from-secondary-600 hover:to-secondary-700;
+  }
+
+  .game-text-gold {
+    @apply text-gold-500 font-bold;
+  }
+}
