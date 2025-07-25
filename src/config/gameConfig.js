@@ -33,60 +33,205 @@ export const RESOURCE_TYPES = {
  */
 export const BUILDING_CONFIG = {
   [BUILDING_TYPES.WOOD_MILL]: {
-    name: '木材厂',
+    name: '伐木场',
     resourceType: RESOURCE_TYPES.WOOD,
-    // 🎯 手动配置每级产量 - 可在此处直接修改各等级产出
-    productionByLevel: [0, 100, 120, 144, 173, 207, 249, 299, 358, 430, 516],
+    maxLevel: 20,            // 最高等级20
+    // 🎯 手动配置每级产量 - 根据用户提供的表格数据配置
+    productionByLevel: [
+      4,     // 0级
+      10,    // 1级
+      18,    // 2级
+      30,    // 3级
+      44,    // 4级
+      66,    // 5级
+      100,   // 6级
+      140,   // 7级
+      200,   // 8级
+      290,   // 9级
+      400,   // 10级
+      560,   // 11级
+      750,   // 12级
+      990,   // 13级
+      1270,  // 14级
+      1600,  // 15级
+      2000,  // 16级
+      2600,  // 17级
+      3200,  // 18级
+      4000,  // 19级
+      4900   // 20级
+    ],
     upgradeTime: {
-      base: 30,                // 基础升级时间(秒)
-      growth: 1.3              // 每级升级时间增长倍数
+      base: 60,                // 基础升级时间(秒)
+      growth: 1.25             // 每级升级时间增长倍数
     },
-    upgradeCost: {
-      base: { wood: 50, soil: 30, iron: 10, food: 20 },
-      growth: 1.5              // 每级升级成本增长倍数
-    }
+    // 🎯 手动配置每级升级成本 - 根据用户提供的表格数据配置
+    upgradeCostByLevel: [
+      { wood: 80, soil: 200, iron: 100, food: 120 },     // 升级到1级
+      { wood: 130, soil: 330, iron: 170, food: 200 },    // 升级到2级
+      { wood: 220, soil: 560, iron: 280, food: 330 },    // 升级到3级
+      { wood: 370, soil: 930, iron: 470, food: 560 },    // 升级到4级
+      { wood: 620, soil: 1560, iron: 780, food: 930 },   // 升级到5级
+      { wood: 1040, soil: 2600, iron: 1300, food: 1560 }, // 升级到6级
+      { wood: 1740, soil: 4340, iron: 2170, food: 2600 }, // 升级到7级
+      { wood: 2900, soil: 7250, iron: 3620, food: 4350 }, // 升级到8级
+      { wood: 4840, soil: 12100, iron: 6050, food: 7260 }, // 升级到9级
+      { wood: 8080, soil: 20210, iron: 10100, food: 12120 }, // 升级到10级
+      { wood: 13500, soil: 33740, iron: 16870, food: 20250 }, // 升级到11级
+      { wood: 22540, soil: 56350, iron: 28180, food: 33810 }, // 升级到12级
+      { wood: 37640, soil: 94110, iron: 47050, food: 56460 }, // 升级到13级
+      { wood: 62860, soil: 157160, iron: 78580, food: 94300 }, // 升级到14级
+      { wood: 104980, soil: 262460, iron: 131230, food: 157480 }, // 升级到15级
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到16级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到17级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到18级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到19级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 }              // 升级到20级 (表格显示为-)
+    ]
   },
   [BUILDING_TYPES.SOIL_MINE]: {
-    name: '泥土矿',
+    name: '泥土场',
+    maxLevel: 20,
     resourceType: RESOURCE_TYPES.SOIL,
-    // 🎯 手动配置每级产量 - 可在此处直接修改各等级产出
-    productionByLevel: [0, 80, 96, 115, 138, 166, 199, 239, 287, 344, 413],
+    productionByLevel: [
+      0, 10, 18, 30, 44, 66, 100, 140, 200, 290, 400, 560, 750, 990, 1270, 1600, 2000, 2600, 3200, 4000, 4900
+    ],
     upgradeTime: {
-      base: 45,                // 基础升级时间(秒)
-      growth: 1.3              // 每级升级时间增长倍数
-    },
-    upgradeCost: {
-      base: { wood: 30, soil: 40, iron: 20, food: 10 },
+      base: 30,
       growth: 1.5
-    }
+    },
+    upgradeCostByLevel: [
+      { wood: 160, soil: 80, iron: 160, food: 100 }, // 1级
+      { wood: 270, soil: 130, iron: 270, food: 170 }, // 2级
+      { wood: 450, soil: 220, iron: 450, food: 280 }, // 3级
+      { wood: 750, soil: 370, iron: 750, food: 470 }, // 4级
+      { wood: 1240, soil: 620, iron: 1240, food: 780 }, // 5级
+      { wood: 2080, soil: 1040, iron: 2080, food: 1300 }, // 6级
+      { wood: 3470, soil: 1740, iron: 3470, food: 2170 }, // 7级
+      { wood: 5800, soil: 2900, iron: 5800, food: 3620 }, // 8级
+      { wood: 9680, soil: 4840, iron: 9680, food: 6050 }, // 9级
+      { wood: 16160, soil: 8080, iron: 16160, food: 10100 }, // 10级
+      { wood: 27000, soil: 13500, iron: 27000, food: 16870 }, // 11级
+      { wood: 45080, soil: 22540, iron: 45080, food: 28180 }, // 12级
+      { wood: 75290, soil: 37640, iron: 75290, food: 47050 }, // 13级
+      { wood: 125730, soil: 62860, iron: 125730, food: 78580 }, // 14级
+      { wood: 209970, soil: 104980, iron: 209970, food: 131230 }, // 15级
+      { wood: 0, soil: 0, iron: 0, food: 0 }, // 16级
+      { wood: 0, soil: 0, iron: 0, food: 0 }, // 17级
+      { wood: 0, soil: 0, iron: 0, food: 0 }, // 18级
+      { wood: 0, soil: 0, iron: 0, food: 0 }, // 19级
+      { wood: 0, soil: 0, iron: 0, food: 0 }  // 20级
+    ]
   },
   [BUILDING_TYPES.IRON_MINE]: {
     name: '铁矿场',
     resourceType: RESOURCE_TYPES.IRON,
-    // 🎯 手动配置每级产量 - 可在此处直接修改各等级产出
-    productionByLevel: [0, 60, 72, 86, 103, 124, 149, 179, 215, 258, 310],
+    maxLevel: 20,            // 最高等级20
+    // 🎯 手动配置每级产量 - 根据用户提供的表格数据配置
+    productionByLevel: [
+      4,     // 0级
+      10,    // 1级
+      18,    // 2级
+      30,    // 3级
+      44,    // 4级
+      66,    // 5级
+      100,   // 6级
+      140,   // 7级
+      200,   // 8级
+      290,   // 9级
+      400,   // 10级
+      560,   // 11级
+      750,   // 12级
+      990,   // 13级
+      1270,  // 14级
+      1600,  // 15级
+      2000,  // 16级
+      2600,  // 17级
+      3200,  // 18级
+      4000,  // 19级
+      4900   // 20级
+    ],
     upgradeTime: {
       base: 60,                // 基础升级时间(秒)
-      growth: 1.3              // 每级升级时间增长倍数
+      growth: 1.25             // 每级升级时间增长倍数
     },
-    upgradeCost: {
-      base: { wood: 40, soil: 50, iron: 30, food: 15 },
-      growth: 1.5
-    }
+    // 🎯 手动配置每级升级成本 - 根据用户提供的表格数据配置
+    upgradeCostByLevel: [
+      { wood: 200, soil: 160, iron: 60, food: 120 },     // 升级到1级
+      { wood: 330, soil: 270, iron: 100, food: 200 },    // 升级到2级
+      { wood: 560, soil: 450, iron: 170, food: 330 },    // 升级到3级
+      { wood: 930, soil: 750, iron: 280, food: 560 },    // 升级到4级
+      { wood: 1560, soil: 1240, iron: 470, food: 930 },  // 升级到5级
+      { wood: 2600, soil: 2080, iron: 780, food: 1560 }, // 升级到6级
+      { wood: 4340, soil: 3470, iron: 1300, food: 2600 }, // 升级到7级
+      { wood: 7250, soil: 5800, iron: 2170, food: 4350 }, // 升级到8级
+      { wood: 12100, soil: 9680, iron: 3630, food: 7260 }, // 升级到9级
+      { wood: 20210, soil: 16160, iron: 6060, food: 12120 }, // 升级到10级
+      { wood: 33740, soil: 27000, iron: 10120, food: 20250 }, // 升级到11级
+      { wood: 56350, soil: 45080, iron: 16910, food: 33810 }, // 升级到12级
+      { wood: 94110, soil: 75290, iron: 28230, food: 56460 }, // 升级到13级
+      { wood: 157160, soil: 125730, iron: 47150, food: 94300 }, // 升级到14级
+      { wood: 262460, soil: 209970, iron: 78740, food: 157480 }, // 升级到15级
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到16级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到17级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到18级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到19级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 }              // 升级到20级 (表格显示为-)
+    ]
   },
   [BUILDING_TYPES.FARM]: {
     name: '农场',
     resourceType: RESOURCE_TYPES.FOOD,
+    maxLevel: 20,
     // 🎯 手动配置每级产量 - 可在此处直接修改各等级产出
-    productionByLevel: [0, 120, 144, 173, 207, 249, 299, 358, 430, 516, 619],
+    productionByLevel: [
+      0,     // 0级
+      10,    // 1级
+      18,    // 2级
+      30,    // 3级
+      44,    // 4级
+      66,    // 5级
+      100,   // 6级
+      140,   // 7级
+      200,   // 8级
+      290,   // 9级
+      400,   // 10级
+      560,   // 11级
+      750,   // 12级
+      990,   // 13级
+      1270,  // 14级
+      1600,  // 15级
+      2000,  // 16级
+      2600,  // 17级
+      3200,  // 18级
+      4000,  // 19级
+      4900   // 20级
+    ],
     upgradeTime: {
-      base: 25,                // 基础升级时间(秒)
-      growth: 1.3              // 每级升级时间增长倍数
+      base: 30,                // 基础升级时间(秒)
+      growth: 1.5              // 每级升级时间增长倍数
     },
-    upgradeCost: {
-      base: { wood: 25, soil: 20, iron: 5, food: 30 },
-      growth: 1.5
-    }
+    upgradeCostByLevel: [
+      { wood: 120, soil: 100, iron: 120, food: 60 },     // 升级到1级
+      { wood: 200, soil: 170, iron: 200, food: 100 },    // 升级到2级
+      { wood: 330, soil: 280, iron: 330, food: 170 },    // 升级到3级
+      { wood: 560, soil: 470, iron: 560, food: 280 },    // 升级到4级
+      { wood: 930, soil: 780, iron: 930, food: 470 },    // 升级到5级
+      { wood: 1560, soil: 1300, iron: 1560, food: 780 }, // 升级到6级
+      { wood: 2600, soil: 2170, iron: 2600, food: 1300 }, // 升级到7级
+      { wood: 4350, soil: 3620, iron: 4350, food: 2170 }, // 升级到8级
+      { wood: 7260, soil: 6050, iron: 7260, food: 3630 }, // 升级到9级
+      { wood: 12120, soil: 10100, iron: 12120, food: 6060 }, // 升级到10级
+      { wood: 20250, soil: 16870, iron: 20250, food: 10120 }, // 升级到11级
+      { wood: 33810, soil: 28180, iron: 33810, food: 16910 }, // 升级到12级
+      { wood: 56460, soil: 47050, iron: 56460, food: 28230 }, // 升级到13级
+      { wood: 94300, soil: 78580, iron: 94300, food: 47150 }, // 升级到14级
+      { wood: 157480, soil: 131230, iron: 157480, food: 78740 }, // 升级到15级
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到16级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到17级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到18级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 },             // 升级到19级 (表格显示为-)
+      { wood: 0, soil: 0, iron: 0, food: 0 }              // 升级到20级 (表格显示为-)
+    ]
   }
 }
 
@@ -184,15 +329,28 @@ export const calculateUpgradeCost = (buildingType, currentLevel) => {
   const config = BUILDING_CONFIG[buildingType]
   if (!config) return {}
   
-  const cost = {}
-  const baseCost = config.upgradeCost.base
-  const growth = config.upgradeCost.growth
+  // 如果有手动配置的升级成本表，优先使用
+  if (config.upgradeCostByLevel) {
+    if (currentLevel < 0 || currentLevel >= config.upgradeCostByLevel.length) {
+      return {}
+    }
+    return { ...config.upgradeCostByLevel[currentLevel] }
+  }
   
-  Object.keys(baseCost).forEach(resource => {
-    cost[resource] = Math.floor(baseCost[resource] * Math.pow(growth, currentLevel - 1))
-  })
+  // 否则使用基础成本和增长倍数计算
+  if (config.upgradeCost) {
+    const cost = {}
+    const baseCost = config.upgradeCost.base
+    const growth = config.upgradeCost.growth
+    
+    Object.keys(baseCost).forEach(resource => {
+      cost[resource] = Math.floor(baseCost[resource] * Math.pow(growth, currentLevel - 1))
+    })
+    
+    return cost
+  }
   
-  return cost
+  return {}
 }
 
 /**

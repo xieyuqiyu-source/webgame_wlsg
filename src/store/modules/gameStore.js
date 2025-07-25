@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { 
   BUILDING_TYPES, 
   RESOURCE_TYPES, 
+  BUILDING_CONFIG,
   WAREHOUSE_CONFIG,
   calculateProduction, 
   calculateUpgradeCost, 
@@ -160,8 +161,10 @@ export const useGameStore = defineStore('game', {
         return false
       }
       
-      // 检查建筑是否已达到最大等级（10级）
-      if (state.buildings[buildingType][buildingIndex] >= 10) {
+      // 检查建筑是否已达到最大等级
+      const config = BUILDING_CONFIG[buildingType]
+      const maxLevel = config?.maxLevel || config?.productionByLevel?.length - 1 || 10
+      if (state.buildings[buildingType][buildingIndex] >= maxLevel) {
         return false
       }
       
@@ -328,19 +331,23 @@ export const useGameStore = defineStore('game', {
         if (this.buildingUpgrades[buildingType][buildingIndex] !== null) {
           const notificationStore = useNotificationStore()
           notificationStore.addInfoNotification('升级进行中', '该建筑正在升级中，请等待完成', 3000)
-        } else if (this.buildings[buildingType][buildingIndex] >= 10) {
-          const notificationStore = useNotificationStore()
-          notificationStore.addInfoNotification('已达最高等级', '该建筑已达到最高等级', 3000)
         } else {
-          const notificationStore = useNotificationStore()
-          const buildingNames = {
-            [BUILDING_TYPES.WOOD_MILL]: '木材厂',
-            [BUILDING_TYPES.SOIL_MINE]: '泥土矿',
-            [BUILDING_TYPES.IRON_MINE]: '铁矿场',
-            [BUILDING_TYPES.FARM]: '农场'
+          const config = BUILDING_CONFIG[buildingType]
+          const maxLevel = config?.maxLevel || config?.productionByLevel?.length - 1 || 10
+          if (this.buildings[buildingType][buildingIndex] >= maxLevel) {
+            const notificationStore = useNotificationStore()
+            notificationStore.addInfoNotification('已达最高等级', '该建筑已达到最高等级', 3000)
+          } else {
+            const notificationStore = useNotificationStore()
+            const buildingNames = {
+              [BUILDING_TYPES.WOOD_MILL]: '伐木场',
+              [BUILDING_TYPES.SOIL_MINE]: '泥土矿',
+              [BUILDING_TYPES.IRON_MINE]: '铁矿场',
+              [BUILDING_TYPES.FARM]: '农场'
+            }
+            const buildingName = buildingNames[buildingType] || '建筑'
+            notificationStore.addResourceInsufficientNotification(`升级${buildingName}`)
           }
-          const buildingName = buildingNames[buildingType] || '建筑'
-          notificationStore.addResourceInsufficientNotification(`升级${buildingName}`)
         }
         return false
       }
@@ -388,7 +395,7 @@ export const useGameStore = defineStore('game', {
       // 发送升级完成通知
       const notificationStore = useNotificationStore()
       const buildingNames = {
-        [BUILDING_TYPES.WOOD_MILL]: '木材厂',
+        [BUILDING_TYPES.WOOD_MILL]: '伐木场',
         [BUILDING_TYPES.SOIL_MINE]: '泥土矿',
         [BUILDING_TYPES.IRON_MINE]: '铁矿场',
         [BUILDING_TYPES.FARM]: '农场'

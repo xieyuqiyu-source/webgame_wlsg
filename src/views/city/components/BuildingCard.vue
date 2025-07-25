@@ -53,7 +53,7 @@
               <div class="text-blue-400 text-center mt-1">剩余时间: {{ remainingTimeText }}</div>
             </div>
           </div>
-          <div v-else-if="currentLevel >= 10" class="tooltip-content">
+          <div v-else-if="currentLevel >= maxLevel" class="tooltip-content">
             <div class="tooltip-item max-level">建筑已达到最大等级</div>
           </div>
           <div v-else-if="canUpgrade" class="tooltip-content">
@@ -132,6 +132,12 @@ export default {
     //=== 当前建筑等级
     const currentLevel = computed(() => {
       return gameStore.buildings[props.buildingType][props.buildingIndex] || 0
+    })
+    
+    //=== 建筑最大等级
+    const maxLevel = computed(() => {
+      const config = BUILDING_CONFIG[props.buildingType]
+      return config?.maxLevel || config?.productionByLevel?.length - 1 || 10
     })
     
     //=== 建筑名称
