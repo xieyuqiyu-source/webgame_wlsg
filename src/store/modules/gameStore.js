@@ -679,8 +679,9 @@ export const useGameStore = defineStore('game', {
         this.resources[resource] -= totalCost[resource]
       })
       
-      // 计算训练时间
-      const trainTime = this.getActualTrainTime
+      // 计算训练时间（根据数量累加）
+      const baseTrainTime = this.getActualTrainTime
+      const trainTime = baseTrainTime * count // 每个兵种需要单独的训练时间
       const startTime = Date.now()
       
       // 添加到征兵队列
@@ -702,9 +703,20 @@ export const useGameStore = defineStore('game', {
       }, trainTime)
       
       const notificationStore = useNotificationStore()
+      const totalMinutes = Math.ceil(trainTime / 60000)
+      const hours = Math.floor(totalMinutes / 60)
+      const minutes = totalMinutes % 60
+      
+      let timeText = ''
+      if (hours > 0) {
+        timeText = `${hours}小时${minutes}分钟`
+      } else {
+        timeText = `${minutes}分钟`
+      }
+      
       notificationStore.addSuccessNotification(
         '征兵开始',
-        `开始征募 ${count} 个 ${unit.name}，预计 ${Math.ceil(trainTime / 60000)} 分钟完成`
+        `开始征募 ${count} 个 ${unit.name}，预计 ${timeText} 完成`
       )
       
       return true

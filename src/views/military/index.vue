@@ -11,7 +11,11 @@
         <!-- Tab 切换组件 -->
         <MilitaryTabs :active-tab="activeTab" @tab-change="handleTabChange">
           <!-- 征兵内容 -->
-          <div v-if="activeTab === 'recruitment'">
+          <div v-if="activeTab === 'recruitment'" class="recruitment-content">
+            <!-- 征兵队列显示 -->
+            <RecruitmentQueue class="mb-6" />
+            
+            <!-- 兵种详情标签页 -->
             <UnitDetailTabs 
               @tab-change="handleUnitDetailTabChange"
             />
@@ -47,13 +51,15 @@
 import GameSidebar from '@/components/GameSidebar.vue'
 import MilitaryTabs from './components/MilitaryTabs.vue'
 import UnitDetailTabs from './components/UnitDetailTabs.vue'
+import RecruitmentQueue from './components/RecruitmentQueue.vue'
 
 export default {
   name: 'MilitaryView',
   components: {
     GameSidebar,
     MilitaryTabs,
-    UnitDetailTabs
+    UnitDetailTabs,
+    RecruitmentQueue
   },
   data() {
     return {
@@ -113,6 +119,9 @@ export default {
 }
 
 /* Tab内容样式 */
+.recruitment-content {
+  @apply space-y-6;
+}
 
 .tab-panel {
   @apply bg-white rounded-lg shadow-sm border border-gray-200;

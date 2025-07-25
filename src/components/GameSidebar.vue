@@ -164,16 +164,18 @@
         <div class="section">
           <div class="section-header">
             <span>本城直属军队</span>
-            <span class="army-count">查看详情</span>
+            <span class="army-count">总数: {{ gameStore.totalArmyCount }}</span>
           </div>
           <div class="army-grid">
-            <div class="army-item" v-for="army in armies" :key="army.id">
-              <div class="army-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path :d="army.iconPath"/>
-                </svg>
+            <div v-if="Object.keys(gameStore.army).length === 0" class="empty-army">
+              <span class="empty-text">暂无军队</span>
+            </div>
+            <div v-else class="army-item" v-for="(count, unitId) in gameStore.army" :key="unitId">
+              <div class="army-icon">{{ getUnitIcon(unitId) }}</div>
+              <div class="army-info">
+                <span class="army-name">{{ getUnitName(unitId) }}</span>
+                <span class="army-count-text">×{{ count }}</span>
               </div>
-              <span class="army-name text-sm">{{ army.name }}</span>
             </div>
           </div>
         </div>
@@ -234,7 +236,7 @@ import { useGameStore } from '@/store/modules/gameStore.js'
 import { computed, ref, onMounted, onUnmounted, watchEffect } from 'vue'
 import { calculateWarehouseUpgradeTime, calculateWarehouseUpgradeCost, calculateProduction, BUILDING_TYPES } from '@/config/gameConfig.js'
 import { formatCivilization, formatTime } from '@/utils/formatters.js'
-import { getFactionConfig } from '@/config/factionConfig.js'
+import { getFactionConfig, getUnitById } from '@/config/factionConfig.js'
 
 export default {
   name: 'GameSidebar',
@@ -403,6 +405,18 @@ export default {
       })
     })
     
+    //=== getUnitIcon 获取兵种图标
+    const getUnitIcon = (unitId) => {
+      const unit = getUnitById(unitId)
+      return unit?.icon || '⚔️'
+    }
+    
+    //=== getUnitName 获取兵种名称
+    const getUnitName = (unitId) => {
+      const unit = getUnitById(unitId)
+      return unit?.name || '未知兵种'
+    }
+    
     // 清理定时器
     onUnmounted(() => {
       stopProgressTimer()
@@ -420,25 +434,15 @@ export default {
       warehouseUpgradeCost,
       getResourceName,
       formatTime,
-      formatCivilization
+      formatCivilization,
+      getUnitIcon,
+      getUnitName
     }
   },
   data() {
     return {
       //=== isCollapsed 侧边栏折叠状态
-      isCollapsed: false,
-      //=== armies 军队数据
-      armies: [
-        { id: 1, name: '影卫', iconPath: 'M12 2L13.09 8.26L22 9L17 14L18.18 22.74L12 19.27L5.82 22.74L7 14L2 9L10.91 8.26L12 2Z' },
-        { id: 2, name: '虎豹骑', iconPath: 'M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z' },
-        { id: 3, name: '朱雀', iconPath: 'M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z' },
-        { id: 4, name: '青龙', iconPath: 'M20.5 3L20.34 3.03L15 5.1L9 3L3.36 4.9C3.15 4.97 3 5.15 3 5.38V20.5C3 20.78 3.22 21 3.5 21L3.66 20.97L9 18.9L15 21L20.64 19.1C20.85 19.03 21 18.85 21 18.62V3.5C21 3.22 20.78 3 20.5 3Z' },
-        { id: 5, name: '白虎', iconPath: 'M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z' },
-        { id: 6, name: '玄武', iconPath: 'M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z' },
-        { id: 7, name: '飞熊', iconPath: 'M7 14l5-5 5 5z' },
-        { id: 8, name: '神机', iconPath: 'M12 2L13.09 8.26L22 9L17 14L18.18 22.74L12 19.27L5.82 22.74L7 14L2 9L10.91 8.26L12 2Z' },
-        { id: 9, name: '天策', iconPath: 'M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z' }
-      ]
+      isCollapsed: false
     }
   },
   methods: {
@@ -887,36 +891,41 @@ export default {
 
 /* 军队网格样式 */
 .army-grid {
-  @apply grid grid-cols-3 gap-2 mt-3;
+  @apply space-y-2 mt-3;
+}
+
+.empty-army {
+  @apply text-center py-4;
+}
+
+.empty-text {
+  @apply text-gray-400 text-sm;
 }
 
 .army-item {
-  @apply flex flex-col items-center justify-center p-2 rounded-md cursor-pointer transition-all duration-200;
+  @apply flex items-center gap-2 p-2 rounded-md transition-all duration-200;
   background: rgba(55, 65, 81, 0.3);
   border: 1px solid rgba(35, 124, 72, 0.2);
-  min-height: 50px;
 }
 
 .army-item:hover {
   background: rgba(35, 124, 72, 0.4);
   border-color: rgba(35, 124, 72, 0.5);
-  transform: translateY(-1px);
-}
-
-.army-item:active {
-  transform: translateY(0);
 }
 
 .army-icon {
-  @apply text-green-400 mb-1;
+  @apply text-green-400 text-lg;
 }
 
-.army-item:hover .army-icon {
-  @apply text-green-300;
+.army-info {
+  @apply flex-1 flex justify-between items-center;
 }
 
 .army-name {
-  @apply text-white text-center;
-  line-height: 14px;
+  @apply text-white text-sm;
+}
+
+.army-count-text {
+  @apply text-green-300 text-sm font-medium;
 }
 </style>
