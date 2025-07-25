@@ -14,7 +14,6 @@
           <div v-if="activeTab === 'recruitment'">
             <UnitDetailTabs 
               @tab-change="handleUnitDetailTabChange"
-              @unit-train="handleUnitTrain"
             />
           </div>
 
@@ -79,11 +78,7 @@ export default {
        this.activeUnitDetailTab = tab
        console.log('Unit detail tab changed:', tab)
      },
-    //=== handleUnitTrain 处理兵种训练事件
-    handleUnitTrain(unitData) {
-      // 处理兵种训练逻辑
-      console.log('Training unit:', unitData)
-    }
+
   }
 }
 </script>

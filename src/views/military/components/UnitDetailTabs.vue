@@ -68,7 +68,7 @@
           <!-- 当前数量显示 -->
           <div class="unit-count">
             <span class="count-label">当前有</span>
-            <span class="count-value">0</span>
+            <span class="count-value">{{ getUnitCount(unit.id) }}</span>
           </div>
           
           <!-- 征募按钮 -->
@@ -81,6 +81,13 @@
         </div>
       </div>
     </div>
+    
+    <!-- 征兵弹窗 -->
+    <RecruitmentModal
+      :visible="showRecruitmentModal"
+      :selectedUnit="selectedUnit"
+      @close="closeRecruitmentModal"
+    />
   </div>
 </template>
 
@@ -88,9 +95,13 @@
 import { UNIT_CATEGORIES, getFactionUnitsByType } from '@/config/factionConfig'
 import { getFactionConfig } from '@/config/factionConfig'
 import { useGameStore } from '@/store/modules/gameStore'
+import RecruitmentModal from './RecruitmentModal.vue'
 
 export default {
   name: 'UnitDetailTabs',
+  components: {
+    RecruitmentModal
+  },
   setup() {
     const gameStore = useGameStore()
     return {
@@ -100,7 +111,9 @@ export default {
   data() {
     return {
       activeTab: 'infantry',
-      unitCategories: UNIT_CATEGORIES
+      unitCategories: UNIT_CATEGORIES,
+      showRecruitmentModal: false,
+      selectedUnit: null
     }
   },
   computed: {
@@ -112,6 +125,12 @@ export default {
     currentUnits() {
       if (!this.gameStore.userFaction) return []
       return getFactionUnitsByType(this.gameStore.userFaction, this.activeTab)
+    },
+    //=== 获取兵种当前数量
+    getUnitCount() {
+      return (unitId) => {
+        return this.gameStore.army[unitId] || 0
+      }
     }
   },
   methods: {
@@ -122,7 +141,13 @@ export default {
     },
     //=== handleUnitTrain 处理兵种训练
     handleUnitTrain(unit) {
-      this.$emit('unit-train', unit)
+      this.selectedUnit = unit
+      this.showRecruitmentModal = true
+    },
+    //=== 关闭征兵弹窗
+    closeRecruitmentModal() {
+      this.showRecruitmentModal = false
+      this.selectedUnit = null
     }
   }
 }
