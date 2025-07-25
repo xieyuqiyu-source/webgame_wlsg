@@ -35,6 +35,9 @@ export const useGameStore = defineStore('game', {
       [RESOURCE_TYPES.FOOD]: 100
     },
     
+    //=== 金币数据
+    coins: 1000, // 玩家金币
+    
     //=== 建筑等级数据 - 每种资源类型5个独立建筑
     buildings: {
       [BUILDING_TYPES.WOOD_MILL]: [1, 0, 0, 0, 0], // 5个木材厂，第一个1级，其余0级
@@ -489,6 +492,7 @@ export const useGameStore = defineStore('game', {
         userFaction: this.userFaction,
         isFirstTime: this.isFirstTime,
         resources: this.resources,
+        coins: this.coins, // 保存金币数据
         buildings: this.buildings,
         buildingUpgrades: this.buildingUpgrades,
         warehouseLevel: this.warehouseLevel,
@@ -554,6 +558,11 @@ export const useGameStore = defineStore('game', {
           }
           if (gameData.hasOwnProperty('isFirstTime')) {
             this.isFirstTime = gameData.isFirstTime
+          }
+          
+          // 加载金币数据
+          if (gameData.hasOwnProperty('coins')) {
+            this.coins = gameData.coins
           }
           
           this.warehouseLevel = gameData.warehouseLevel || 1
@@ -749,6 +758,90 @@ export const useGameStore = defineStore('game', {
     },
     
     /**
+     * 加速征兵 - 消耗金币缩短50%时间
+     */
+    accelerateRecruitment(taskId) {
+      const taskIndex = this.recruitmentQueue.findIndex(task => task.id === taskId)
+      if (taskIndex === -1) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addErrorNotification('加速失败', '未找到指定的征兵任务')
+        return false
+      }
+      
+      const task = this.recruitmentQueue[taskIndex]
+      const now = Date.now()
+      const elapsed = now - task.startTime
+      const remaining = task.duration - elapsed
+      
+      if (remaining <= 0) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addInfoNotification('无需加速', '征兵即将完成，无需加速')
+        return false
+      }
+      
+      // 计算加速所需金币（基于剩余时间，每分钟10金币）
+      const remainingMinutes = Math.ceil(remaining / 60000)
+      const accelerationCost = Math.max(10, remainingMinutes * 10)
+      
+      if (this.coins < accelerationCost) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addErrorNotification('金币不足', `加速需要 ${accelerationCost} 金币，当前仅有 ${this.coins} 金币`)
+        return false
+      }
+      
+      // 扣除金币
+      this.coins -= accelerationCost
+      
+      // 保存游戏数据（金币变化）
+      this.saveGame()
+      
+      // 计算新的完成时间（缩短50%剩余时间）
+      const acceleratedRemaining = Math.floor(remaining * 0.5)
+      const newEndTime = now + acceleratedRemaining
+      
+      // 更新任务的持续时间
+      task.duration = elapsed + acceleratedRemaining
+      
+      // 清除原有定时器并设置新的定时器
+      setTimeout(() => {
+        this.completeRecruitment(taskId)
+      }, acceleratedRemaining)
+      
+      const notificationStore = useNotificationStore()
+      const savedMinutes = Math.ceil((remaining - acceleratedRemaining) / 60000)
+      notificationStore.addSuccessNotification(
+        '征兵加速成功',
+        `消耗 ${accelerationCost} 金币，节省 ${savedMinutes} 分钟训练时间`
+      )
+      
+      return true
+    },
+    
+    /**
+     * GM添加金币
+     */
+    addCoins(amount) {
+      if (amount <= 0) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addErrorNotification('添加失败', '金币数量必须大于0')
+        return false
+      }
+      
+      this.coins += amount
+      
+      // 保存游戏数据（金币变化）
+      this.saveGame()
+      
+      const notificationStore = useNotificationStore()
+      notificationStore.addSuccessNotification(
+        'GM操作',
+        `成功添加 ${amount} 金币，当前金币: ${this.coins}`
+      )
+      
+      return true
+    },
+    
+    /**
      * 检查是否可以征兵
      */
     canRecruit(unitId, count) {
@@ -822,6 +915,9 @@ export const useGameStore = defineStore('game', {
         [RESOURCE_TYPES.IRON]: 100,
         [RESOURCE_TYPES.FOOD]: 100
       }
+      
+      // 重置金币
+      this.coins = 1000
       // 重置建筑 - 每种资源类型的第一个建筑为1级，其余为0级
       this.buildings = {
         [BUILDING_TYPES.WOOD_MILL]: [1, 0, 0, 0, 0],

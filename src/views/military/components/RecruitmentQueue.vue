@@ -1,29 +1,41 @@
 <template>
   <div class="recruitment-queue">
-    <!-- 简化的一行显示 -->
+    <!-- 征兵队列说明 -->
+    <div class="description-box">
+      <p class="description-text">
+        当前征兵队列将持续训练各种兵种，完成后自动加入本城直属军队。征兵时间根据兵种数量累计计算。
+      </p>
+    </div>
+    
+    <!-- 征兵任务列表 -->
     <div v-if="recruitmentQueue.length === 0" class="empty-queue">
       <span class="empty-text">当前没有征兵任务</span>
     </div>
     
-    <div v-else class="queue-item">
-      <div class="task-info">
-        <div class="unit-icon">{{ getUnitIcon(recruitmentQueue[0].unitId) }}</div>
-        <span class="unit-name">{{ recruitmentQueue[0].unitName }}</span>
-        <span class="unit-count">×{{ recruitmentQueue[0].count }}</span>
-      </div>
-      
-      <div class="task-progress">
-        <div class="progress-bar">
-          <div 
-            class="progress-fill"
-            :style="{ width: getProgressPercentage(recruitmentQueue[0]) + '%' }"
-          ></div>
+    <div v-else class="queue-tasks">
+      <div 
+        v-for="(task, index) in recruitmentQueue.slice(0, 5)" 
+        :key="task.id || index"
+        class="task-item"
+      >
+        <!-- 任务信息一行展示 -->
+        <div class="task-info">
+          <span class="unit-icon">{{ getUnitIcon(task.unitId) }}</span>
+          <span class="unit-name">{{ task.unitName }}</span>
+          <span class="unit-count">×{{ task.count }}</span>
+          <span class="time-remaining">{{ getTimeRemaining(task) }}</span>
         </div>
-        <span class="time-remaining">{{ getTimeRemaining(recruitmentQueue[0]) }}</span>
-      </div>
-      
-      <div v-if="recruitmentQueue.length > 1" class="queue-more">
-        +{{ recruitmentQueue.length - 1 }}个任务
+        <!-- 加速按钮在右边 -->
+        <div class="task-actions">
+          <button 
+            class="accelerate-btn"
+            @click="handleAccelerate(task)"
+            :disabled="getTimeRemaining(task) === '即将完成'"
+            :title="getAccelerateCost(task) + ' 金币加速'"
+          >
+            ⚡
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -113,6 +125,23 @@ export default {
       }
     }
     
+    //=== 计算加速所需金币
+    const getAccelerateCost = (task) => {
+      const now = currentTime.value
+      const elapsed = now - task.startTime
+      const remaining = Math.max(0, task.duration - elapsed)
+      const remainingMinutes = Math.ceil(remaining / 60000)
+      return Math.max(10, remainingMinutes * 10)
+    }
+    
+    //=== 处理加速征兵
+    const handleAccelerate = (task) => {
+      const cost = getAccelerateCost(task)
+      if (confirm(`确定要花费 ${cost} 金币加速征兵吗？\n将缩短50%的剩余时间`)) {
+        gameStore.accelerateRecruitment(task.id)
+      }
+    }
+    
     //=== 组件挂载时启动定时器
     onMounted(() => {
       startUpdateTimer()
@@ -129,7 +158,9 @@ export default {
       getResourceIcon,
       getProgressPercentage,
       getProgressText,
-      getTimeRemaining
+      getTimeRemaining,
+      getAccelerateCost,
+      handleAccelerate
     }
   }
 }
@@ -137,56 +168,65 @@ export default {
 
 <style scoped>
 .recruitment-queue {
-  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-3;
+  @apply bg-transparent p-3 mb-2;
+}
+
+/* 说明文字样式 */
+.description-box {
+  @apply bg-gray-700 bg-opacity-50 border border-green-700 border-opacity-30 rounded p-4 mb-2;
+}
+
+.description-text {
+  @apply text-white text-sm leading-5 m-0;
 }
 
 /* 空队列样式 */
 .empty-queue {
-  @apply text-center;
+  @apply text-center py-2;
 }
 
 .empty-text {
   @apply text-sm text-gray-500;
 }
 
-/* 简化的队列项样式 */
-.queue-item {
-  @apply flex items-center justify-between gap-3;
+/* 征兵任务列表样式 */
+.queue-tasks {
+  @apply flex gap-2;
 }
 
+.task-item {
+  @apply flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3;
+  /* 5等分宽度固定 */
+  width: calc(20% - 0.4rem);
+  min-width: 0;
+}
+
+/* 任务信息一行展示 */
 .task-info {
-  @apply flex items-center gap-2;
+  @apply flex items-center gap-1 min-w-0 flex-1;
+}
+
+.task-actions {
+  @apply flex-shrink-0 ml-2;
+}
+
+.accelerate-btn {
+  @apply bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-2 py-1 rounded text-sm transition-colors;
 }
 
 .unit-icon {
-  @apply text-lg;
+  @apply text-base flex-shrink-0;
 }
 
 .unit-name {
-  @apply font-medium text-gray-900 text-sm;
+  @apply font-medium text-gray-900 text-xs truncate;
 }
 
 .unit-count {
-  @apply text-sm text-gray-600;
-}
-
-.task-progress {
-  @apply flex items-center gap-2 flex-1 max-w-xs;
-}
-
-.progress-bar {
-  @apply flex-1 bg-gray-200 rounded-full h-2 overflow-hidden;
-}
-
-.progress-fill {
-  @apply h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-1000 ease-out;
+  @apply text-xs text-gray-600 flex-shrink-0;
 }
 
 .time-remaining {
-  @apply text-xs text-green-600 font-medium whitespace-nowrap;
-}
-
-.queue-more {
-  @apply text-xs text-gray-500 whitespace-nowrap;
+  @apply text-xs text-green-600 font-medium flex-shrink-0;
 }
 </style>

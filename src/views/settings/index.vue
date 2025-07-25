@@ -165,6 +165,30 @@
                   </div>
                 </div>
 
+                <h4 class="gm-section-title">金币管理</h4>
+                <div class="coins-controls">
+                  <div class="coins-item">
+                    <div class="coins-info">
+                      <span class="coins-name">💰 金币</span>
+                      <span class="coins-current">当前: {{ gameStore.coins }}</span>
+                    </div>
+                    <div class="coins-actions">
+                      <button @click="addCoins(100)" class="resource-btn small">
+                        +100
+                      </button>
+                      <button @click="addCoins(1000)" class="resource-btn medium">
+                        +1K
+                      </button>
+                      <button @click="addCoins(10000)" class="resource-btn large">
+                        +10K
+                      </button>
+                      <button @click="addCoins(100000)" class="resource-btn max">
+                        +100K
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <h4 class="gm-section-title">快速操作</h4>
                 <div class="quick-actions">
                   <button @click="addAllResources(10000)" class="quick-btn">
@@ -472,6 +496,12 @@ export default {
       // 这里可以实现实际的通知控制逻辑
     }
     
+    //=== addCoins 添加金币
+    const addCoins = (amount) => {
+      gameStore.addCoins(amount)
+      console.log(`添加金币 ${amount}，当前: ${gameStore.coins}`)
+    }
+
     //=== copyUUID 复制用户UUID到剪贴板
     const copyUUID = async () => {
       try {
@@ -515,6 +545,7 @@ export default {
       addAllResources,
       maxAllResources,
       completeAllUpgrades,
+      addCoins,
       updateAutoSaveInterval,
       updateSoundSetting,
       updateNotificationSetting,
@@ -771,6 +802,30 @@ input:checked + .toggle-slider::before {
 
 .resource-btn.max {
   @apply bg-gradient-to-r from-gold-200 to-primary-200 text-primary-800 hover:from-gold-300 hover:to-primary-300 border border-gold-300;
+}
+
+.coins-controls {
+  @apply space-y-3;
+}
+
+.coins-item {
+  @apply flex justify-between items-center p-3 bg-gradient-to-r from-gold-50/90 to-gold-100/50 rounded-md border border-gold-200/60;
+}
+
+.coins-info {
+  @apply flex flex-col;
+}
+
+.coins-name {
+  @apply font-medium text-gold-800;
+}
+
+.coins-current {
+  @apply text-sm text-gold-600;
+}
+
+.coins-actions {
+  @apply flex space-x-2;
 }
 
 .quick-actions {

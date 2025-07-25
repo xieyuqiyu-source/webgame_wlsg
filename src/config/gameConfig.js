@@ -94,16 +94,57 @@ export const BUILDING_CONFIG = {
  * 仓库配置
  */
 export const WAREHOUSE_CONFIG = {
-  maxLevel: 12,              // 仓库最大等级
-  baseCapacity: 1000,       // 基础仓库容量
-  capacityGrowth: 1.3,       // 每级容量增长倍数
+  maxLevel: 20,              // 仓库最大等级
+  // 🎯 手动配置每级容量 - 根据图片数据表配置
+  capacityByLevel: [
+    3200,   // 0级
+    4800,   // 1级
+    6800,   // 2级
+    9200,   // 3级
+    12400,  // 4级
+    16000,  // 5级
+    20000,  // 6级
+    25200,  // 7级
+    31200,  // 8级
+    38400,  // 9级
+    47200,  // 10级
+    57600,  // 11级
+    70400,  // 12级
+    85600,  // 13级
+    103600, // 14级
+    125200, // 15级
+    151600, // 16级
+    182800, // 17级
+    220400, // 18级
+    265600, // 19级
+    320000  // 20级
+  ],
+  // 🎯 手动配置每级升级成本 - 根据图片数据表配置
+  upgradeCostByLevel: [
+    { wood: 260, soil: 320, iron: 180, food: 80 },    // 升级到1级
+    { wood: 330, soil: 410, iron: 230, food: 100 },   // 升级到2级
+    { wood: 430, soil: 520, iron: 290, food: 130 },   // 升级到3级
+    { wood: 550, soil: 670, iron: 380, food: 170 },   // 升级到4级
+    { wood: 700, soil: 860, iron: 480, food: 210 },   // 升级到5级
+    { wood: 890, soil: 1100, iron: 620, food: 270 },  // 升级到6级
+    { wood: 1140, soil: 1410, iron: 790, food: 350 }, // 升级到7级
+    { wood: 1460, soil: 1800, iron: 1010, food: 450 },// 升级到8级
+    { wood: 1870, soil: 2310, iron: 1300, food: 580 },// 升级到9级
+    { wood: 2400, soil: 2950, iron: 1660, food: 740 },// 升级到10级
+    { wood: 3070, soil: 3780, iron: 2130, food: 940 },// 升级到11级
+    { wood: 3930, soil: 4840, iron: 2720, food: 1210 },// 升级到12级
+    { wood: 5030, soil: 6190, iron: 3480, food: 1550 },// 升级到13级
+    { wood: 6440, soil: 7920, iron: 4460, food: 1980 },// 升级到14级
+    { wood: 8240, soil: 10140, iron: 5700, food: 2540 },// 升级到15级
+    { wood: 10550, soil: 12980, iron: 7300, food: 3250 },// 升级到16级
+    { wood: 13500, soil: 16620, iron: 9350, food: 4150 },// 升级到17级
+    { wood: 17280, soil: 21270, iron: 11960, food: 5320 },// 升级到18级
+    { wood: 22120, soil: 27220, iron: 15310, food: 6810 },// 升级到19级
+    { wood: 28310, soil: 34840, iron: 19600, food: 8710 } // 升级到20级
+  ],
   upgradeTime: {
     base: 120,               // 基础升级时间(秒)
     growth: 1.4              // 每级升级时间增长倍数
-  },
-  upgradeCost: {
-    base: { wood: 100, soil: 100, iron: 50, food: 50 },
-    growth: 1.8
   }
 }
 
@@ -160,7 +201,11 @@ export const calculateUpgradeCost = (buildingType, currentLevel) => {
  * @returns {number} 仓库容量
  */
 export const calculateWarehouseCapacity = (level) => {
-  return Math.floor(WAREHOUSE_CONFIG.baseCapacity * Math.pow(WAREHOUSE_CONFIG.capacityGrowth, level - 1))
+  // 使用手动配置的容量表
+  if (level < 0 || level >= WAREHOUSE_CONFIG.capacityByLevel.length) {
+    return 0
+  }
+  return WAREHOUSE_CONFIG.capacityByLevel[level]
 }
 
 /**
@@ -191,13 +236,9 @@ export const calculateWarehouseUpgradeTime = (currentLevel) => {
  * @returns {Object} 升级所需资源
  */
 export const calculateWarehouseUpgradeCost = (currentLevel) => {
-  const cost = {}
-  const baseCost = WAREHOUSE_CONFIG.upgradeCost.base
-  const growth = WAREHOUSE_CONFIG.upgradeCost.growth
-  
-  Object.keys(baseCost).forEach(resource => {
-    cost[resource] = Math.floor(baseCost[resource] * Math.pow(growth, currentLevel - 1))
-  })
-  
-  return cost
+  // 使用手动配置的升级成本表
+  if (currentLevel < 0 || currentLevel >= WAREHOUSE_CONFIG.upgradeCostByLevel.length) {
+    return {}
+  }
+  return { ...WAREHOUSE_CONFIG.upgradeCostByLevel[currentLevel] }
 }

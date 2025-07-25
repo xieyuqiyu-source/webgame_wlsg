@@ -19,15 +19,23 @@
         <!-- 城池信息卡片 -->
         <div class="city-info-card">
           <div class="city-header">
-            <div class="city-title">新的城池p0sg (101|38)</div>
-            <div class="city-details">
-              <div class="detail-item">
-                <div class="status-dot red"></div>
-                <span>城池文明度: {{ formatCivilization(gameStore.citycivilization) }}</span>
+            <div class="city-title-row">
+              <div class="city-title">新的城池p0sg (101|38)</div>
+              <div class="coins-display" @click="handleCoinsClick">
+                <span class="coins-icon">💰</span>
+                <span class="coins-amount">{{ gameStore.coins }}</span>
               </div>
-              <div class="detail-item">
-                <div class="status-dot" :class="gameStore.civilizationLevel.statusColor || 'blue'"></div>
-                <span :class="gameStore.civilizationLevel.color">{{ gameStore.civilizationLevel.level }}</span>
+            </div>
+            <div class="city-details">
+              <div class="detail-item civilization-row">
+                <div class="civilization-left">
+                  <div class="status-dot red"></div>
+                  <span>城池文明度: {{ formatCivilization(gameStore.citycivilization) }}</span>
+                </div>
+                <div class="civilization-right">
+                  <div class="status-dot" :class="gameStore.civilizationLevel.statusColor || 'blue'"></div>
+                  <span :class="gameStore.civilizationLevel.color">{{ gameStore.civilizationLevel.level }}</span>
+                </div>
               </div>
               <div class="detail-item">
                 <div class="status-dot yellow"></div>
@@ -106,7 +114,7 @@
           <div class="warehouse-info">
             <div class="warehouse-level">
               <span class="warehouse-label">仓库等级:</span>
-              <span class="warehouse-value">{{ gameStore.warehouseLevel }}/12</span>
+              <span class="warehouse-value">{{ gameStore.warehouseLevel }}/{{ WAREHOUSE_CONFIG.maxLevel }}</span>
             </div>
             <div class="warehouse-upgrade-container" @mouseenter="showTooltip = true" @mouseleave="showTooltip = false">
               <button
@@ -130,7 +138,7 @@
                     升级中... {{ Math.round(warehouseUpgradeProgress) }}%
                   </template>
                   <template v-else>
-                    {{ gameStore.warehouseLevel >= 12 ? '已满级' : `升级 (${gameStore.warehouseLevel} → ${gameStore.warehouseLevel + 1})` }}
+                    {{ gameStore.warehouseLevel >= WAREHOUSE_CONFIG.maxLevel ? '已满级' : `升级 (${gameStore.warehouseLevel} → ${gameStore.warehouseLevel + 1})` }}
                   </template>
                 </span>
               </button>
@@ -144,7 +152,7 @@
                     <div class="text-green-400 text-center mt-1">剩余时间: {{ formatTime(warehouseUpgradeTimeLeft) }}</div>
                   </div>
                 </div>
-                <div v-else-if="gameStore.warehouseLevel >= 12" class="tooltip-content">
+                <div v-else-if="gameStore.warehouseLevel >= WAREHOUSE_CONFIG.maxLevel" class="tooltip-content">
                   <div class="tooltip-item max-level">仓库已达到最大等级</div>
                 </div>
                 <div v-else class="tooltip-content">
@@ -234,7 +242,7 @@
 import { RESOURCE_ICONS, getResourceIcon, getResourceName } from '@/config/resources.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { computed, ref, onMounted, onUnmounted, watchEffect } from 'vue'
-import { calculateWarehouseUpgradeTime, calculateWarehouseUpgradeCost, calculateProduction, BUILDING_TYPES } from '@/config/gameConfig.js'
+import { calculateWarehouseUpgradeTime, calculateWarehouseUpgradeCost, calculateProduction, BUILDING_TYPES, WAREHOUSE_CONFIG } from '@/config/gameConfig.js'
 import { formatCivilization, formatTime } from '@/utils/formatters.js'
 import { getFactionConfig, getUnitById } from '@/config/factionConfig.js'
 
@@ -436,7 +444,8 @@ export default {
       formatTime,
       formatCivilization,
       getUnitIcon,
-      getUnitName
+      getUnitName,
+      WAREHOUSE_CONFIG
     }
   },
   data() {
@@ -472,6 +481,13 @@ export default {
       const targetRoute = routeMap[navType]
       if (targetRoute && this.$router.currentRoute.value.path !== targetRoute) {
         this.$router.push(targetRoute)
+      }
+    },
+    //=== handleCoinsClick 处理金币点击事件（GM功能）
+    handleCoinsClick() {
+      const amount = prompt('GM操作：请输入要添加的金币数量', '100')
+      if (amount && !isNaN(amount) && parseInt(amount) > 0) {
+        this.gameStore.addCoins(parseInt(amount))
       }
     }
   }
@@ -536,9 +552,26 @@ export default {
   @apply space-y-3;
 }
 
+.city-title-row {
+  @apply flex justify-between items-center mb-3;
+}
+
 .city-title {
-  @apply text-white text-sm font-medium text-center;
+  @apply text-white text-sm font-medium;
   line-height: 20px;
+}
+
+.coins-display {
+  @apply flex items-center gap-1 cursor-pointer hover:bg-yellow-600 hover:bg-opacity-20 px-2 py-1 rounded transition-colors;
+}
+
+.coins-icon {
+  @apply text-sm;
+}
+
+.coins-amount {
+  @apply text-yellow-400 text-sm font-bold;
+  color: #FFB900;
 }
 
 .city-details {
@@ -548,6 +581,15 @@ export default {
 .detail-item {
   @apply flex items-center gap-2 text-white text-sm;
   line-height: 20px;
+}
+
+.civilization-row {
+  @apply justify-between;
+}
+
+.civilization-left,
+.civilization-right {
+  @apply flex items-center gap-2;
 }
 
 .status-dot {
