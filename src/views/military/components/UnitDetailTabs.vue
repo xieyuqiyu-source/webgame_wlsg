@@ -1,19 +1,11 @@
 <template>
   <div class="unit-detail-tabs">
-    <!-- 国家选择器 -->
-    <div class="faction-selector">
-      <div class="faction-title">选择国家</div>
-      <div class="faction-buttons">
-        <button 
-          v-for="faction in factions" 
-          :key="faction.id"
-          class="faction-btn"
-          :class="{ active: activeFaction === faction.id }"
-          @click="handleFactionChange(faction.id)"
-        >
-          <span class="faction-icon">{{ faction.icon }}</span>
-          <span class="faction-name">{{ faction.name }}</span>
-        </button>
+    <!-- 当前阵营显示 -->
+    <div class="current-faction-display">
+      <div class="faction-info">
+        <span class="faction-icon">{{ currentFactionConfig?.icon }}</span>
+        <span class="faction-name">{{ currentFactionConfig?.name }}</span>
+        <span class="faction-desc">{{ currentFactionConfig?.description }}</span>
       </div>
     </div>
 
@@ -33,11 +25,6 @@
 
     <!-- Tab 内容 -->
     <div class="tab-content">
-      <div class="category-info">
-        <h3>{{ unitCategories[activeTab]?.name }}</h3>
-        <p class="category-description">{{ unitCategories[activeTab]?.description }}</p>
-      </div>
-      
       <div class="units-grid">
         <div 
           v-for="unit in currentUnits" 
@@ -98,36 +85,42 @@
 </template>
 
 <script>
-import { UNIT_CATEGORIES, getUnitsByFactionAndType } from '@/config/unitsConfig'
+import { UNIT_CATEGORIES, getFactionUnitsByType } from '@/config/factionConfig'
+import { getFactionConfig } from '@/config/factionConfig'
+import { useGameStore } from '@/store/modules/gameStore'
 
 export default {
   name: 'UnitDetailTabs',
+  setup() {
+    const gameStore = useGameStore()
+    return {
+      gameStore
+    }
+  },
   data() {
     return {
       activeTab: 'infantry',
-      activeFaction: 'shu',
-      unitCategories: UNIT_CATEGORIES,
-      factions: [
-        { id: 'shu', name: '蜀国', icon: '🐉' },
-        { id: 'wei', name: '魏国', icon: '⚡' },
-        { id: 'wu', name: '吴国', icon: '🐅' }
-      ]
+      unitCategories: UNIT_CATEGORIES
     }
   },
   computed: {
+    //=== currentFactionConfig 当前用户阵营配置
+    currentFactionConfig() {
+      return this.gameStore.userFaction ? getFactionConfig(this.gameStore.userFaction) : null
+    },
+    //=== currentUnits 当前阵营当前兵种类型的兵种列表
     currentUnits() {
-      return getUnitsByFactionAndType(this.activeFaction, this.activeTab)
+      if (!this.gameStore.userFaction) return []
+      return getFactionUnitsByType(this.gameStore.userFaction, this.activeTab)
     }
   },
   methods: {
+    //=== handleTabChange 处理兵种类型切换
     handleTabChange(tabType) {
       this.activeTab = tabType
-      this.$emit('tab-change', { faction: this.activeFaction, unitType: tabType })
+      this.$emit('tab-change', { faction: this.gameStore.userFaction, unitType: tabType })
     },
-    handleFactionChange(factionId) {
-      this.activeFaction = factionId
-      this.$emit('faction-change', { faction: factionId, unitType: this.activeTab })
-    },
+    //=== handleUnitTrain 处理兵种训练
     handleUnitTrain(unit) {
       this.$emit('unit-train', unit)
     }
@@ -137,75 +130,80 @@ export default {
 
 <style scoped>
 .unit-detail-tabs {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(35, 124, 72, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  margin: 20px 0;
 }
 
-/* 国家选择器样式 */
-.faction-selector {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 16px 20px;
-  border-bottom: 1px solid #dee2e6;
+/* 当前阵营显示样式 */
+.current-faction-display {
+  background: rgba(35, 124, 72, 0.1);
+  padding: 24px;
+  border-bottom: 2px solid rgba(35, 124, 72, 0.3);
+  backdrop-filter: blur(10px);
 }
 
-.faction-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.faction-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.faction-btn {
+.faction-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 14px;
-  font-weight: 500;
-  color: #495057;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #237C48;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(35, 124, 72, 0.25);
+  transition: all 0.3s ease;
 }
 
-.faction-btn:hover {
-  background: rgba(255, 255, 255, 1);
+.faction-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(35, 124, 72, 0.35);
   border-color: #FFB900;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.2);
-}
-
-.faction-btn.active {
-  background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
-  border-color: #FFB900;
-  color: #18181B;
-  box-shadow: 0 4px 16px rgba(255, 185, 0, 0.3);
 }
 
 .faction-icon {
-  font-size: 16px;
+  font-size: 28px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+}
+
+.faction-info:hover .faction-icon {
+  transform: scale(1.1) rotate(5deg);
+  filter: drop-shadow(0 4px 8px rgba(255, 185, 0, 0.5));
 }
 
 .faction-name {
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-right: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
+}
+
+.faction-desc {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  max-width: 350px;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  line-height: 1.4;
 }
 
 /* Tab 头部样式 */
 .tab-header {
   display: flex;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background: rgba(24, 24, 27, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid #237C48;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
 }
 
 .tab-item {
@@ -213,54 +211,73 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 16px;
+  padding: 16px 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-bottom: 3px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(35, 124, 72, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 .tab-item:hover {
-  background: #e9ecef;
+  background: rgba(35, 124, 72, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+}
+
+.tab-item:hover::before {
+  left: 100%;
 }
 
 .tab-item.active {
-  background: #fff;
-  border-bottom-color: #dc3545;
-  color: #dc3545;
+  background: linear-gradient(135deg, #237C48 0%, #2d8f56 100%);
+  border-bottom-color: #FFB900;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(35, 124, 72, 0.3);
+  transform: translateY(-2px);
 }
 
 .tab-icon {
-  font-size: 18px;
-  margin-right: 8px;
+  font-size: 20px;
+  margin-right: 10px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+}
+
+.tab-item.active .tab-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 8px rgba(255, 185, 0, 0.5));
 }
 
 .tab-text {
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.tab-item.active .tab-text {
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Tab 内容样式 */
 .tab-content {
   padding: 20px;
-}
-
-.category-info {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.category-info h3 {
-  margin: 0 0 8px 0;
-  color: #333;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.category-description {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
-  line-height: 1.5;
+  background: transparent;
 }
 
 /* 兵种网格布局 */
