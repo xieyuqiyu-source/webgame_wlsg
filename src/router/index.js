@@ -7,6 +7,7 @@ import MilitaryView from '@/views/military/index.vue'
 import MapView from '@/views/map/index.vue'
 import SettingsView from '@/views/settings/index.vue'
 import NotificationTest from '@/views/NotificationTest.vue'
+import MessageView from '@/views/MessageView.vue'
 
 //=== createRouter 创建路由实例
 const router = createRouter({
@@ -41,6 +42,11 @@ const router = createRouter({
       path: '/notification-test',
       name: 'NotificationTest',
       component: NotificationTest
+    },
+    {
+      path: '/message',
+      name: 'Message',
+      component: MessageView
     }
   ]
 })

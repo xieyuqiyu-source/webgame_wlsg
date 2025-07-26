@@ -28,12 +28,12 @@ export const useGameStore = defineStore('game', {
     userFaction: null,          // 用户阵营
     isFirstTime: true,          // 是否首次进入游戏
     
-    //=== 资源数据
+    //=== 资源数据 - 初始化为满仓状态（1级仓库容量4800）
     resources: {
-      [RESOURCE_TYPES.WOOD]: 100,
-      [RESOURCE_TYPES.SOIL]: 100,
-      [RESOURCE_TYPES.IRON]: 100,
-      [RESOURCE_TYPES.FOOD]: 100
+      [RESOURCE_TYPES.WOOD]: 4800,
+      [RESOURCE_TYPES.SOIL]: 4800,
+      [RESOURCE_TYPES.IRON]: 4800,
+      [RESOURCE_TYPES.FOOD]: 4800
     },
     
     //=== 金币数据
@@ -90,12 +90,21 @@ export const useGameStore = defineStore('game', {
       value: null,
       lastCalculatedAt: 0,
       cacheTimeout: 1000 // 缓存1秒
+    },
+    
+    //=== 生产力加速状态
+    productionBoost: {
+      isActive: false,        // 是否正在加速
+      multiplier: 1.4,        // 加速倍数（40%加成）
+      startTime: null,        // 加速开始时间
+      duration: 0,            // 加速持续时间（毫秒）
+      endTime: null           // 加速结束时间
     }
   }),
   
   getters: {
     /**
-     * 获取每小时总产出
+     * 获取每小时总产出（包含加速效果）
      */
     hourlyProduction: (state) => {
       const production = {}
@@ -111,7 +120,12 @@ export const useGameStore = defineStore('game', {
         buildingLevels.forEach(level => {
           if (level > 0) { // 只计算已建造的建筑（等级大于0）
             // 传入玩家阵营信息以应用经济加成
-            const productionAmount = calculateProduction(buildingType, level, state.userFaction)
+            let productionAmount = calculateProduction(buildingType, level, state.userFaction)
+            
+            // 应用生产力加速效果
+            if (state.productionBoost.isActive && state.productionBoost.endTime > Date.now()) {
+              productionAmount *= state.productionBoost.multiplier
+            }
             
             // 根据建筑类型确定产出的资源类型
             if (buildingType === BUILDING_TYPES.WOOD_MILL) {
@@ -251,6 +265,31 @@ export const useGameStore = defineStore('game', {
      */
     getActualTrainTime: (state) => {
       return Math.floor(state.recruitmentConfig.baseTrainTime / state.recruitmentConfig.speedMultiplier)
+    },
+    
+    /**
+     * 检查生产力加速是否激活
+     */
+    isProductionBoostActive: (state) => {
+      return state.productionBoost.isActive && state.productionBoost.endTime > Date.now()
+    },
+    
+    /**
+     * 获取生产力加速剩余时间（秒）
+     */
+    productionBoostTimeLeft: (state) => {
+      if (!state.productionBoost.isActive || !state.productionBoost.endTime) return 0
+      const remaining = Math.max(0, state.productionBoost.endTime - Date.now())
+      return Math.ceil(remaining / 1000)
+    },
+    
+    /**
+     * 计算生产力加速费用（基于持续时间）
+     */
+    calculateBoostCost: (state) => (hours) => {
+      // 基础费用：每小时100金币
+      const baseCostPerHour = 100
+      return baseCostPerHour * hours
     }
   },
   
@@ -271,11 +310,14 @@ export const useGameStore = defineStore('game', {
       const timeDiff = now - this.lastUpdateTime
       const seconds = timeDiff / 1000 // 转换为秒
       
+      // 离线收益计算
+      if (seconds > 5) { // 如果离线时间超过5秒，显示离线收益信息
+        console.log(`离线收益: 离线了${(seconds/60).toFixed(1)}分钟，获得资源收益`)
+      }
       
       if (seconds >= 0.1) {
         const production = this.hourlyProduction
         const capacity = this.warehouseCapacity
-        
         
         Object.keys(production).forEach(resourceType => {
           // 按秒计算产出：每小时产出 / 3600秒 * 经过的秒数
@@ -509,7 +551,8 @@ export const useGameStore = defineStore('game', {
         accumulatedProduction: this.accumulatedProduction,
         army: this.army,
         recruitmentQueue: this.recruitmentQueue,
-        recruitmentConfig: this.recruitmentConfig
+        recruitmentConfig: this.recruitmentConfig,
+        productionBoost: this.productionBoost // 保存生产力加速状态
       }
       
       localStorage.setItem('wlsg_game_data', JSON.stringify(gameData))
@@ -583,11 +626,19 @@ export const useGameStore = defineStore('game', {
           this.recruitmentQueue = gameData.recruitmentQueue || []
           this.recruitmentConfig = { ...this.recruitmentConfig, ...gameData.recruitmentConfig }
           
+          // 加载生产力加速状态
+          if (gameData.productionBoost) {
+            this.productionBoost = { ...this.productionBoost, ...gameData.productionBoost }
+          }
+          
           // 恢复升级定时器
           this.restoreUpgradeTimers()
           
           // 恢复征兵定时器
           this.restoreRecruitmentTimers()
+          
+          // 恢复生产力加速定时器
+          this.restoreProductionBoostTimer()
         } catch (error) {
           console.error('加载游戏数据失败:', error)
         }
@@ -659,6 +710,26 @@ export const useGameStore = defineStore('game', {
           }, remaining)
         }
       })
+    },
+    
+    /**
+     * 恢复生产力加速定时器
+     */
+    restoreProductionBoostTimer() {
+      if (this.productionBoost.isActive && this.productionBoost.endTime) {
+        const now = Date.now()
+        const remaining = this.productionBoost.endTime - now
+        
+        if (remaining <= 0) {
+          // 加速已过期，停止加速
+          this.stopProductionBoost()
+        } else {
+          // 设置剩余时间的定时器
+          setTimeout(() => {
+            this.stopProductionBoost()
+          }, remaining)
+        }
+      }
     },
     
     /**
@@ -906,6 +977,87 @@ export const useGameStore = defineStore('game', {
     },
     
     /**
+     * 启动生产力加速
+     */
+    startProductionBoost(hours) {
+      if (hours < 1 || hours > 24) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addErrorNotification('参数错误', '加速时间必须在1-24小时之间')
+        return false
+      }
+      
+      const cost = this.calculateBoostCost(hours)
+      
+      if (this.coins < cost) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addErrorNotification('金币不足', `生产力加速需要 ${cost} 金币，当前仅有 ${this.coins} 金币`)
+        return false
+      }
+      
+      // 如果已经在加速中，延长时间
+      const now = Date.now()
+      let newEndTime
+      
+      if (this.productionBoost.isActive && this.productionBoost.endTime > now) {
+        // 延长现有加速时间
+        newEndTime = this.productionBoost.endTime + (hours * 60 * 60 * 1000)
+      } else {
+        // 开始新的加速
+        newEndTime = now + (hours * 60 * 60 * 1000)
+      }
+      
+      // 扣除金币
+      this.coins -= cost
+      
+      // 更新加速状态
+      this.productionBoost = {
+        isActive: true,
+        multiplier: 1.4, // 40%加成
+        startTime: this.productionBoost.isActive ? this.productionBoost.startTime : now,
+        duration: newEndTime - (this.productionBoost.isActive ? this.productionBoost.startTime : now),
+        endTime: newEndTime
+      }
+      
+      // 设置定时器自动停止加速
+      const remainingTime = newEndTime - now
+      setTimeout(() => {
+        this.stopProductionBoost()
+      }, remainingTime)
+      
+      // 保存游戏数据
+      this.saveGame()
+      
+      const notificationStore = useNotificationStore()
+      notificationStore.addSuccessNotification(
+        '生产力加速启动',
+        `消耗 ${cost} 金币，生产力提升40%，持续 ${hours} 小时`
+      )
+      
+      return true
+    },
+    
+    /**
+     * 停止生产力加速
+     */
+    stopProductionBoost() {
+      if (this.productionBoost.isActive) {
+        this.productionBoost = {
+          isActive: false,
+          multiplier: 1.4,
+          startTime: null,
+          duration: 0,
+          endTime: null
+        }
+        
+        // 保存游戏数据
+        this.saveGame()
+        
+        const notificationStore = useNotificationStore()
+        notificationStore.addInfoNotification('生产力加速结束', '生产力已恢复正常水平')
+      }
+    },
+    
+    /**
      * 重置游戏数据（包含用户信息）
      */
     resetGame() {
@@ -915,12 +1067,12 @@ export const useGameStore = defineStore('game', {
       this.userFaction = null
       this.isFirstTime = true
       
-      // 重置资源为初始值
+      // 重置资源为满仓状态（1级仓库容量4800）
       this.resources = {
-        [RESOURCE_TYPES.WOOD]: 100,
-        [RESOURCE_TYPES.SOIL]: 100,
-        [RESOURCE_TYPES.IRON]: 100,
-        [RESOURCE_TYPES.FOOD]: 100
+        [RESOURCE_TYPES.WOOD]: 4800,
+        [RESOURCE_TYPES.SOIL]: 4800,
+        [RESOURCE_TYPES.IRON]: 4800,
+        [RESOURCE_TYPES.FOOD]: 4800
       }
       
       // 重置金币
@@ -958,6 +1110,15 @@ export const useGameStore = defineStore('game', {
       this.recruitmentConfig = {
         baseTrainTime: 5 * 60 * 1000, // 基础训练时间：5分钟（毫秒）
         speedMultiplier: 1.0 // 训练速度倍数（后期可通过建筑加速）
+      }
+      
+      // 重置生产力加速状态
+      this.productionBoost = {
+        isActive: false,
+        multiplier: 1.4,
+        startTime: null,
+        duration: 0,
+        endTime: null
       }
       
       // 清除本地存储的游戏数据

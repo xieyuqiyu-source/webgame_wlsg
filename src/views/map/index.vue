@@ -5,22 +5,20 @@
     
     <!-- 主要内容区域 -->
     <div class="main-content" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
-      <div class="page-header">
-        <h1 class="page-title">世界地图</h1>
-        <p class="page-subtitle">探索武林三国的广阔世界</p>
-      </div>
+     
       
       <div class="content-area">
-        <!-- 地图内容将在这里实现 -->
-        <div class="placeholder-content">
-          <div class="placeholder-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="text-blue-400">
-              <path d="M20.5 3L20.34 3.03L15 5.1L9 3L3.36 4.9C3.15 4.97 3 5.15 3 5.38V20.5C3 20.78 3.22 21 3.5 21L3.66 20.97L9 18.9L15 21L20.64 19.1C20.85 19.03 21 18.85 21 18.62V3.5C21 3.22 20.78 3 20.5 3Z"/>
-            </svg>
-          </div>
-          <h3 class="placeholder-title">世界地图系统</h3>
-          <p class="placeholder-text">地图功能正在开发中...</p>
-        </div>
+        <!-- Tab 切换组件 -->
+        <MapTabs :active-tab="activeTab" @tab-change="handleTabChange">
+          <!-- NPC城池列表 -->
+          <NpcList v-if="activeTab === 'npc'" />
+          
+          <!-- 玩家城池列表 -->
+          <PlayerList v-if="activeTab === 'player'" />
+          
+          <!-- 副本列表 -->
+          <DungeonList v-if="activeTab === 'dungeon'" />
+        </MapTabs>
       </div>
     </div>
   </div>
@@ -28,21 +26,38 @@
 
 <script>
 import GameSidebar from '@/components/GameSidebar.vue'
+import MapTabs from './components/MapTabs.vue'
+import NpcList from './components/NpcList.vue'
+import PlayerList from './components/PlayerList.vue'
+import DungeonList from './components/DungeonList.vue'
 
 export default {
   name: 'MapView',
   components: {
-    GameSidebar
+    GameSidebar,
+    MapTabs,
+    NpcList,
+    PlayerList,
+    DungeonList
   },
   data() {
     return {
-      sidebarCollapsed: false
+      //=== sidebarCollapsed 侧边栏是否折叠
+      sidebarCollapsed: false,
+      //=== activeTab 当前激活的Tab页
+      activeTab: 'npc'
     }
   },
   methods: {
     //=== handleSidebarToggle 处理侧边栏切换事件
     handleSidebarToggle(collapsed) {
       this.sidebarCollapsed = collapsed
+    },
+    
+    //=== handleTabChange 处理Tab切换事件
+    handleTabChange(tabKey) {
+      this.activeTab = tabKey
+      console.log('切换到Tab:', tabKey)
     }
   }
 }
@@ -50,46 +65,35 @@ export default {
 
 <style scoped>
 .map-view {
-  @apply flex h-screen bg-gray-100;
+  @apply flex h-screen;
+  /* background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%); */
+  position: relative;
+}
+
+.map-view::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(35, 124, 72, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(255, 185, 0, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .main-content {
   @apply flex-1 ml-80 transition-all duration-300 ease-in-out;
+  position: relative;
+  z-index: 1;
 }
 
 .main-content.sidebar-collapsed {
   @apply ml-16;
 }
 
-.page-header {
-  @apply bg-white shadow-sm border-b border-gray-200 px-6 py-4;
-}
-
-.page-title {
-  @apply text-2xl font-bold text-gray-900 mb-1;
-}
-
-.page-subtitle {
-  @apply text-gray-600 text-sm;
-}
-
 .content-area {
   @apply p-6;
-}
-
-.placeholder-content {
-  @apply flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-sm border border-gray-200;
-}
-
-.placeholder-icon {
-  @apply mb-4;
-}
-
-.placeholder-title {
-  @apply text-xl font-semibold text-gray-900 mb-2;
-}
-
-.placeholder-text {
-  @apply text-gray-500;
 }
 </style>

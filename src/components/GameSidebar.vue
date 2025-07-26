@@ -66,7 +66,21 @@
 
         <!-- 生产力信息 -->
         <div class="section">
-          <div class="section-header">城池生产力</div>
+          <div class="section-header">
+            <span>城池生产力</span>
+            <button 
+              @click="showBoostDialog = true"
+              class="boost-btn"
+              :class="{ 'boost-active': gameStore.isProductionBoostActive }"
+              :title="gameStore.isProductionBoostActive ? `加速中，剩余${formatTime(gameStore.productionBoostTimeLeft)}` : '生产力加速'"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13,2.05V5.08C16.39,5.57 19,8.47 19,12C19,12.9 18.82,13.75 18.5,14.54L21.12,16.07C21.68,14.83 22,13.45 22,12C22,6.82 18.05,2.55 13,2.05M12,19C8.13,19 5,15.87 5,12C5,8.47 7.61,5.57 11,5.08V2.05C5.94,2.55 2,6.81 2,12C2,17.52 6.48,22 12,22C13.45,22 14.83,21.68 16.07,21.12L14.54,18.5C13.75,18.82 12.9,19 12,19M15,12A3,3 0 0,0 12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12Z"/>
+              </svg>
+              <span v-if="gameStore.isProductionBoostActive" class="boost-text">{{ formatTime(gameStore.productionBoostTimeLeft) }}</span>
+              <span v-else class="boost-text">加速</span>
+            </button>
+          </div>
           <div class="production-list">
             <div 
               class="production-item" 
@@ -189,6 +203,49 @@
         </div>
       </div>
 
+      <!-- 生产力加速弹窗 -->
+      <div v-if="showBoostDialog" class="boost-dialog-overlay" @click="showBoostDialog = false">
+        <div class="boost-dialog" @click.stop>
+          <div class="boost-dialog-header">
+            <h3>生产力加速</h3>
+            <button @click="showBoostDialog = false" class="close-btn">×</button>
+          </div>
+          <div class="boost-dialog-content">
+            <div class="boost-info">
+              <p class="boost-description">消耗金币获得生产力40%加成</p>
+              <div class="current-coins">
+                <span class="coins-label">当前金币:</span>
+                <span class="coins-value">{{ gameStore.coins }}</span>
+              </div>
+            </div>
+            
+            <div class="boost-options">
+              <div 
+                v-for="option in boostOptions" 
+                :key="option.hours"
+                class="boost-option"
+                :class="{ 'disabled': gameStore.coins < option.cost }"
+                @click="startBoost(option.hours)"
+              >
+                <div class="option-header">
+                  <span class="option-duration">{{ option.hours }}小时</span>
+                  <span class="option-cost">{{ option.cost }}金币</span>
+                </div>
+                <div class="option-description">{{ option.description }}</div>
+              </div>
+            </div>
+            
+            <div v-if="gameStore.isProductionBoostActive" class="current-boost">
+              <div class="current-boost-info">
+                <span class="boost-status">当前加速状态: 激活中</span>
+                <span class="boost-remaining">剩余时间: {{ formatTime(gameStore.productionBoostTimeLeft) }}</span>
+              </div>
+              <p class="boost-note">选择新的加速时间将延长当前加速效果</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 固定在底部的导航区域 -->
       <div class="bottom-nav">
         <div class="nav-buttons">
@@ -224,6 +281,14 @@
             </div>
             <span class="nav-label">设置</span>
           </div>
+          <div class="nav-button" @click="handleNavClick('message')">
+            <div class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.17L4 17.17V4H20V16Z"/>
+              </svg>
+            </div>
+            <span class="nav-label">信函</span>
+          </div>
           <div class="nav-button" @click="handleNavClick('notification-test')">
             <div class="nav-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -256,6 +321,8 @@ export default {
     const showTooltip = ref(false)
     // 生产力提示框状态
     const showProductionTooltip = ref(null)
+    // 生产力加速弹窗状态
+    const showBoostDialog = ref(false)
     let progressTimer = null
     
     //=== 仓库升级状态（从gameStore获取）
@@ -425,6 +492,42 @@ export default {
       return unit?.name || '未知兵种'
     }
     
+    //=== 生产力加速选项配置
+    const boostOptions = computed(() => [
+      {
+        hours: 1,
+        cost: gameStore.calculateBoostCost(1),
+        description: '短期加速，适合快速收集资源'
+      },
+      {
+        hours: 4,
+        cost: gameStore.calculateBoostCost(4),
+        description: '中期加速，性价比较高'
+      },
+      {
+        hours: 8,
+        cost: gameStore.calculateBoostCost(8),
+        description: '长期加速，适合离线挂机'
+      },
+      {
+        hours: 24,
+        cost: gameStore.calculateBoostCost(24),
+        description: '全天加速，效果最佳'
+      }
+    ])
+    
+    //=== 启动生产力加速
+    const startBoost = (hours) => {
+      if (gameStore.coins < gameStore.calculateBoostCost(hours)) {
+        return // 金币不足，不执行
+      }
+      
+      const success = gameStore.startProductionBoost(hours)
+      if (success) {
+        showBoostDialog.value = false
+      }
+    }
+    
     // 清理定时器
     onUnmounted(() => {
       stopProgressTimer()
@@ -439,6 +542,9 @@ export default {
       warehouseUpgradeProgress,
       showTooltip,
       showProductionTooltip,
+      showBoostDialog,
+      boostOptions,
+      startBoost,
       warehouseUpgradeCost,
       getResourceName,
       formatTime,
@@ -474,6 +580,7 @@ export default {
         'city': '/city',
         'military': '/military', 
         'map': '/map',
+        'message': '/message', // 信函页面
         'settings': '/settings', // 设置按钮跳转到设置页面
         'notification-test': '/notification-test' // 通知测试页面
       }
@@ -969,5 +1076,120 @@ export default {
 
 .army-count-text {
   @apply text-green-300 text-sm font-medium;
+}
+
+/* 生产力加速按钮样式 */
+.boost-btn {
+  @apply flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all duration-200;
+  @apply bg-yellow-600 bg-opacity-20 text-yellow-400 border border-yellow-600 border-opacity-30;
+  @apply hover:bg-yellow-600 hover:bg-opacity-30 hover:border-opacity-50;
+}
+
+.boost-btn.boost-active {
+  @apply bg-green-600 bg-opacity-30 text-green-400 border-green-600;
+  @apply animate-pulse;
+}
+
+.boost-text {
+  @apply font-medium;
+}
+
+/* 生产力加速弹窗样式 */
+.boost-dialog-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+  backdrop-filter: blur(4px);
+}
+
+.boost-dialog {
+  @apply bg-gray-800 rounded-lg shadow-xl border border-gray-600 max-w-md w-full mx-4;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.boost-dialog-header {
+  @apply flex justify-between items-center p-4 border-b border-gray-600;
+}
+
+.boost-dialog-header h3 {
+  @apply text-white text-lg font-semibold;
+}
+
+.close-btn {
+  @apply text-gray-400 hover:text-white text-2xl font-bold cursor-pointer transition-colors;
+  @apply w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-700;
+}
+
+.boost-dialog-content {
+  @apply p-4 space-y-4;
+}
+
+.boost-info {
+  @apply space-y-2;
+}
+
+.boost-description {
+  @apply text-gray-300 text-sm;
+}
+
+.current-coins {
+  @apply flex justify-between items-center p-2 bg-gray-700 rounded-md;
+}
+
+.coins-label {
+  @apply text-gray-400 text-sm;
+}
+
+.coins-value {
+  @apply text-yellow-400 font-bold;
+}
+
+.boost-options {
+  @apply space-y-2;
+}
+
+.boost-option {
+  @apply p-3 bg-gray-700 rounded-md cursor-pointer transition-all duration-200;
+  @apply border border-gray-600 hover:border-yellow-500 hover:bg-gray-600;
+}
+
+.boost-option.disabled {
+  @apply opacity-50 cursor-not-allowed;
+  @apply hover:border-gray-600 hover:bg-gray-700;
+}
+
+.option-header {
+  @apply flex justify-between items-center mb-1;
+}
+
+.option-duration {
+  @apply text-white font-semibold;
+}
+
+.option-cost {
+  @apply text-yellow-400 font-bold;
+}
+
+.option-description {
+  @apply text-gray-400 text-sm;
+}
+
+.current-boost {
+  @apply p-3 bg-green-900 bg-opacity-30 border border-green-600 border-opacity-50 rounded-md;
+}
+
+.current-boost-info {
+  @apply flex justify-between items-center mb-2;
+}
+
+.boost-status {
+  @apply text-green-400 font-semibold text-sm;
+}
+
+.boost-remaining {
+  @apply text-green-300 text-sm;
+}
+
+.boost-note {
+  @apply text-green-200 text-xs opacity-80;
 }
 </style>

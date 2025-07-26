@@ -64,11 +64,17 @@ export function useGameTimer() {
   //=== 处理页面可见性变化
   const handleVisibilityChange = () => {
     if (document.hidden) {
-      // 页面隐藏时保存游戏数据
+      // 页面隐藏时停止定时器并保存游戏数据
+      stopTimers()
       gameStore.saveGame()
+      console.log('页面隐藏，定时器已停止，游戏数据已保存')
     } else {
-      // 页面重新可见时更新资源（计算离线收益）
+      // 页面重新可见时计算离线收益并重启定时器
+      console.log('页面重新可见，计算离线收益...')
       gameStore.updateResources()
+      startUpdateTimer()
+      startSaveTimer()
+      console.log('离线收益计算完成，定时器已重启')
     }
   }
   
