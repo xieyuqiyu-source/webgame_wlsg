@@ -55,6 +55,12 @@ export default {
           label: '副本',
           count: 0,
           icon: 'DungeonIcon'
+        },
+        {
+          key: 'test',
+          label: 'Test',
+          count: 0,
+          icon: 'TestIcon'
         }
       ]
     }
@@ -81,6 +87,14 @@ export default {
       template: `
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 12V14H15V16H13V14H11V12H13V10H15V12H17Z"/>
+        </svg>
+      `
+    },
+    //=== TestIcon 测试图标
+    TestIcon: {
+      template: `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7 2V4H8V18C8 19.1 8.9 20 10 20H14C15.1 20 16 19.1 16 18V4H17V2H7M10 4H14V18H10V4M11 6V16H13V6H11Z"/>
         </svg>
       `
     }

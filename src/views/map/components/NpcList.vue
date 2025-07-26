@@ -481,7 +481,9 @@ export default {
     
     //=== handleScout 处理侦查事件
     handleScout(npc) {
-      console.log('侦查NPC:', npc)
+      console.log('侦查NPC112:', npc)
+      // 字符串输出
+      console.log('字符串输出:', JSON.stringify(npc))
       
       // 检查是否已经侦查过
       if (npc.scoutedAt) {

@@ -18,6 +18,9 @@
           
           <!-- 副本列表 -->
           <DungeonList v-show="activeTab === 'dungeon'" />
+          
+          <!-- 测试页面 -->
+          <TestList v-show="activeTab === 'test'" />
         </MapTabs>
       </div>
     </div>
@@ -30,6 +33,7 @@ import MapTabs from './components/MapTabs.vue'
 import NpcList from './components/NpcList.vue'
 import PlayerList from './components/PlayerList.vue'
 import DungeonList from './components/DungeonList.vue'
+import TestList from './components/TestList.vue'
 
 export default {
   name: 'MapView',
@@ -38,7 +42,8 @@ export default {
     MapTabs,
     NpcList,
     PlayerList,
-    DungeonList
+    DungeonList,
+    TestList
   },
   data() {
     return {
