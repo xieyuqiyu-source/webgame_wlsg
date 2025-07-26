@@ -58,24 +58,7 @@
       </button>
     </div>
     
-    <!-- 统计信息 -->
-    <!-- <div class="online-stats">
-      <div class="stat-item">
-        <svg class="stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
-        </svg>
-        <span class="stat-label">NPC城池:</span>
-        <span class="stat-value">{{ filteredNpcs.length }}</span>
-      </div>
-      
-      <div class="stat-item" v-if="totalPages > 1">
-        <svg class="stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z"/>
-        </svg>
-        <span class="stat-label">页码:</span>
-        <span class="stat-value">{{ currentPage }} / {{ totalPages }}</span>
-      </div>
-    </div> -->
+   
     
     <!-- NPC列表 -->
     <div class="npc-list-container">
@@ -85,6 +68,7 @@
         class="npc-list-item"
         @click="handleNpcClick(npc)"
       >
+       <div class="npc-list-items" style="display: flex;">
         <!-- 阵营标识 -->
         <div class="npc-faction">
           <div :class="['faction-badge', npc.faction]">
@@ -150,8 +134,10 @@
             攻击
           </button>
         </div>
-        
-        <!-- 侦查结果显示 - 横向展示在下方 -->
+        </div>
+        <div>
+
+<!-- 侦查结果显示 - 横向展示在下方 -->
         <div v-if="npc.scoutedAt && npc.scoutData" class="scout-result">
           <div class="scout-result-header">
             <div>
@@ -172,6 +158,9 @@
             </div>
           </div>
         </div>
+        </div>
+        
+        
       </div>
     </div>
     
@@ -323,11 +312,10 @@ export default {
   },
   
   beforeUnmount() {
-    //=== 保存最终状态
-    this.saveRefreshState()
-    
     //=== 清理定时器
     this.clearRefreshTimer()
+    //=== 组件销毁前保存状态
+    this.saveRefreshState()
   },
   watch: {
     //=== 监听搜索条件变化，重置分页
@@ -341,16 +329,47 @@ export default {
   },
   methods: {
     //=== generateNpcs 生成随机NPC数据
-    generateNpcs() {
+    generateNpcs(isManualRefresh = false) {
       const factions = ['wei', 'shu', 'wu']
       const cityNames = [
         '洛阳', '长安', '成都', '建业', '襄阳', '江陵', '合肥', '濮阳', '徐州', '荆州',
         '益州', '扬州', '兖州', '青州', '冀州', '并州', '凉州', '交州', '幽州', '豫州'
       ]
       
+      // 保存当前已侦查且未过期的完整NPC数据（手动刷新时跳过）
+      const scoutedNpcs = new Map()
+      
+      if (!isManualRefresh && this.npcs && this.npcs.length > 0) {
+        const currentTime = Date.now()
+        const oneHour = 60 * 60 * 1000 // 一小时的毫秒数
+        
+        this.npcs.forEach(npc => {
+          if (npc.scoutedAt) {
+            // 检查侦查时间是否在一小时内
+            const scoutTime = new Date(npc.scoutedAt).getTime()
+            if (currentTime - scoutTime < oneHour) {
+              // 侦查时间在一小时内，保存整个NPC对象
+              scoutedNpcs.set(npc.id, { ...npc })
+            }
+            // 如果超过一小时，不保存，让其重新生成
+          }
+        })
+      }
+      
       this.npcs = []
       
       for (let i = 0; i < 12; i++) {
+        const npcId = `npc_${i + 1}`
+        
+        // 检查是否有未过期的已侦查NPC数据
+        const existingScoutedNpc = scoutedNpcs.get(npcId)
+        if (existingScoutedNpc) {
+          // 如果已侦查过且未过期，直接使用原有数据，不重新生成
+          this.npcs.push(existingScoutedNpc)
+          continue
+        }
+        
+        // 未侦查过或已过期的NPC重新生成
         const faction = factions[Math.floor(Math.random() * factions.length)]
         const name = cityNames[Math.floor(Math.random() * cityNames.length)] + (Math.floor(Math.random() * 999) + 1)
         const level = Math.floor(Math.random() * 20) + 1
@@ -375,15 +394,17 @@ export default {
           food: Math.floor(Math.random() * 50000) + 10000
         }
         
-        this.npcs.push({
-          id: `npc_${i + 1}`,
+        const newNpc = {
+          id: npcId,
           name,
           faction,
           level,
           resources: resources,
           defenseArmy,
           defenderResources: resources // 防守资源就是城池的原本资源
-        })
+        }
+        
+        this.npcs.push(newNpc)
       }
     },
     
@@ -611,6 +632,12 @@ export default {
       }
       
       npc.scoutData = scoutData
+      
+      // 立即保存侦查数据到localStorage
+      this.saveRefreshState()
+      
+      // 同时保存游戏数据（包含军队变化）
+      this.gameStore.saveGame()
     },
     
     //=== formatScoutTime 格式化侦查时间
@@ -725,8 +752,8 @@ export default {
       // 扣除金币
       this.gameStore.coins -= this.manualRefreshCost
       
-      // 刷新NPC列表
-      this.generateNpcs()
+      // 刷新NPC列表（手动刷新清除所有侦查数据）
+      this.generateNpcs(true)
       
       // 重置倒计时
       this.refreshCountdown = this.refreshInterval
@@ -973,15 +1000,29 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 16px;
-  cursor: pointer;
+  /* cursor: pointer; */
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   color: white;
-  display: flex;
+  /* display: flex; */
   align-items: center;
   gap: 16px;
   min-height: 60px;
 }
-
+.npc-list-items {
+  /* background: rgba(255, 255, 255, 0.05); */
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(35, 124, 72, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  /* cursor: pointer; */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color: white;
+  /* display: flex; */
+  align-items: center;
+  gap: 16px;
+  min-height: 60px;
+}
 .npc-list-item:hover {
   border-color: rgba(255, 185, 0, 0.4);
   box-shadow: 0 4px 12px rgba(255, 185, 0, 0.1);
@@ -993,9 +1034,9 @@ export default {
 }
 
 .faction-badge {
-  @apply w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs;
+  @apply w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 0px solid rgba(255, 255, 255, 0.2);
 }
 
 .faction-badge.wei {

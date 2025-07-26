@@ -51,7 +51,78 @@
 
         <!-- 资源信息 -->
         <div class="section">
-          <div class="section-header">本城资源</div>
+          <div class="section-header">
+            <span>本城资源</span>
+            <!-- 资源管理小圆点 -->
+            <div class="resource-dots-container">
+              <!-- 一键爆仓小圆点 -->
+              <div 
+                @click="fillWarehouse" 
+                @mouseenter="showFillTooltip = true"
+                @mouseleave="showFillTooltip = false"
+                :class="{ 'disabled': gameStore.coins < 10 }"
+                class="resource-dot fill-dot"
+              >
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                
+                <!-- 一键爆仓悬浮提示 -->
+                <Transition name="tooltip-fade">
+                  <div v-if="showFillTooltip" class="resource-tooltip">
+                    <div class="tooltip-content">
+                      <div v-if="gameStore.coins < 10" class="tooltip-item insufficient">
+                        <span class="tooltip-label">金币不足</span>
+                        <span class="tooltip-value">需要10金币 (当前: {{ gameStore.coins }})</span>
+                      </div>
+                      <div v-else class="tooltip-item">
+                        <span class="tooltip-label">一键爆仓</span>
+                        <span class="tooltip-value">消耗10金币填满所有资源</span>
+                      </div>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+              
+              <!-- 容量加成小圆点 -->
+              <div 
+                @click="activateWarehouseBoost" 
+                @mouseenter="showBoostTooltip = true"
+                @mouseleave="showBoostTooltip = false"
+                :class="{ 
+                  'disabled': gameStore.coins < warehouseBoostCost,
+                  'active': isWarehouseBoostActive 
+                }"
+                class="resource-dot boost-dot"
+              >
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                
+                <!-- 容量加成悬浮提示 -->
+                <Transition name="tooltip-fade">
+                  <div v-if="showBoostTooltip" class="resource-tooltip">
+                    <div class="tooltip-content">
+                      <div v-if="isWarehouseBoostActive" class="tooltip-item active">
+                        <span class="tooltip-label">容量加成激活中</span>
+                        <span class="tooltip-value">剩余时间: {{ formatTime(warehouseBoostTimeLeft) }}</span>
+                        <span class="tooltip-value">当前容量: {{ formatNumber(gameStore.warehouseCapacity) }} (2倍加成)</span>
+                      </div>
+                      <div v-else-if="gameStore.coins < warehouseBoostCost" class="tooltip-item insufficient">
+                        <span class="tooltip-label">金币不足</span>
+                        <span class="tooltip-value">需要{{ warehouseBoostCost }}金币 (当前: {{ gameStore.coins }})</span>
+                      </div>
+                      <div v-else class="tooltip-item">
+                        <span class="tooltip-label">容量加成</span>
+                        <span class="tooltip-value">消耗{{ warehouseBoostCost }}金币获得2倍仓库容量</span>
+                        <span class="tooltip-value">持续1小时</span>
+                      </div>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+            </div>
+          </div>
           <div class="resource-list">
             <div class="resource-item" v-for="resource in resources" :key="resource.name">
               <div class="resource-info">
@@ -308,7 +379,7 @@ import { RESOURCE_ICONS, getResourceIcon, getResourceName } from '@/config/resou
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { computed, ref, onMounted, onUnmounted, watchEffect } from 'vue'
 import { calculateWarehouseUpgradeTime, calculateWarehouseUpgradeCost, calculateProduction, BUILDING_TYPES, WAREHOUSE_CONFIG } from '@/config/gameConfig.js'
-import { formatCivilization, formatTime } from '@/utils/formatters.js'
+import { formatCivilization, formatTime, formatNumber } from '@/utils/formatters.js'
 import { getFactionConfig, getUnitById } from '@/config/factionConfig.js'
 
 export default {
@@ -323,6 +394,9 @@ export default {
     const showProductionTooltip = ref(null)
     // 生产力加速弹窗状态
     const showBoostDialog = ref(false)
+    // 资源管理小圆点悬浮提示状态
+    const showFillTooltip = ref(false)
+    const showBoostTooltip = ref(false)
     let progressTimer = null
     
     //=== 仓库升级状态（从gameStore获取）
@@ -528,6 +602,47 @@ export default {
       }
     }
     
+    //=== 仓库容量加成相关
+    const warehouseBoostCost = computed(() => {
+      return 50 // 仓库容量加成花费50金币
+    })
+    
+    const isWarehouseBoostActive = computed(() => {
+      return gameStore.isWarehouseBoostActive
+    })
+    
+    const warehouseBoostTimeLeft = computed(() => {
+      if (!gameStore.warehouseBoost) return 0
+      const now = currentTime.value
+      const elapsed = now - gameStore.warehouseBoost.startTime
+      const remaining = Math.max(0, gameStore.warehouseBoost.duration - elapsed)
+      return Math.ceil(remaining / 1000)
+    })
+    
+    //=== 一键爆仓功能
+    const fillWarehouse = () => {
+      if (gameStore.coins < 10) {
+        return // 金币不足
+      }
+      
+      const success = gameStore.fillWarehouse()
+      if (success) {
+        console.log('一键爆仓成功')
+      }
+    }
+    
+    //=== 激活仓库容量加成
+    const activateWarehouseBoost = () => {
+      if (gameStore.coins < warehouseBoostCost.value || isWarehouseBoostActive.value) {
+        return // 金币不足或已激活
+      }
+      
+      const success = gameStore.activateWarehouseBoost()
+      if (success) {
+        console.log('仓库容量加成激活成功')
+      }
+    }
+    
     // 清理定时器
     onUnmounted(() => {
       stopProgressTimer()
@@ -543,9 +658,16 @@ export default {
       showTooltip,
       showProductionTooltip,
       showBoostDialog,
+      showFillTooltip,
+      showBoostTooltip,
       boostOptions,
       startBoost,
       warehouseUpgradeCost,
+      warehouseBoostCost,
+      isWarehouseBoostActive,
+      warehouseBoostTimeLeft,
+      fillWarehouse,
+      activateWarehouseBoost,
       getResourceName,
       formatTime,
       formatCivilization,
@@ -596,6 +718,19 @@ export default {
       if (amount && !isNaN(amount) && parseInt(amount) > 0) {
         this.gameStore.addCoins(parseInt(amount))
       }
+    },
+    //=== formatNumber 格式化数字显示
+    formatNumber(num) {
+      if (num >= 1000000000) {
+        return (num / 1000000000).toFixed(1) + 'B'
+      }
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M'
+      }
+      if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K'
+      }
+      return num.toString()
     }
   }
 }
@@ -886,6 +1021,143 @@ export default {
 .tooltip-fade-leave-from {
   opacity: 1;
   transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* 资源标题区域样式 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* 资源管理小圆点样式 */
+.resource-dots-container {
+  display: flex;
+  gap: 8px;
+}
+
+.resource-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.resource-dot:hover {
+  transform: scale(1.1);
+}
+
+.resource-dot.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.resource-dot.disabled:hover {
+  transform: none;
+}
+
+/* 一键爆仓小圆点 */
+.fill-dot {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.fill-dot:hover:not(.disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* 容量加成小圆点 */
+.boost-dot {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.boost-dot:hover:not(.disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.boost-dot.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  animation: pulse-boost 2s infinite;
+}
+
+@keyframes pulse-boost {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+  }
+}
+
+.resource-dot svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+/* 资源小圆点悬浮提示样式 */
+.resource-tooltip {
+  @apply absolute bottom-full mb-2;
+  @apply border border-green-500/50 rounded-md shadow-2xl;
+  @apply text-white text-sm;
+  min-width: 200px;
+  max-width: 280px;
+  z-index: 9999;
+  /* 向左偏移，避免被右侧遮挡 */
+  right: 0;
+  transform: translateX(-20px);
+  /* 毛玻璃效果 */
+  background: rgba(31, 41, 55, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 移除三角形箭头样式 */
+
+.resource-tooltip .tooltip-content {
+  @apply p-3 space-y-2;
+}
+
+.resource-tooltip .tooltip-item {
+  @apply flex flex-col space-y-1;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.resource-tooltip .tooltip-item.active {
+  @apply text-green-400;
+}
+
+.resource-tooltip .tooltip-item.insufficient {
+  @apply text-red-400;
+}
+
+.resource-tooltip .tooltip-label {
+  @apply font-medium text-white;
+}
+
+.resource-tooltip .tooltip-value {
+  @apply text-gray-300;
+}
+
+/* 悬浮提示过渡动画 */
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
 }
 
 /* 仓库管理样式 */

@@ -99,6 +99,15 @@ export const useGameStore = defineStore('game', {
       startTime: null,        // 加速开始时间
       duration: 0,            // 加速持续时间（毫秒）
       endTime: null           // 加速结束时间
+    },
+    
+    //=== 仓库容量加成状态
+    warehouseBoost: {
+      isActive: false,        // 是否正在加成
+      multiplier: 1.4,        // 容量加成倍数（40%加成）
+      startTime: null,        // 加成开始时间
+      duration: 24 * 60 * 60 * 1000, // 加成持续时间（24小时，毫秒）
+      endTime: null           // 加成结束时间
     }
   }),
   
@@ -145,10 +154,17 @@ export const useGameStore = defineStore('game', {
     },
     
     /**
-     * 获取仓库容量
+     * 获取仓库容量（包含加成效果）
      */
     warehouseCapacity: (state) => {
-      return calculateWarehouseCapacity(state.warehouseLevel)
+      let baseCapacity = calculateWarehouseCapacity(state.warehouseLevel)
+      
+      // 应用仓库容量加成效果
+      if (state.warehouseBoost.isActive && state.warehouseBoost.endTime > Date.now()) {
+        baseCapacity = Math.floor(baseCapacity * state.warehouseBoost.multiplier)
+      }
+      
+      return baseCapacity
     },
     
     /**
@@ -278,8 +294,28 @@ export const useGameStore = defineStore('game', {
      * 获取生产力加速剩余时间（秒）
      */
     productionBoostTimeLeft: (state) => {
-      if (!state.productionBoost.isActive || !state.productionBoost.endTime) return 0
+      if (!state.productionBoost.isActive || !state.productionBoost.endTime) {
+        return 0
+      }
       const remaining = Math.max(0, state.productionBoost.endTime - Date.now())
+      return Math.ceil(remaining / 1000)
+    },
+    
+    /**
+     * 检查仓库容量加成是否激活
+     */
+    isWarehouseBoostActive: (state) => {
+      return state.warehouseBoost.isActive && state.warehouseBoost.endTime > Date.now()
+    },
+    
+    /**
+     * 获取仓库容量加成剩余时间（秒）
+     */
+    warehouseBoostTimeLeft: (state) => {
+      if (!state.warehouseBoost.isActive || !state.warehouseBoost.endTime) {
+        return 0
+      }
+      const remaining = Math.max(0, state.warehouseBoost.endTime - Date.now())
       return Math.ceil(remaining / 1000)
     },
     
@@ -552,7 +588,8 @@ export const useGameStore = defineStore('game', {
         army: this.army,
         recruitmentQueue: this.recruitmentQueue,
         recruitmentConfig: this.recruitmentConfig,
-        productionBoost: this.productionBoost // 保存生产力加速状态
+        productionBoost: this.productionBoost, // 保存生产力加速状态
+        warehouseBoost: this.warehouseBoost // 保存仓库容量加成状态
       }
       
       localStorage.setItem('wlsg_game_data', JSON.stringify(gameData))
@@ -631,6 +668,11 @@ export const useGameStore = defineStore('game', {
             this.productionBoost = { ...this.productionBoost, ...gameData.productionBoost }
           }
           
+          // 加载仓库容量加成状态
+          if (gameData.warehouseBoost) {
+            this.warehouseBoost = { ...this.warehouseBoost, ...gameData.warehouseBoost }
+          }
+          
           // 恢复升级定时器
           this.restoreUpgradeTimers()
           
@@ -639,6 +681,9 @@ export const useGameStore = defineStore('game', {
           
           // 恢复生产力加速定时器
           this.restoreProductionBoostTimer()
+          
+          // 恢复仓库容量加成定时器
+          this.restoreWarehouseBoostTimer()
         } catch (error) {
           console.error('加载游戏数据失败:', error)
         }
@@ -727,6 +772,26 @@ export const useGameStore = defineStore('game', {
           // 设置剩余时间的定时器
           setTimeout(() => {
             this.stopProductionBoost()
+          }, remaining)
+        }
+      }
+    },
+    
+    /**
+     * 恢复仓库容量加成定时器
+     */
+    restoreWarehouseBoostTimer() {
+      if (this.warehouseBoost.isActive && this.warehouseBoost.endTime) {
+        const now = Date.now()
+        const remaining = this.warehouseBoost.endTime - now
+        
+        if (remaining <= 0) {
+          // 加成已过期，停止加成
+          this.stopWarehouseBoost()
+        } else {
+          // 设置剩余时间的定时器
+          setTimeout(() => {
+            this.stopWarehouseBoost()
           }, remaining)
         }
       }
@@ -1058,6 +1123,117 @@ export const useGameStore = defineStore('game', {
     },
     
     /**
+     * 一键爆仓（填满仓库）
+     */
+    fillWarehouse() {
+      const cost = 10 // 固定花费10金币
+      
+      if (this.coins < cost) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addErrorNotification('金币不足', `一键爆仓需要 ${cost} 金币，当前仅有 ${this.coins} 金币`)
+        return false
+      }
+      
+      // 扣除金币
+      this.coins -= cost
+      
+      // 获取当前仓库容量
+      const capacity = this.warehouseCapacity
+      
+      // 填满所有资源
+      Object.keys(RESOURCE_TYPES).forEach(key => {
+        this.resources[RESOURCE_TYPES[key]] = capacity
+      })
+      
+      // 保存游戏数据
+      this.saveGame()
+      
+      const notificationStore = useNotificationStore()
+      notificationStore.addSuccessNotification(
+        '一键爆仓成功',
+        `消耗 ${cost} 金币，所有资源已填满至仓库容量 ${capacity}`
+      )
+      
+      return true
+    },
+    
+    /**
+     * 激活仓库容量加成
+     */
+    activateWarehouseBoost() {
+      // 计算花费：基础50金币 + 仓库等级 * 10金币
+      const cost = 50 + this.warehouseLevel * 10
+      
+      if (this.coins < cost) {
+        const notificationStore = useNotificationStore()
+        notificationStore.addErrorNotification('金币不足', `仓库容量加成需要 ${cost} 金币，当前仅有 ${this.coins} 金币`)
+        return false
+      }
+      
+      // 如果已经激活，延长时间
+      const now = Date.now()
+      let newEndTime
+      
+      if (this.warehouseBoost.isActive && this.warehouseBoost.endTime > now) {
+        // 延长现有加成时间
+        newEndTime = this.warehouseBoost.endTime + this.warehouseBoost.duration
+      } else {
+        // 开始新的加成
+        newEndTime = now + this.warehouseBoost.duration
+      }
+      
+      // 扣除金币
+      this.coins -= cost
+      
+      // 更新加成状态
+      this.warehouseBoost = {
+        isActive: true,
+        multiplier: 1.4, // 40%加成
+        startTime: this.warehouseBoost.isActive ? this.warehouseBoost.startTime : now,
+        duration: 24 * 60 * 60 * 1000, // 24小时
+        endTime: newEndTime
+      }
+      
+      // 设置定时器自动停止加成
+      const remainingTime = newEndTime - now
+      setTimeout(() => {
+        this.stopWarehouseBoost()
+      }, remainingTime)
+      
+      // 保存游戏数据
+      this.saveGame()
+      
+      const notificationStore = useNotificationStore()
+      notificationStore.addSuccessNotification(
+        '仓库容量加成启动',
+        `消耗 ${cost} 金币，仓库容量提升40%，持续24小时`
+      )
+      
+      return true
+    },
+    
+    /**
+     * 停止仓库容量加成
+     */
+    stopWarehouseBoost() {
+      if (this.warehouseBoost.isActive) {
+        this.warehouseBoost = {
+          isActive: false,
+          multiplier: 1.4,
+          startTime: null,
+          duration: 24 * 60 * 60 * 1000,
+          endTime: null
+        }
+        
+        // 保存游戏数据
+        this.saveGame()
+        
+        const notificationStore = useNotificationStore()
+        notificationStore.addInfoNotification('仓库容量加成结束', '仓库容量已恢复正常水平')
+      }
+    },
+    
+    /**
      * 重置游戏数据（包含用户信息）
      */
     resetGame() {
@@ -1118,6 +1294,15 @@ export const useGameStore = defineStore('game', {
         multiplier: 1.4,
         startTime: null,
         duration: 0,
+        endTime: null
+      }
+      
+      // 重置仓库容量加成状态
+      this.warehouseBoost = {
+        isActive: false,
+        multiplier: 1.4,
+        startTime: null,
+        duration: 24 * 60 * 60 * 1000,
         endTime: null
       }
       

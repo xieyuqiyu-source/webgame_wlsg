@@ -635,11 +635,11 @@ export default {
 }
 
 .backup-actions {
-  @apply flex space-x-3 mt-3 flex-wrap;
+  @apply flex flex-col space-y-3 mt-3;
 }
 
 .backup-actions .setting-btn {
-  @apply flex-1 min-w-[120px];
+  @apply w-full;
 }
 
 .uuid-display {

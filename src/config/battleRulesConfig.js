@@ -5,10 +5,15 @@
 
 // 战斗规则ID常量
 export const BATTLE_RULE_IDS = {
-  BASIC: 'BASIC',           // 基础战斗规则
   PLUNDER: 'PLUNDER',       // 掠夺战斗规则
-  EXPONENT: 'EXPONENT',     // 指数伤亡规则
   COMPREHENSIVE: 'COMPREHENSIVE'  // 综合实力战斗规则
+}
+
+//=== 战斗结果常量
+export const BATTLE_RESULTS = {
+  ATTACKER_VICTORY: 'ATTACKER_VICTORY',
+  DEFENDER_VICTORY: 'DEFENDER_VICTORY', 
+  DRAW: 'DRAW'
 }
 
 // 战斗时间配置
@@ -33,12 +38,13 @@ export const BATTLE_TIME_CONFIG = {
 
 // 战斗规则配置
 export const BATTLE_RULES = {
-  [BATTLE_RULE_IDS.BASIC]: {
-    id: BATTLE_RULE_IDS.BASIC,
-    name: '基础战斗',
-    description: '简单的攻防计算，适合快速战斗',
+  
+  [BATTLE_RULE_IDS.PLUNDER]: {
+    id: BATTLE_RULE_IDS.PLUNDER,
+    name: '掠夺战斗',
+    description: '专门用于掠夺战斗，考虑运载能力',
     
-    //=== 计算伤害
+    //=== 计算伤害（复制自基础战斗）
     calculateDamage(attackerArmy, defenderArmy) {
       const attackerPower = this.calculateArmyAttack(attackerArmy)
       const defenderPower = this.calculateArmyDefense(defenderArmy, attackerArmy)
@@ -53,7 +59,7 @@ export const BATTLE_RULES = {
       }
     },
     
-    //=== 计算军团攻击力
+    //=== 计算军团攻击力（复制自基础战斗）
     calculateArmyAttack(army) {
       if (!army.units) return 0
       return army.units.reduce((total, unit) => {
@@ -61,7 +67,7 @@ export const BATTLE_RULES = {
       }, 0)
     },
     
-    //=== 计算军团防御力
+    //=== 计算军团防御力（复制自基础战斗）
     calculateArmyDefense(army, enemyArmy) {
       if (!army.units) return 0
       return army.units.reduce((total, unit) => {
@@ -71,7 +77,7 @@ export const BATTLE_RULES = {
       }, 0)
     },
     
-    //=== 获取有效防御力
+    //=== 获取有效防御力（复制自基础战斗）
     getEffectiveDefense(unit, enemyArmy) {
       if (!enemyArmy.units) return unit.infantryDefense || 0
       
@@ -92,32 +98,23 @@ export const BATTLE_RULES = {
       return weightedDefense
     },
     
-    //=== 计算战斗结果
+    //=== 计算战斗结果（复制自基础战斗）
     calculateBattleResult(attackerDamage, defenderDamage) {
       const damageDiff = attackerDamage - defenderDamage
       
       if (Math.abs(damageDiff) < attackerDamage * 0.1) {
-        return 'draw' // 平局
+        return BATTLE_RESULTS.DRAW // 平局
       } else if (damageDiff > 0) {
-        return 'victory' // 胜利
+        return BATTLE_RESULTS.ATTACKER_VICTORY // 胜利
       } else {
-        return 'defeat' // 失败
+        return BATTLE_RESULTS.DEFENDER_VICTORY // 失败
       }
-    }
-  },
-  
-  [BATTLE_RULE_IDS.PLUNDER]: {
-    id: BATTLE_RULE_IDS.PLUNDER,
-    name: '掠夺战斗',
-    description: '专门用于掠夺战斗，考虑运载能力',
-    
-    //=== 继承基础战斗的计算方法
-    ...BATTLE_RULES[BATTLE_RULE_IDS.BASIC],
+    },
     
     //=== 计算掠夺资源
     calculatePlunderResources(attackerArmy, defenderResources, battleResult) {
       // 只有胜利才能掠夺
-      if (battleResult !== 'victory') {
+      if (battleResult !== BATTLE_RESULTS.ATTACKER_VICTORY) {
         return { wood: 0, soil: 0, iron: 0, food: 0 }
       }
       
@@ -148,56 +145,7 @@ export const BATTLE_RULES = {
     }
   },
   
-  [BATTLE_RULE_IDS.EXPONENT]: {
-    id: BATTLE_RULE_IDS.EXPONENT,
-    name: '指数伤亡',
-    description: '使用指数公式计算损耗比例，更真实的战损模拟',
-    
-    //=== 继承基础战斗的部分方法
-    calculateArmyAttack: BATTLE_RULES[BATTLE_RULE_IDS.BASIC].calculateArmyAttack,
-    calculateArmyDefense: BATTLE_RULES[BATTLE_RULE_IDS.BASIC].calculateArmyDefense,
-    getEffectiveDefense: BATTLE_RULES[BATTLE_RULE_IDS.BASIC].getEffectiveDefense,
-    
-    //=== 指数伤害计算
-    calculateDamage(attackerArmy, defenderArmy) {
-      const attackerPower = this.calculateArmyAttack(attackerArmy)
-      const defenderPower = this.calculateArmyDefense(defenderArmy, attackerArmy)
-      
-      // 指数公式：损耗比例 = (防御力/攻击力)^1.422
-      const attackerLossRatio = defenderPower > 0 ? Math.pow(defenderPower / attackerPower, 1.422) : 0
-      const defenderLossRatio = attackerPower > 0 ? Math.pow(attackerPower / defenderPower, 1.422) : 0
-      
-      // 限制损耗比例在合理范围内
-      const maxLossRatio = 0.8 // 最大80%损耗
-      const minLossRatio = 0.1 // 最小10%损耗
-      
-      const attackerDamage = Math.min(maxLossRatio, Math.max(minLossRatio, attackerLossRatio)) * attackerPower
-      const defenderDamage = Math.min(maxLossRatio, Math.max(minLossRatio, defenderLossRatio)) * defenderPower
-      
-      return {
-        attackerDamage,
-        defenderDamage,
-        attackerLossRatio: attackerDamage / attackerPower,
-        defenderLossRatio: defenderDamage / defenderPower
-      }
-    },
-    
-    //=== 计算战斗结果
-    calculateBattleResult(attackerDamage, defenderDamage, attackerPower, defenderPower) {
-      const attackerLossRatio = attackerDamage / attackerPower
-      const defenderLossRatio = defenderDamage / defenderPower
-      
-      const ratioDiff = defenderLossRatio - attackerLossRatio
-      
-      if (Math.abs(ratioDiff) < 0.1) {
-        return 'draw' // 平局
-      } else if (ratioDiff > 0) {
-        return 'victory' // 胜利
-      } else {
-        return 'defeat' // 失败
-      }
-    }
-  },
+
   
   [BATTLE_RULE_IDS.COMPREHENSIVE]: {
     id: BATTLE_RULE_IDS.COMPREHENSIVE,
@@ -351,18 +299,141 @@ export const BATTLE_RULES = {
     //=== 计算战斗结果
     calculateBattleResult(overallRatio) {
       if (overallRatio >= 0.9 && overallRatio <= 1.1) {
-        return 'draw' // 平局
+        return BATTLE_RESULTS.DRAW // 平局
       } else if (overallRatio > 1.1) {
-        return 'victory' // 胜利
+        return BATTLE_RESULTS.ATTACKER_VICTORY // 胜利
       } else {
-        return 'defeat' // 失败
+        return BATTLE_RESULTS.DEFENDER_VICTORY // 失败
       }
     }
   }
 }
 
 // 默认战斗规则
-export const DEFAULT_BATTLE_RULE = BATTLE_RULE_IDS.BASIC
+export const DEFAULT_BATTLE_RULE = BATTLE_RULE_IDS.PLUNDER
+
+//=== 通用战斗计算函数
+function createStandardBattleResult(ruleId, attackerArmy, defenderArmy, battleResult, damage, details = {}) {
+  // 计算损失兵种
+  const calculateLosses = (army, lossRatio) => {
+    if (!army.units) return []
+    return army.units.map(unit => ({
+      id: unit.id,
+      name: unit.name,
+      count: Math.floor((unit.count || 0) * lossRatio),
+      lossRatio: lossRatio
+    })).filter(loss => loss.count > 0)
+  }
+
+  // 计算总攻击力和防御力
+  const totalAttack = attackerArmy.units ? attackerArmy.units.reduce((sum, unit) => 
+    sum + (unit.attack || 0) * (unit.count || 0), 0) : 0
+  const totalDefense = defenderArmy.units ? defenderArmy.units.reduce((sum, unit) => 
+    sum + (unit.infantryDefense || 0) * (unit.count || 0), 0) : 0
+
+  const attackerLossRatio = damage.attackerLossRatio || 0.1
+  const defenderLossRatio = damage.defenderLossRatio || 0.1
+
+  return {
+    ruleId,
+    battleResult,
+    attacker: {
+      uuid: attackerArmy.playerInfo?.userUUID || 'player-uuid',
+      nickname: attackerArmy.playerInfo?.nickname || '玩家',
+      faction: attackerArmy.armyGroup?.faction || attackerArmy.faction || 'unknown',
+      originalUnits: attackerArmy.units || [],
+      losses: calculateLosses(attackerArmy, attackerLossRatio),
+      carryResources: attackerArmy.carryResources || { wood: 0, soil: 0, iron: 0, food: 0 },
+      lossRatio: attackerLossRatio
+    },
+    defender: {
+      uuid: defenderArmy.npcInfo?.id || 'npc-uuid',
+      nickname: defenderArmy.npcInfo?.name || 'NPC城池',
+      faction: defenderArmy.armyGroup?.faction || defenderArmy.faction || 'unknown',
+      originalUnits: defenderArmy.units || [],
+      losses: calculateLosses(defenderArmy, defenderLossRatio),
+      remainingResources: defenderArmy.remainingResources || { wood: 0, soil: 0, iron: 0, food: 0 },
+      lossRatio: defenderLossRatio
+    },
+    details: {
+      totalAttack,
+      totalDefense,
+      powerRatio: totalDefense > 0 ? totalAttack / totalDefense : (totalAttack > 0 ? 10 : 1),
+      marchTime: details.marchTime || 0,
+      plundered: details.plundered || null,
+      ...details
+    }
+  }
+}
+
+// 为每个战斗规则添加统一的 calculateBattle 方法
+Object.values(BATTLE_RULES).forEach(rule => {
+  if (!rule.calculateBattle) {
+    rule.calculateBattle = function(attackerArmy, defenderArmy, options = {}) {
+      try {
+        let damage, battleResult, details = {}
+        
+        if (this.id === BATTLE_RULE_IDS.COMPREHENSIVE) {
+          // 综合实力战斗规则
+          damage = this.calculateDamage(attackerArmy, defenderArmy)
+          battleResult = damage.battleResult
+          details = {
+            powerComparison: damage.powerComparison?.overallRatio || 1,
+            attackerLosses: damage.attackerLosses || [],
+            defenderLosses: damage.defenderLosses || []
+          }
+        } else if (this.id === BATTLE_RULE_IDS.PLUNDER) {
+          // 掠夺战斗规则
+          damage = this.calculateDamage(attackerArmy, defenderArmy)
+          battleResult = this.calculateBattleResult(damage.attackerDamage, damage.defenderDamage)
+          
+          // 计算掠夺资源
+          const defenderResources = defenderArmy.resources || { wood: 10000, soil: 10000, iron: 5000, food: 8000 }
+          const plundered = this.calculatePlunderResources(attackerArmy, defenderResources, battleResult)
+          
+          details = {
+            plundered: battleResult === BATTLE_RESULTS.ATTACKER_VICTORY ? plundered : null,
+            carryCapacity: this.calculateArmyCarryCapacity(attackerArmy)
+          }
+          
+          // 计算损失比例 - 修复过高损耗问题
+          const attackerPower = this.calculateArmyAttack(attackerArmy)
+          const defenderPower = this.calculateArmyDefense(defenderArmy, attackerArmy)
+          
+          // 基础损失比例：根据伤害与总实力的比值，但限制在合理范围内
+          const baseLossRatio = 0.15 // 基础损失15%
+          const maxLossRatio = 0.4   // 最大损失40%
+          const minLossRatio = 0.05  // 最小损失5%
+          
+          // 根据实力对比调整损失比例
+          const powerRatio = defenderPower > 0 ? attackerPower / defenderPower : 2
+          
+          if (battleResult === BATTLE_RESULTS.ATTACKER_VICTORY) {
+            // 攻击方胜利：攻击方损失少，防守方损失多
+            damage.attackerLossRatio = Math.max(minLossRatio, baseLossRatio / Math.sqrt(powerRatio))
+            damage.defenderLossRatio = Math.min(maxLossRatio, baseLossRatio * Math.sqrt(powerRatio))
+          } else if (battleResult === BATTLE_RESULTS.DEFENDER_VICTORY) {
+            // 防守方胜利：防守方损失少，攻击方损失多
+            damage.attackerLossRatio = Math.min(maxLossRatio, baseLossRatio * Math.sqrt(1/powerRatio))
+            damage.defenderLossRatio = Math.max(minLossRatio, baseLossRatio / Math.sqrt(1/powerRatio))
+          } else {
+            // 平局：双方损失相等
+            damage.attackerLossRatio = baseLossRatio
+            damage.defenderLossRatio = baseLossRatio
+          }
+        }
+        
+        return createStandardBattleResult(this.id, attackerArmy, defenderArmy, battleResult, damage, details)
+      } catch (error) {
+        console.error(`战斗计算错误 (${this.id}):`, error)
+        return createStandardBattleResult(this.id, attackerArmy, defenderArmy, 'error', {
+          attackerLossRatio: 0,
+          defenderLossRatio: 0
+        }, { error: error.message })
+      }
+    }
+  }
+})
 
 //=== 获取战斗规则
 export function getBattleRule(ruleId) {
