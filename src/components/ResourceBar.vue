@@ -10,7 +10,7 @@
         >
           <!-- 资源图标 -->
           <div class="w-8 h-8 flex items-center justify-center">
-            <div v-html="getResourceIcon(resourceType)" class="w-6 h-6"></div>
+            <img :src="getResourceIcon(resourceType)" :alt="getResourceName(resourceType)" class="w-6 h-6" />
           </div>
           
           <!-- 资源信息 -->
@@ -71,7 +71,7 @@
 <script>
 import { computed } from 'vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
-import { getResourceName } from '@/config/resources.js'
+import { getResourceName, getResourceIcon } from '@/config/resources.js'
 import { calculateWarehouseUpgradeCost } from '@/config/gameConfig.js'
 
 export default {
@@ -79,16 +79,7 @@ export default {
   setup() {
     const gameStore = useGameStore()
     
-    //=== 获取资源图标 - 返回SVG图标字符串
-    const getResourceIcon = (resourceType) => {
-      const iconMap = {
-        wood: '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="8" width="8" height="3" fill="#8B4513"/><path d="M3 2 L9 2 L8 8 L4 8 Z" fill="#228B22"/><circle cx="6" cy="4" r="1" fill="#32CD32"/></svg>',
-        soil: '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="6" width="10" height="5" fill="#8B4513"/><circle cx="3" cy="8" r="0.5" fill="#A0522D"/><circle cx="7" cy="9" r="0.5" fill="#A0522D"/><circle cx="9" cy="7" r="0.5" fill="#A0522D"/></svg>',
-        iron: '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3 L10 3 L9 9 L3 9 Z" fill="#708090"/><rect x="4" y="5" width="4" height="2" fill="#C0C0C0"/><circle cx="6" cy="6" r="0.5" fill="#FFD700"/></svg>',
-        food: '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="6" cy="8" rx="4" ry="2" fill="#DAA520"/><path d="M4 4 Q6 2 8 4 Q6 6 4 4" fill="#32CD32"/><line x1="6" y1="4" x2="6" y2="8" stroke="#228B22" stroke-width="0.5"/></svg>'
-      }
-      return iconMap[resourceType] || ''
-    }
+
     
     //=== 格式化数字显示 - 大数字使用K、M等单位
     const formatNumber = (num) => {

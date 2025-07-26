@@ -11,13 +11,13 @@
         <!-- Tab 切换组件 -->
         <MapTabs :active-tab="activeTab" @tab-change="handleTabChange">
           <!-- NPC城池列表 -->
-          <NpcList v-if="activeTab === 'npc'" />
+          <NpcList v-show="activeTab === 'npc'" />
           
           <!-- 玩家城池列表 -->
-          <PlayerList v-if="activeTab === 'player'" />
+          <PlayerList v-show="activeTab === 'player'" />
           
           <!-- 副本列表 -->
-          <DungeonList v-if="activeTab === 'dungeon'" />
+          <DungeonList v-show="activeTab === 'dungeon'" />
         </MapTabs>
       </div>
     </div>

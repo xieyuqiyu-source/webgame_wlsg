@@ -26,6 +26,38 @@
       </div>
     </div>
     
+    <!-- 刷新控制区域 -->
+    <div class="refresh-control">
+      <div class="refresh-info">
+        <div class="countdown-display">
+          <svg class="countdown-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/>
+          </svg>
+          <span class="countdown-label">自动刷新:</span>
+          <span class="countdown-time">{{ formattedCountdown }}</span>
+        </div>
+        
+        <div class="refresh-cost">
+          <svg class="coin-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+          </svg>
+          <span class="cost-text">手动刷新: {{ manualRefreshCost }}金币</span>
+        </div>
+      </div>
+      
+      <button 
+        class="manual-refresh-btn"
+        :class="{ 'disabled': !canManualRefresh }"
+        :disabled="!canManualRefresh"
+        @click="manualRefresh"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+        </svg>
+        立即刷新
+      </button>
+    </div>
+    
     <!-- 统计信息 -->
     <!-- <div class="online-stats">
       <div class="stat-item">
@@ -69,28 +101,37 @@
         <!-- 资源信息 -->
         <div class="npc-resources">
           <div class="resource-item">
-            <svg class="resource-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z" class="text-amber-600"/>
-            </svg>
+            <img :src="getResourceIcon('wood')" :alt="getResourceName('wood')" class="resource-icon" width="14" height="14" />
             <span class="resource-value">{{ formatNumber(npc.resources.wood) }}</span>
           </div>
           <div class="resource-item">
-            <svg class="resource-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2,17H22V19H2V17M3.15,12.95L4,11.47L4.85,12.95L5.81,11L4,9.19L2.19,11L3.15,12.95M9.85,12.95L10.7,11.47L11.55,12.95L12.51,11L10.7,9.19L8.89,11L9.85,12.95M16.55,12.95L17.4,11.47L18.25,12.95L19.21,11L17.4,9.19L15.59,11L16.55,12.95M12,8A2,2 0 0,0 10,6A2,2 0 0,0 8,8A2,2 0 0,0 10,10A2,2 0 0,0 12,8Z" class="text-yellow-600"/>
-            </svg>
+            <img :src="getResourceIcon('soil')" :alt="getResourceName('soil')" class="resource-icon" width="14" height="14" />
             <span class="resource-value">{{ formatNumber(npc.resources.soil) }}</span>
           </div>
           <div class="resource-item">
-            <svg class="resource-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z" class="text-gray-600"/>
-            </svg>
+            <img :src="getResourceIcon('iron')" :alt="getResourceName('iron')" class="resource-icon" width="14" height="14" />
             <span class="resource-value">{{ formatNumber(npc.resources.iron) }}</span>
           </div>
           <div class="resource-item">
-            <svg class="resource-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" class="text-green-600"/>
-            </svg>
+            <img :src="getResourceIcon('food')" :alt="getResourceName('food')" class="resource-icon" width="14" height="14" />
             <span class="resource-value">{{ formatNumber(npc.resources.food) }}</span>
+          </div>
+        </div>
+        
+        <!-- 侦查状态信息 -->
+        <div class="npc-scout-info">
+          <div v-if="npc.scoutedAt" class="scout-status">
+            <svg class="scout-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+            </svg>
+            <span class="scout-label">已侦查</span>
+            <span class="scout-time">{{ formatScoutTime(npc.scoutedAt) }}</span>
+          </div>
+          <div v-else class="scout-status">
+            <svg class="scout-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.76,7.13 11.37,7 12,7Z"/>
+            </svg>
+            <span class="scout-label">未侦查</span>
           </div>
         </div>
         
@@ -108,6 +149,28 @@
             </svg>
             攻击
           </button>
+        </div>
+        
+        <!-- 侦查结果显示 - 横向展示在下方 -->
+        <div v-if="npc.scoutedAt && npc.scoutData" class="scout-result">
+          <div class="scout-result-header">
+            <div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+              </svg>
+              <span>侦查情报</span>
+            </div>
+            <div class="army-summary">
+              <span class="army-total">总兵力: {{ npc.scoutData.totalUnits }}</span>
+              <span class="army-types">{{ npc.scoutData.unitTypes }}种兵种</span>
+            </div>
+          </div>
+          <div class="army-details">
+            <div v-for="unit in npc.scoutData.units" :key="unit.id" class="unit-item">
+              <span class="unit-name">{{ unit.name }}</span>
+              <span class="unit-count">{{ formatNumber(unit.count) }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -155,9 +218,21 @@
 
 <script>
 import { formatNumber } from '@/utils/formatters.js'
+import { getFactionUnits, UNIT_TYPES, getUnitById } from '@/config/factionConfig.js'
+import { useGameStore } from '@/store/modules/gameStore.js'
+import { useNotificationStore } from '@/store/modules/notificationStore.js'
+import { getResourceIcon, getResourceName } from '@/config/resources.js'
 
 export default {
   name: 'NpcList',
+  setup() {
+    const gameStore = useGameStore()
+    const notificationStore = useNotificationStore()
+    return {
+      gameStore,
+      notificationStore
+    }
+  },
   data() {
     return {
       //=== searchQuery 搜索关键词
@@ -176,7 +251,14 @@ export default {
       //=== currentPage 当前页码
       currentPage: 1,
       //=== pageSize 每页显示数量
-      pageSize: 12
+      pageSize: 12,
+      
+      //=== 刷新相关
+      refreshTimer: null,        // 定时器
+      refreshCountdown: 0,       // 倒计时（秒）
+      refreshInterval: 3600,     // 刷新间隔（1小时 = 3600秒）
+      manualRefreshCost: 50,     // 手动刷新消耗金币
+      lastRefreshTime: 0         // 上次刷新时间戳
     }
   },
   computed: {
@@ -209,11 +291,43 @@ export default {
     //=== totalPages 总页数
     totalPages() {
       return Math.ceil(this.filteredNpcs.length / this.pageSize)
+    },
+    
+    //=== 格式化倒计时显示
+    formattedCountdown() {
+      const hours = Math.floor(this.refreshCountdown / 3600)
+      const minutes = Math.floor((this.refreshCountdown % 3600) / 60)
+      const seconds = this.refreshCountdown % 60
+      
+      if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      } else {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`
+      }
+    },
+    
+    //=== 检查是否可以手动刷新
+    canManualRefresh() {
+      return this.gameStore.coins >= this.manualRefreshCost
     }
   },
   mounted() {
-    //=== 生成随机NPC数据
-    this.generateNpcs()
+    //=== 初始化刷新定时器（会自动处理数据恢复或生成）
+    this.initRefreshTimer()
+    
+    //=== 如果没有恢复到数据，则生成新的NPC数据
+    if (this.npcs.length === 0) {
+      this.generateNpcs()
+      this.saveRefreshState()
+    }
+  },
+  
+  beforeUnmount() {
+    //=== 保存最终状态
+    this.saveRefreshState()
+    
+    //=== 清理定时器
+    this.clearRefreshTimer()
   },
   watch: {
     //=== 监听搜索条件变化，重置分页
@@ -241,19 +355,98 @@ export default {
         const name = cityNames[Math.floor(Math.random() * cityNames.length)] + (Math.floor(Math.random() * 999) + 1)
         const level = Math.floor(Math.random() * 20) + 1
         
+        // 生成防守军队
+        const defenseArmy = this.generateNpcArmy(faction, level)
+        
+        // 生成防守资源（基于等级）
+        const baseResource = level * 2000 + 10000
+        const defenderResources = {
+          wood: Math.floor(baseResource + Math.random() * baseResource * 0.5),
+          soil: Math.floor(baseResource + Math.random() * baseResource * 0.5),
+          iron: Math.floor(baseResource + Math.random() * baseResource * 0.5),
+          food: Math.floor(baseResource + Math.random() * baseResource * 0.5)
+        }
+        
+        // 生成城池资源
+        const resources = {
+          wood: Math.floor(Math.random() * 50000) + 10000,
+          soil: Math.floor(Math.random() * 50000) + 10000,
+          iron: Math.floor(Math.random() * 50000) + 10000,
+          food: Math.floor(Math.random() * 50000) + 10000
+        }
+        
         this.npcs.push({
           id: `npc_${i + 1}`,
           name,
           faction,
           level,
-          resources: {
-            wood: Math.floor(Math.random() * 50000) + 10000,
-            soil: Math.floor(Math.random() * 50000) + 10000,
-            iron: Math.floor(Math.random() * 50000) + 10000,
-            food: Math.floor(Math.random() * 50000) + 10000
-          },
-          armyPower: Math.floor(Math.random() * 100000) + 20000
+          resources: resources,
+          defenseArmy,
+          defenderResources: resources // 防守资源就是城池的原本资源
         })
+      }
+    },
+    
+    //=== generateNpcArmy 根据阵营和等级生成NPC防守军队
+    generateNpcArmy(faction, level) {
+      const factionUnits = getFactionUnits(faction)
+      if (!factionUnits.length) return { faction, units: [] }
+      
+      // 根据等级确定军队规模
+      const armyScale = Math.max(1, Math.floor(level / 3)) // 每3级增加一个规模等级
+      const maxUnits = Math.min(4, 1 + armyScale) // 最多4种兵种
+      
+      // 按兵种类型分组
+      const infantryUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.INFANTRY)
+      const cavalryUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.CAVALRY)
+      const siegeUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.SIEGE)
+      const specialUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.SPECIAL)
+      
+      const selectedUnits = []
+      
+      // 确保至少有一个步兵单位（基础防守）
+      if (infantryUnits.length > 0) {
+        const randomInfantry = infantryUnits[Math.floor(Math.random() * infantryUnits.length)]
+        const count = Math.floor((level * 10 + Math.random() * level * 5))
+        selectedUnits.push({
+          ...randomInfantry,
+          count
+        })
+      }
+      
+      // 根据等级添加其他兵种
+      if (level >= 5 && cavalryUnits.length > 0 && selectedUnits.length < maxUnits) {
+        const randomCavalry = cavalryUnits[Math.floor(Math.random() * cavalryUnits.length)]
+        const count = Math.floor((level * 5 + Math.random() * level * 3))
+        selectedUnits.push({
+          ...randomCavalry,
+          count
+        })
+      }
+      
+      // 高等级添加攻城武器
+      if (level >= 10 && siegeUnits.length > 0 && selectedUnits.length < maxUnits) {
+        const randomSiege = siegeUnits[Math.floor(Math.random() * siegeUnits.length)]
+        const count = Math.floor((level * 2 + Math.random() * level))
+        selectedUnits.push({
+          ...randomSiege,
+          count
+        })
+      }
+      
+      // 极高等级添加特殊兵种
+      if (level >= 15 && specialUnits.length > 0 && selectedUnits.length < maxUnits) {
+        const randomSpecial = specialUnits[Math.floor(Math.random() * specialUnits.length)]
+        const count = Math.floor((level + Math.random() * level * 0.5))
+        selectedUnits.push({
+          ...randomSpecial,
+          count
+        })
+      }
+      
+      return {
+        faction,
+        units: selectedUnits
       }
     },
     
@@ -267,15 +460,14 @@ export default {
       return names[faction] || '未知'
     },
     
-    //=== getResourceIcon 获取资源图标组件
+    //=== getResourceIcon 获取资源图标URL
     getResourceIcon(resourceType) {
-      const icons = {
-        wood: 'WoodIcon',
-        soil: 'SoilIcon', 
-        iron: 'IronIcon',
-        food: 'FoodIcon'
-      }
-      return icons[resourceType] || 'WoodIcon'
+      return getResourceIcon(resourceType)
+    },
+    
+    //=== getResourceName 获取资源名称
+    getResourceName(resourceType) {
+      return getResourceName(resourceType)
     },
     
     //=== formatNumber 格式化数字
@@ -290,7 +482,64 @@ export default {
     //=== handleScout 处理侦查事件
     handleScout(npc) {
       console.log('侦查NPC:', npc)
-      // TODO: 实现侦查功能
+      
+      // 检查是否已经侦查过
+      if (npc.scoutedAt) {
+        this.notificationStore.addNotification({
+          type: 'warning',
+          title: '侦查失败',
+          message: '该城池已经侦查过了'
+        })
+        return
+      }
+      
+      // 获取玩家阵营
+      const playerFaction = this.gameStore.userFaction
+      if (!playerFaction) {
+        this.notificationStore.addNotification({
+          type: 'error',
+          title: '侦查失败',
+          message: '请先选择阵营'
+        })
+        return
+      }
+      
+      // 获取对应阵营的侦查兵种ID
+      const scoutUnitId = this.getScoutUnitId(playerFaction)
+      if (!scoutUnitId) {
+        this.notificationStore.addNotification({
+          type: 'error',
+          title: '侦查失败',
+          message: '未找到对应的侦查兵种'
+        })
+        return
+      }
+      
+      // 计算需要消耗的侦查兵数量
+      const requiredScouts = this.calculateRequiredScouts(playerFaction, npc.level)
+      
+      // 检查是否有足够的侦查兵
+      const currentScouts = this.gameStore.army[scoutUnitId] || 0
+      if (currentScouts < requiredScouts) {
+        this.notificationStore.addNotification({
+          type: 'error',
+          title: '侦查失败',
+          message: `需要${requiredScouts}个侦查兵，当前只有${currentScouts}个`
+        })
+        return
+      }
+      
+      // 消耗侦查兵
+      this.gameStore.army[scoutUnitId] -= requiredScouts
+      
+      // 执行侦查
+      this.performScout(npc, requiredScouts)
+      
+      this.notificationStore.addNotification({
+        type: 'success',
+        title: '侦查成功',
+        message: `消耗了${requiredScouts}个侦查兵`
+      })
     },
     
     //=== handleAttack 处理攻击事件
@@ -309,6 +558,189 @@ export default {
     //=== resetPagination 重置分页
     resetPagination() {
       this.currentPage = 1
+    },
+    
+    //=== getScoutUnitId 获取对应阵营的侦查兵种ID
+    getScoutUnitId(faction) {
+      const scoutUnits = {
+        'wei': 'zhanYingTanMa',  // 魏国：战鹰探马
+        'shu': 'flyingKite',     // 蜀国：飞鸢
+        'wu': 'secretAgent'      // 吴国：密探
+      }
+      return scoutUnits[faction]
+    },
+    
+    //=== calculateRequiredScouts 计算需要消耗的侦查兵数量
+    calculateRequiredScouts(faction, targetLevel) {
+      // 消耗比例：魏国 0.5，蜀国 1.5，吴国 1
+      const consumptionRates = {
+        'wei': 0.5,
+        'shu': 1.5,
+        'wu': 1.0
+      }
+      
+      const baseConsumption = targetLevel // 基础消耗等于目标等级
+      const rate = consumptionRates[faction] || 1.0
+      
+      return Math.max(1, Math.ceil(baseConsumption * rate))
+    },
+    
+    //=== performScout 执行侦查
+    performScout(npc, scoutsUsed) {
+      // 记录侦查时间
+      npc.scoutedAt = Date.now()
+      
+      // 生成侦查数据
+      const scoutData = {
+        totalUnits: 0,
+        unitTypes: 0,
+        units: []
+      }
+      
+      if (npc.defenseArmy && npc.defenseArmy.units) {
+        scoutData.units = npc.defenseArmy.units.map(unit => ({
+          id: unit.id,
+          name: unit.name,
+          count: unit.count
+        }))
+        
+        scoutData.totalUnits = npc.defenseArmy.units.reduce((total, unit) => total + unit.count, 0)
+        scoutData.unitTypes = npc.defenseArmy.units.length
+      }
+      
+      npc.scoutData = scoutData
+    },
+    
+    //=== formatScoutTime 格式化侦查时间
+    formatScoutTime(timestamp) {
+      const now = Date.now()
+      const diff = now - timestamp
+      const minutes = Math.floor(diff / (1000 * 60))
+      
+      if (minutes < 1) {
+        return '刚刚'
+      } else if (minutes < 60) {
+        return `${minutes}分钟前`
+      } else {
+        const hours = Math.floor(minutes / 60)
+        return `${hours}小时前`
+      }
+    },
+    
+    //=== initRefreshTimer 初始化刷新定时器
+    initRefreshTimer() {
+      // 从localStorage恢复状态
+      const savedLastRefreshTime = localStorage.getItem('npc_last_refresh_time')
+      const savedNpcData = localStorage.getItem('npc_list_data')
+      
+      if (savedLastRefreshTime) {
+        this.lastRefreshTime = parseInt(savedLastRefreshTime)
+        const elapsed = Math.floor((Date.now() - this.lastRefreshTime) / 1000)
+        
+        // 如果已经超过刷新间隔，立即刷新
+        if (elapsed >= this.refreshInterval) {
+          this.autoRefresh()
+          return
+        }
+        
+        // 否则设置剩余倒计时
+        this.refreshCountdown = this.refreshInterval - elapsed
+        
+        // 恢复NPC数据（如果存在）
+        if (savedNpcData) {
+          try {
+            this.npcs = JSON.parse(savedNpcData)
+          } catch (e) {
+            console.warn('恢复NPC数据失败，重新生成:', e)
+            this.generateNpcs()
+          }
+        }
+      } else {
+        // 首次访问，设置初始倒计时
+        this.refreshCountdown = this.refreshInterval
+        this.lastRefreshTime = Date.now()
+        this.saveRefreshState()
+      }
+      
+      // 启动倒计时定时器
+      this.refreshTimer = setInterval(() => {
+        this.refreshCountdown--
+        
+        // 每10秒保存一次状态
+        if (this.refreshCountdown % 10 === 0) {
+          this.saveRefreshState()
+        }
+        
+        // 倒计时结束，自动刷新
+        if (this.refreshCountdown <= 0) {
+          this.autoRefresh()
+        }
+      }, 1000)
+    },
+    
+    //=== clearRefreshTimer 清理刷新定时器
+    clearRefreshTimer() {
+      if (this.refreshTimer) {
+        clearInterval(this.refreshTimer)
+        this.refreshTimer = null
+      }
+    },
+    
+    //=== saveRefreshState 保存刷新状态到localStorage
+    saveRefreshState() {
+      localStorage.setItem('npc_last_refresh_time', this.lastRefreshTime.toString())
+      localStorage.setItem('npc_list_data', JSON.stringify(this.npcs))
+    },
+    
+    //=== autoRefresh 自动刷新NPC列表
+    autoRefresh() {
+      this.generateNpcs()
+      this.refreshCountdown = this.refreshInterval
+      this.lastRefreshTime = Date.now()
+      
+      // 保存刷新状态
+      this.saveRefreshState()
+      
+      this.notificationStore.addNotification({
+        type: 'info',
+        title: 'NPC列表刷新',
+        message: 'NPC列表已自动刷新，发现新的目标！'
+      })
+    },
+    
+    //=== manualRefresh 手动刷新NPC列表
+    manualRefresh() {
+      // 检查金币是否足够
+      if (!this.canManualRefresh) {
+        this.notificationStore.addNotification({
+          type: 'error',
+          title: '刷新失败',
+          message: `金币不足！需要${this.manualRefreshCost}金币，当前只有${this.gameStore.coins}金币`
+        })
+        return
+      }
+      
+      // 扣除金币
+      this.gameStore.coins -= this.manualRefreshCost
+      
+      // 刷新NPC列表
+      this.generateNpcs()
+      
+      // 重置倒计时
+      this.refreshCountdown = this.refreshInterval
+      this.lastRefreshTime = Date.now()
+      
+      // 保存刷新状态
+      this.saveRefreshState()
+      
+      // 保存游戏数据
+      this.gameStore.saveGame()
+      
+      this.notificationStore.addNotification({
+        type: 'success',
+        title: '手动刷新成功',
+        message: `消耗${this.manualRefreshCost}金币，NPC列表已刷新！`
+      })
     }
   }
 }
@@ -330,6 +762,106 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* 刷新控制区域样式 */
+.refresh-control {
+  background: linear-gradient(135deg, rgba(255, 185, 0, 0.1), rgba(255, 185, 0, 0.05));
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 185, 0, 0.3);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.refresh-info {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.countdown-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.countdown-icon {
+  color: #FFB900;
+  animation: pulse 2s infinite;
+}
+
+.countdown-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.countdown-time {
+  color: #FFB900;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 185, 0, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 185, 0, 0.3);
+}
+
+.refresh-cost {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coin-icon {
+  color: #FFB900;
+}
+
+.cost-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+}
+
+.manual-refresh-btn {
+  background: linear-gradient(135deg, #FFB900, #FF8C00);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.3);
+}
+
+.manual-refresh-btn:hover:not(.disabled) {
+  background: linear-gradient(135deg, #FF8C00, #FFB900);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.4);
+}
+
+.manual-refresh-btn.disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 @media (min-width: 640px) {
@@ -513,6 +1045,87 @@ export default {
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+
+/* 侦查状态信息样式 */
+ .npc-scout-info {
+   @apply flex-shrink-0 flex flex-col gap-1;
+   width: 120px;
+ }
+ 
+ .scout-status {
+   @apply flex items-center gap-1 text-xs;
+   color: white;
+   font-weight: 500;
+ }
+ 
+ .scout-icon {
+   color: #FFB900;
+   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+ }
+ 
+ .scout-label {
+   color: rgba(255, 255, 255, 0.7);
+ }
+ 
+ .scout-time {
+   color: #FFB900;
+   font-weight: bold;
+   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+   font-size: 10px;
+ }
+ 
+ /* 侦查结果样式 - 横向布局 */
+ .scout-result {
+   @apply mt-3 p-3 rounded-lg w-full;
+   background: rgba(255, 185, 0, 0.1);
+   border: 1px solid rgba(255, 185, 0, 0.3);
+   backdrop-filter: blur(10px);
+ }
+ 
+ .scout-result-header {
+   @apply flex items-center justify-between mb-2 text-sm font-bold;
+   color: #FFB900;
+ }
+ 
+ .scout-result-header > div:first-child {
+   @apply flex items-center gap-2;
+ }
+ 
+ .army-summary {
+   @apply flex items-center gap-4 text-xs;
+   color: rgba(255, 255, 255, 0.8);
+ }
+ 
+ .army-total {
+   color: #FFB900;
+   font-weight: bold;
+ }
+ 
+ .army-types {
+   color: rgba(255, 255, 255, 0.6);
+ }
+ 
+ .army-details {
+   @apply flex flex-wrap gap-2;
+ }
+ 
+ .unit-item {
+   @apply flex items-center gap-2 text-xs px-2 py-1 rounded;
+   background: rgba(255, 255, 255, 0.05);
+   border: 1px solid rgba(255, 185, 0, 0.2);
+   min-width: 80px;
+ }
+ 
+ .unit-name {
+   color: rgba(255, 255, 255, 0.8);
+   font-size: 10px;
+ }
+ 
+ .unit-count {
+   color: #FFB900;
+   font-weight: bold;
+   font-size: 10px;
+ }
 
 /* 操作按钮样式 */
 .npc-actions {

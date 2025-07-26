@@ -7,7 +7,8 @@
 export const BATTLE_RULE_IDS = {
   BASIC: 'BASIC',           // 基础战斗规则
   PLUNDER: 'PLUNDER',       // 掠夺战斗规则
-  EXPONENT: 'EXPONENT'      // 指数伤亡规则
+  EXPONENT: 'EXPONENT',     // 指数伤亡规则
+  COMPREHENSIVE: 'COMPREHENSIVE'  // 综合实力战斗规则
 }
 
 // 战斗时间配置
@@ -191,6 +192,167 @@ export const BATTLE_RULES = {
       if (Math.abs(ratioDiff) < 0.1) {
         return 'draw' // 平局
       } else if (ratioDiff > 0) {
+        return 'victory' // 胜利
+      } else {
+        return 'defeat' // 失败
+      }
+    }
+  },
+  
+  [BATTLE_RULE_IDS.COMPREHENSIVE]: {
+    id: BATTLE_RULE_IDS.COMPREHENSIVE,
+    name: '综合实力战斗',
+    description: '分别计算步兵和骑兵攻防，根据实力差距计算损耗，强者损失少，弱者损失大',
+    
+    //=== 计算分兵种攻击力
+    calculateSeparateAttack(army) {
+      if (!army.units) return { infantry: 0, cavalry: 0 }
+      
+      let infantryAttack = 0
+      let cavalryAttack = 0
+      
+      army.units.forEach(unit => {
+        const attack = (unit.attack || 0) * (unit.count || 0)
+        if (unit.unitType === 'cavalry') {
+          cavalryAttack += attack
+        } else {
+          infantryAttack += attack
+        }
+      })
+      
+      return { infantry: infantryAttack, cavalry: cavalryAttack }
+    },
+    
+    //=== 计算分兵种防御力
+    calculateSeparateDefense(army) {
+      if (!army.units) return { infantryDefense: 0, cavalryDefense: 0 }
+      
+      let infantryDefense = 0
+      let cavalryDefense = 0
+      
+      army.units.forEach(unit => {
+        const count = unit.count || 0
+        infantryDefense += (unit.infantryDefense || 0) * count
+        cavalryDefense += (unit.cavalryDefense || 0) * count
+      })
+      
+      return { infantryDefense, cavalryDefense }
+    },
+    
+    //=== 计算综合实力对比
+    calculatePowerComparison(attackerArmy, defenderArmy) {
+      const attackerAttack = this.calculateSeparateAttack(attackerArmy)
+      const defenderDefense = this.calculateSeparateDefense(defenderArmy)
+      
+      // 步兵攻击 vs 步防
+      const infantryPowerRatio = defenderDefense.infantryDefense > 0 
+        ? attackerAttack.infantry / defenderDefense.infantryDefense 
+        : (attackerAttack.infantry > 0 ? 10 : 1)
+      
+      // 骑兵攻击 vs 骑防
+      const cavalryPowerRatio = defenderDefense.cavalryDefense > 0 
+        ? attackerAttack.cavalry / defenderDefense.cavalryDefense 
+        : (attackerAttack.cavalry > 0 ? 10 : 1)
+      
+      // 综合实力比
+      const totalAttack = attackerAttack.infantry + attackerAttack.cavalry
+      const totalDefense = defenderDefense.infantryDefense + defenderDefense.cavalryDefense
+      const overallRatio = totalDefense > 0 ? totalAttack / totalDefense : (totalAttack > 0 ? 10 : 1)
+      
+      return {
+        infantryRatio: infantryPowerRatio,
+        cavalryRatio: cavalryPowerRatio,
+        overallRatio: overallRatio,
+        attackerAttack,
+        defenderDefense
+      }
+    },
+    
+    //=== 计算损耗比例
+    calculateLossRatio(powerRatio) {
+      // 实力相差不大时（0.8-1.25），双方均等损失
+      if (powerRatio >= 0.8 && powerRatio <= 1.25) {
+        return { winner: 0.15, loser: 0.15 } // 均等损失15%
+      }
+      
+      // 实力差距较大时，强者损失少，弱者损失大
+      if (powerRatio > 1.25) {
+        // 进攻方强势
+        const advantage = Math.min(powerRatio / 1.25, 4) // 最大4倍优势
+        const winnerLoss = Math.max(0.05, 0.2 / advantage) // 强者最少5%损失
+        const loserLoss = Math.min(0.6, 0.15 * advantage) // 弱者最多60%损失
+        return { winner: winnerLoss, loser: loserLoss }
+      } else {
+        // 防守方强势
+        const advantage = Math.min(1.25 / powerRatio, 4) // 最大4倍优势
+        const winnerLoss = Math.max(0.05, 0.2 / advantage) // 强者最少5%损失
+        const loserLoss = Math.min(0.6, 0.15 * advantage) // 弱者最多60%损失
+        return { winner: winnerLoss, loser: loserLoss }
+      }
+    },
+    
+    //=== 计算单位损耗
+    calculateUnitLosses(army, lossRatio) {
+      if (!army.units) return []
+      
+      return army.units.map(unit => {
+        const count = unit.count || 0
+        if (count === 0) return { ...unit, losses: 0 }
+        
+        // 单数值强的兵种损耗更小，单数值弱的兵种损失更大
+        const unitPower = (unit.attack || 0) + (unit.infantryDefense || 0) + (unit.cavalryDefense || 0)
+        const avgPower = army.units.reduce((sum, u) => {
+          return sum + ((u.attack || 0) + (u.infantryDefense || 0) + (u.cavalryDefense || 0))
+        }, 0) / army.units.length
+        
+        // 实力修正系数：强兵种损耗减少，弱兵种损耗增加
+        const powerModifier = avgPower > 0 ? Math.pow(unitPower / avgPower, 0.3) : 1
+        const adjustedLossRatio = lossRatio / powerModifier
+        
+        // 限制损耗比例在合理范围内
+        const finalLossRatio = Math.max(0.02, Math.min(0.8, adjustedLossRatio))
+        const losses = Math.floor(count * finalLossRatio)
+        
+        return {
+          ...unit,
+          losses: losses,
+          lossRatio: finalLossRatio
+        }
+      })
+    },
+    
+    //=== 主要伤害计算函数
+    calculateDamage(attackerArmy, defenderArmy) {
+      const powerComparison = this.calculatePowerComparison(attackerArmy, defenderArmy)
+      const { overallRatio } = powerComparison
+      
+      // 计算损耗比例
+      const lossRatios = this.calculateLossRatio(overallRatio)
+      
+      // 确定胜负
+      const attackerWins = overallRatio > 1
+      const attackerLossRatio = attackerWins ? lossRatios.winner : lossRatios.loser
+      const defenderLossRatio = attackerWins ? lossRatios.loser : lossRatios.winner
+      
+      // 计算各单位损耗
+      const attackerLosses = this.calculateUnitLosses(attackerArmy, attackerLossRatio)
+      const defenderLosses = this.calculateUnitLosses(defenderArmy, defenderLossRatio)
+      
+      return {
+        attackerLosses,
+        defenderLosses,
+        attackerLossRatio,
+        defenderLossRatio,
+        powerComparison,
+        battleResult: this.calculateBattleResult(overallRatio)
+      }
+    },
+    
+    //=== 计算战斗结果
+    calculateBattleResult(overallRatio) {
+      if (overallRatio >= 0.9 && overallRatio <= 1.1) {
+        return 'draw' // 平局
+      } else if (overallRatio > 1.1) {
         return 'victory' // 胜利
       } else {
         return 'defeat' // 失败
