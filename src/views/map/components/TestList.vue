@@ -1,38 +1,10 @@
 <template>
   <div class="test-list">
-    <!-- 测试页面按钮区域 -->
-    <div class="button-container">
-      <button class="test-button" @click="handlePlayerArmyInfo">
-        玩家军队信息
-      </button>
-      
-      <button class="test-button" @click="handleNpcArmyInfo">
-        NPC军队信息
-      </button>
-      
-      <div class="battle-rule-container">
-        <label for="battleRule" class="battle-rule-label">战斗规则选择：</label>
-        <select 
-          id="battleRule" 
-          v-model="selectedBattleRule" 
-          @change="handleBattleRuleChange" 
-          class="battle-rule-select"
-        >
-          <option value="" disabled>请选择战斗规则</option>
-          <option v-for="rule in battleRules" :key="rule.id" :value="rule.id">
-            {{ rule.name }} - {{ rule.description }}
-          </option>
-        </select>
-        <button 
-          @click="startBattleTest" 
-          :disabled="!selectedBattleRule" 
-          class="test-button battle-test-btn"
-          :class="{ 'disabled': !selectedBattleRule }"
-        >
-          开始对战测试
-        </button>
-      </div>
-    </div>
+    <!-- 测试按钮区域 -->
+    <PlayerButtons @show-data="handleShowData" />
+    
+    <!-- NPC按钮区域 -->
+    <NpcButtons @show-data="handleShowData" />
     
     <!-- 数据显示区域 -->
     <div v-if="showData" class="data-display">
@@ -62,8 +34,8 @@
           <div class="info-row">
             <span class="label">出动兵种：</span>
             <span class="units-info">
-              <span v-for="(unit, index) in currentData.battleResult.attacker.originalUnits" :key="unit.id">
-                {{ unit.name }}{{ unit.count }}{{ index < currentData.battleResult.attacker.originalUnits.length - 1 ? '，' : '' }}
+              <span v-for="(unit, index) in getAllUnitsWithCounts(currentData.battleResult.attacker.originalUnits)" :key="unit.id">
+                {{ unit.name }}{{ unit.count }}{{ index < getAllUnitsWithCounts(currentData.battleResult.attacker.originalUnits).length - 1 ? '，' : '' }}
               </span>
             </span>
           </div>
@@ -72,21 +44,23 @@
           <div class="info-row">
             <span class="label">阵亡兵种：</span>
             <span class="units-loss">
-              <span v-for="(unit, index) in getUnitsWithLoss(currentData.battleResult.attacker.originalUnits, currentData.battleResult.attacker.losses)" :key="unit.id">
-                {{ unit.name }}{{ unit.lossCount }}{{ index < getUnitsWithLoss(currentData.battleResult.attacker.originalUnits, currentData.battleResult.attacker.losses).length - 1 ? '，' : '' }}
+              <span v-if="getAllUnitsWithLosses(currentData.battleResult.attacker.originalUnits, currentData.battleResult.attacker.losses).filter(unit => unit.lossCount > 0).length === 0">无</span>
+              <span v-else>
+                <span v-for="(unit, index) in getAllUnitsWithLosses(currentData.battleResult.attacker.originalUnits, currentData.battleResult.attacker.losses).filter(unit => unit.lossCount > 0)" :key="unit.id">
+                  {{ unit.name }}{{ unit.lossCount }}{{ index < getAllUnitsWithLosses(currentData.battleResult.attacker.originalUnits, currentData.battleResult.attacker.losses).filter(unit => unit.lossCount > 0).length - 1 ? '，' : '' }}
+                </span>
               </span>
-              <span v-if="getUnitsWithLoss(currentData.battleResult.attacker.originalUnits, currentData.battleResult.attacker.losses).length === 0">无</span>
             </span>
           </div>
           
           <!-- 第四行：掠夺资源 -->
-          <div class="info-row" v-if="currentData.battleResult.details.plundered">
+          <div class="info-row">
             <span class="label">掠夺资源：</span>
             <span class="plunder-info">
-              <span v-if="currentData.battleResult.details.plundered.wood > 0">木材{{ currentData.battleResult.details.plundered.wood }}</span>
-              <span v-if="currentData.battleResult.details.plundered.clay > 0">泥土{{ currentData.battleResult.details.plundered.clay }}</span>
-              <span v-if="currentData.battleResult.details.plundered.iron > 0">铁{{ currentData.battleResult.details.plundered.iron }}</span>
-              <span v-if="currentData.battleResult.details.plundered.food > 0">食物{{ currentData.battleResult.details.plundered.food }}</span>
+              <span>木材{{ getPlunderedResource('wood') }}</span>
+              <span>泥土{{ getPlunderedResource('clay') }}</span>
+              <span>铁{{ getPlunderedResource('iron') }}</span>
+              <span>食物{{ getPlunderedResource('food') }}</span>
             </span>
           </div>
         </div>
@@ -108,8 +82,8 @@
           <div class="info-row">
             <span class="label">出动兵种：</span>
             <span class="units-info">
-              <span v-for="(unit, index) in currentData.battleResult.defender.originalUnits" :key="unit.id">
-                {{ unit.name }}{{ unit.count }}{{ index < currentData.battleResult.defender.originalUnits.length - 1 ? '，' : '' }}
+              <span v-for="(unit, index) in getAllUnitsWithCounts(currentData.battleResult.defender.originalUnits)" :key="unit.id">
+                {{ unit.name }}{{ unit.count }}{{ index < getAllUnitsWithCounts(currentData.battleResult.defender.originalUnits).length - 1 ? '，' : '' }}
               </span>
             </span>
           </div>
@@ -118,10 +92,12 @@
           <div class="info-row">
             <span class="label">阵亡兵种：</span>
             <span class="units-loss">
-              <span v-for="(unit, index) in getUnitsWithLoss(currentData.battleResult.defender.originalUnits, currentData.battleResult.defender.losses)" :key="unit.id">
-                {{ unit.name }}{{ unit.lossCount }}{{ index < getUnitsWithLoss(currentData.battleResult.defender.originalUnits, currentData.battleResult.defender.losses).length - 1 ? '，' : '' }}
+              <span v-if="getAllUnitsWithLosses(currentData.battleResult.defender.originalUnits, currentData.battleResult.defender.losses).filter(unit => unit.lossCount > 0).length === 0">无</span>
+              <span v-else>
+                <span v-for="(unit, index) in getAllUnitsWithLosses(currentData.battleResult.defender.originalUnits, currentData.battleResult.defender.losses).filter(unit => unit.lossCount > 0)" :key="unit.id">
+                  {{ unit.name }}{{ unit.lossCount }}{{ index < getAllUnitsWithLosses(currentData.battleResult.defender.originalUnits, currentData.battleResult.defender.losses).filter(unit => unit.lossCount > 0).length - 1 ? '，' : '' }}
+                </span>
               </span>
-              <span v-if="getUnitsWithLoss(currentData.battleResult.defender.originalUnits, currentData.battleResult.defender.losses).length === 0">无</span>
             </span>
           </div>
         </div>
@@ -165,16 +141,208 @@
       <!-- 其他数据的JSON展示 -->
       <pre v-else class="json-display">{{ formattedData }}</pre>
     </div>
+    
+    <!-- 战斗结果完整数据展示区域 -->
+    <div v-if="currentData && currentData.battleResult" class="battle-result-data-section">
+      <div class="section-header">
+        <h3 class="section-title">🔍 战斗结果完整数据</h3>
+        <p class="section-desc">展示战斗计算的所有详细数据</p>
+      </div>
+      
+      <!-- 战斗基础信息 -->
+      <div class="data-card">
+        <h4 class="data-card-title">⚔️ 战斗基础信息</h4>
+        <div class="data-grid">
+          <div class="data-item">
+            <span class="data-label">战斗结果:</span>
+            <span class="data-value" :class="getBattleResultClass(currentData.battleResult.result)">{{ getBattleResultTitle(currentData.battleResult.result) }}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">战斗规则:</span>
+            <span class="data-value">{{ currentData.battleResult.rule || '未知' }}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">战斗时间:</span>
+            <span class="data-value">{{ new Date().toLocaleString() }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 攻击方数据 -->
+      <div class="data-card" v-if="currentData.attacker && currentData.attacker.playerInfo">
+        <h4 class="data-card-title">🗡️ 攻击方数据</h4>
+        <div class="participant-data">
+          <div class="basic-info">
+            <div class="data-item">
+              <span class="data-label">玩家:</span>
+              <span class="data-value">{{ currentData.attacker.playerInfo?.nickname || '未知' }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">阵营:</span>
+              <span class="data-value">{{ currentData.attacker.playerInfo?.factionName || '未知' }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">总兵力:</span>
+              <span class="data-value">{{ currentData.attacker.armyStatistics?.totalUnits || 0 }}</span>
+            </div>
+          </div>
+          <div class="army-stats">
+            <div class="stat-item">
+              <span class="stat-label">总攻击力:</span>
+              <span class="stat-value">{{ currentData.attacker.armyStatistics?.totalAttack || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">步兵防御:</span>
+              <span class="stat-value">{{ currentData.attacker.armyStatistics?.totalInfantryDefense || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">骑兵防御:</span>
+              <span class="stat-value">{{ currentData.attacker.armyStatistics?.totalCavalryDefense || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">运载能力:</span>
+              <span class="stat-value">{{ currentData.attacker.armyStatistics?.totalCarryCapacity || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">最慢速度:</span>
+              <span class="stat-value">{{ currentData.attacker.armyStatistics?.slowestSpeed || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 防守方数据 -->
+      <div class="data-card" v-if="currentData.defender && currentData.defender.playerInfo">
+        <h4 class="data-card-title">🛡️ 防守方数据</h4>
+        <div class="participant-data">
+          <div class="basic-info">
+            <div class="data-item">
+              <span class="data-label">玩家:</span>
+              <span class="data-value">{{ currentData.defender.playerInfo?.nickname || '未知' }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">阵营:</span>
+              <span class="data-value">{{ currentData.defender.playerInfo?.factionName || '未知' }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">总兵力:</span>
+              <span class="data-value">{{ currentData.defender.armyStatistics?.totalUnits || 0 }}</span>
+            </div>
+          </div>
+          <div class="army-stats">
+            <div class="stat-item">
+              <span class="stat-label">总攻击力:</span>
+              <span class="stat-value">{{ currentData.defender.armyStatistics?.totalAttack || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">步兵防御:</span>
+              <span class="stat-value">{{ currentData.defender.armyStatistics?.totalInfantryDefense || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">骑兵防御:</span>
+              <span class="stat-value">{{ currentData.defender.armyStatistics?.totalCavalryDefense || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">运载能力:</span>
+              <span class="stat-value">{{ currentData.defender.armyStatistics?.totalCarryCapacity || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">最慢速度:</span>
+              <span class="stat-value">{{ currentData.defender.armyStatistics?.slowestSpeed || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 战斗详细结果 -->
+      <div class="data-card">
+        <h4 class="data-card-title">📊 战斗详细结果</h4>
+        <div class="battle-details-data">
+          <div class="detail-section" v-if="currentData.attacker && currentData.attacker.armyGroup && currentData.attacker.armyGroup.units">
+            <h5 class="detail-title">攻击方损失</h5>
+            <div class="loss-data">
+              <div v-for="unit in currentData.attacker.armyGroup.units" :key="'attacker-loss-' + unit.id" class="loss-item">
+                <span class="unit-name">{{ unit.name }}:</span>
+                <span class="loss-count">{{ getLossCount(currentData.battleResult?.details?.attackerLosses, unit.id) }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section" v-if="currentData.defender && currentData.defender.armyGroup && currentData.defender.armyGroup.units">
+            <h5 class="detail-title">防守方损失</h5>
+            <div class="loss-data">
+              <div v-for="unit in currentData.defender.armyGroup.units" :key="'defender-loss-' + unit.id" class="loss-item">
+                <span class="unit-name">{{ unit.name }}:</span>
+                <span class="loss-count">{{ getLossCount(currentData.battleResult?.details?.defenderLosses, unit.id) }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section" v-if="currentData.battleResult && currentData.battleResult.details && currentData.battleResult.details.plundered">
+            <h5 class="detail-title">掠夺资源</h5>
+            <div class="plunder-data">
+              <div class="plunder-item">
+                <span class="resource-name">木材:</span>
+                <span class="resource-amount">{{ currentData.battleResult.details.plundered?.wood || 0 }}</span>
+              </div>
+              <div class="plunder-item">
+                <span class="resource-name">泥土:</span>
+                <span class="resource-amount">{{ currentData.battleResult.details.plundered?.clay || 0 }}</span>
+              </div>
+              <div class="plunder-item">
+                <span class="resource-name">铁:</span>
+                <span class="resource-amount">{{ currentData.battleResult.details.plundered?.iron || 0 }}</span>
+              </div>
+              <div class="plunder-item">
+                <span class="resource-name">食物:</span>
+                <span class="resource-amount">{{ currentData.battleResult.details.plundered?.food || 0 }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 原始JSON数据 -->
+      <div class="data-card">
+        <h4 class="data-card-title">📋 原始JSON数据</h4>
+        <div class="json-container">
+          <div class="json-toolbar">
+            <button @click="copyJsonToClipboard" class="json-btn copy-btn">
+              <span class="btn-icon">📋</span>
+              <span class="btn-text">复制</span>
+            </button>
+            <button @click="toggleJsonCollapse" class="json-btn collapse-btn">
+              <span class="btn-icon">{{ isJsonCollapsed ? '📖' : '📕' }}</span>
+              <span class="btn-text">{{ isJsonCollapsed ? '展开' : '折叠' }}</span>
+            </button>
+            <button @click="downloadJson" class="json-btn download-btn">
+              <span class="btn-icon">💾</span>
+              <span class="btn-text">下载</span>
+            </button>
+          </div>
+          <div class="json-display-wrapper" :class="{ 'collapsed': isJsonCollapsed }">
+            <pre class="json-raw-display" v-html="highlightedJson"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { useGameStore } from '@/store/modules/gameStore.js'
-import { getUnitById, getFactionConfig } from '@/config/factionConfig.js'
+import { getUnitById, getFactionConfig, getFactionUnits } from '@/config/factionConfig.js'
 import { getAllBattleRules, getBattleRule } from '@/config/battleRulesConfig.js'
+import PlayerButtons from './Test/PlayerButtons.vue'
+import NpcButtons from './Test/NpcButtons.vue'
 
 export default {
   name: 'TestList',
+  
+  components: {
+    PlayerButtons,
+    NpcButtons
+  },
   data() {
     return {
       //=== showData 是否显示数据
@@ -183,10 +351,8 @@ export default {
       dataTitle: '',
       //=== currentData 当前显示的数据
       currentData: null,
-      //=== selectedBattleRule 选中的战斗规则
-      selectedBattleRule: '',
-      //=== battleRules 战斗规则列表
-      battleRules: getAllBattleRules()
+      //=== isJsonCollapsed JSON是否折叠
+      isJsonCollapsed: false
     }
   },
   computed: {
@@ -261,6 +427,13 @@ export default {
     //=== formattedData 格式化的JSON数据
     formattedData() {
       return this.currentData ? JSON.stringify(this.currentData, null, 2) : ''
+    },
+    
+    //=== highlightedJson 语法高亮的JSON数据
+    highlightedJson() {
+      if (!this.currentData) return ''
+      const jsonString = JSON.stringify(this.currentData, null, 2)
+      return this.syntaxHighlight(jsonString)
     }
   },
   methods: {
@@ -318,410 +491,80 @@ export default {
       }).filter(unit => unit.lossCount > 0)
     },
     
-    //=== handlePlayerArmyInfo 处理玩家军队信息按钮点击
-    handlePlayerArmyInfo() {
-      // 如果军队数据为空，添加一些测试数据
-      if (Object.keys(this.gameStore.army).length === 0) {
-        console.log('军队数据为空，添加测试数据...')
-        // 设置用户阵营为魏国（如果还没设置）
-        if (!this.gameStore.userFaction) {
-          this.gameStore.userFaction = 'wei'
-        }
-        // 添加一些测试军队数据
-        this.gameStore.army = {
-          'wei_qingzhou': 10,     // 青州军
-          'wei_guard': 5,         // 禁卫甲士
-          'wei_tiger': 3,         // 虎卫
-          'wei_scout': 8,         // 战鹰探马
-          'wei_cavalry': 4,       // 骑骑营
-          'wei_elite_cavalry': 2, // 虎豹骑
-          'wei_ram': 1,           // 冲撞车
-          'wei_catapult': 1       // 露雷车
-        }
-        console.log('已添加测试军队数据:', this.gameStore.army)
+    //=== getAllUnitsWithCounts 获取所有兵种及其数量（包括数量为0的）
+    getAllUnitsWithCounts(originalUnits) {
+      // 如果没有原始兵种数据，返回空数组
+      if (!originalUnits || originalUnits.length === 0) {
+        return []
       }
       
-      this.dataTitle = '玩家军队信息（战斗功能文档格式）'
-      this.currentData = this.playerArmyData
-      this.showData = true
-      console.log('显示玩家军队信息（真实数据）:', this.playerArmyData)
-    },
-    
-    //=== handleNpcArmyInfo 处理NPC军队信息按钮点击
-    async handleNpcArmyInfo() {
-      // 生成示例NPC军队数据，参考NpcList.vue的数据结构
-      const npcArmyData = await this.generateSampleNpcData()
+      // 从原始兵种数据中获取阵营信息
+      const faction = originalUnits[0]?.faction || this.gameStore.userFaction || 'wei'
       
-      this.dataTitle = 'NPC军队信息（示例数据）'
-      this.currentData = npcArmyData
-      this.showData = true
-      console.log('显示NPC军队信息:', npcArmyData)
-    },
-    
-    //=== generateSampleNpcData 生成示例NPC数据
-    async generateSampleNpcData() {
-      // 随机选择一个阵营
-      const factions = ['wei', 'shu', 'wu']
-      const faction = factions[Math.floor(Math.random() * factions.length)]
-      const level = Math.floor(Math.random() * 20) + 1
+      // 获取该阵营的所有兵种类型
+      const allFactionUnits = getFactionUnits(faction)
       
-      // 生成NPC基础信息
-      const npcInfo = {
-        id: `npc_sample_${Date.now()}`,
-        name: `示例城池${Math.floor(Math.random() * 999) + 1}`,
-        faction: faction,
-        level: level
-      }
-      
-      // 生成防守军队
-      const defenseArmy = await this.generateSampleNpcArmy(faction, level)
-      
-      // 生成资源信息
-      const baseResource = level * 2000 + 10000
-      const resources = {
-        wood: Math.floor(baseResource + Math.random() * baseResource * 0.5),
-        soil: Math.floor(baseResource + Math.random() * baseResource * 0.5),
-        iron: Math.floor(baseResource + Math.random() * baseResource * 0.5),
-        food: Math.floor(baseResource + Math.random() * baseResource * 0.5)
-      }
-      
-      // 计算军队统计信息
-      const armyStatistics = {
-        totalUnits: defenseArmy.units.reduce((total, unit) => total + unit.count, 0),
-        totalAttack: defenseArmy.units.reduce((total, unit) => total + (unit.attack * unit.count), 0),
-        totalInfantryDefense: defenseArmy.units.reduce((total, unit) => total + (unit.infantryDefense * unit.count), 0),
-        totalCavalryDefense: defenseArmy.units.reduce((total, unit) => total + (unit.cavalryDefense * unit.count), 0),
-        totalCarryCapacity: defenseArmy.units.reduce((total, unit) => total + (unit.carryCapacity * unit.count), 0),
-        slowestSpeed: defenseArmy.units.length > 0 ? Math.min(...defenseArmy.units.map(unit => unit.speed)) : 0
-      }
-      
-      return {
-        // NPC基础信息
-        npcInfo: npcInfo,
-        
-        // 防守军队信息
-        defenseArmy: defenseArmy,
-        
-        // 资源信息
-        resources: resources,
-        
-        // 军队统计信息
-        armyStatistics: armyStatistics
-      }
-    },
-    
-    //=== generateSampleNpcArmy 生成示例NPC军队
-    async generateSampleNpcArmy(faction, level) {
-      // 根据阵营获取可用兵种
-      const { getFactionUnits, UNIT_TYPES } = await import('@/config/factionConfig.js')
-      const factionUnits = getFactionUnits(faction)
-      
-      if (!factionUnits.length) return { faction, units: [] }
-      
-      // 根据等级确定军队规模
-      const armyScale = Math.max(1, Math.floor(level / 3))
-      const maxUnits = Math.min(4, 1 + armyScale)
-      
-      // 按兵种类型分组
-      const infantryUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.INFANTRY)
-      const cavalryUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.CAVALRY)
-      const siegeUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.SIEGE)
-      const specialUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.SPECIAL)
-      
-      const selectedUnits = []
-      
-      // 确保至少有一个步兵单位（基础防守）
-      if (infantryUnits.length > 0) {
-        const randomInfantry = infantryUnits[Math.floor(Math.random() * infantryUnits.length)]
-        const count = Math.floor((level * 10 + Math.random() * level * 5))
-        selectedUnits.push({
-          ...randomInfantry,
-          count
-        })
-      }
-      
-      // 根据等级添加其他兵种
-      if (level >= 5 && cavalryUnits.length > 0 && selectedUnits.length < maxUnits) {
-        const randomCavalry = cavalryUnits[Math.floor(Math.random() * cavalryUnits.length)]
-        const count = Math.floor((level * 5 + Math.random() * level * 3))
-        selectedUnits.push({
-          ...randomCavalry,
-          count
-        })
-      }
-      
-      // 高等级添加攻城武器
-      if (level >= 10 && siegeUnits.length > 0 && selectedUnits.length < maxUnits) {
-        const randomSiege = siegeUnits[Math.floor(Math.random() * siegeUnits.length)]
-        const count = Math.floor((level * 2 + Math.random() * level))
-        selectedUnits.push({
-          ...randomSiege,
-          count
-        })
-      }
-      
-      // 极高等级添加特殊兵种
-      if (level >= 15 && specialUnits.length > 0 && selectedUnits.length < maxUnits) {
-        const randomSpecial = specialUnits[Math.floor(Math.random() * specialUnits.length)]
-        const count = Math.floor((level + Math.random() * level * 0.5))
-        selectedUnits.push({
-          ...randomSpecial,
-          count
-        })
-      }
-      
-      return {
-        faction,
-        units: selectedUnits
-      }
-    },
-    
-    //=== handleBattleRuleChange 处理战斗规则变化
-    handleBattleRuleChange() {
-      if (this.selectedBattleRule) {
-        const rule = getBattleRule(this.selectedBattleRule)
-        this.dataTitle = '已选择战斗规则'
-        this.currentData = {
-          selectedRule: {
-            id: rule.id,
-            name: rule.name,
-            description: rule.description
-          },
-          message: '已选择战斗规则，点击"开始对战测试"进行测试'
-        }
-        this.showData = true
-        console.log('选择了战斗规则:', rule)
-      }
-    },
-    
-    //=== startBattleTest 开始对战测试
-    async startBattleTest() {
-      if (!this.selectedBattleRule) return
-      
-      try {
-        console.log('开始对战测试...')
-        
-        // 获取玩家军队数据
-        const playerArmy = await this.getPlayerArmyForBattle()
-        
-        // 生成NPC军队数据
-        const npcArmy = await this.generateNpcArmyForBattle()
-        
-        // 获取战斗规则
-        const battleRule = getBattleRule(this.selectedBattleRule)
-        
-        // 执行战斗计算
-        const battleResult = this.calculateBattle(playerArmy, npcArmy, battleRule)
-        
-        // 显示战斗结果
-        this.dataTitle = '对战测试结果'
-        this.currentData = {
-          battleRule: {
-            id: battleRule.id,
-            name: battleRule.name,
-            description: battleRule.description
-          },
-          battleResult: battleResult
-        }
-        this.showData = true
-        
-        console.log('对战测试完成:', battleResult)
-        
-      } catch (error) {
-        console.error('战斗测试失败:', error)
-        this.dataTitle = '对战测试错误'
-        this.currentData = {
-          error: '战斗测试失败',
-          message: error.message,
-          stack: error.stack
-        }
-        this.showData = true
-      }
-    },
-    
-    //=== getPlayerArmyForBattle 获取玩家军队用于战斗
-    async getPlayerArmyForBattle() {
-      // 确保有军队数据
-      if (Object.keys(this.gameStore.army).length === 0) {
-        // 自动添加测试数据
-        this.gameStore.userFaction = 'wei'
-        this.gameStore.army = {
-          'wei_qingzhou': 50,
-          'wei_guard': 30,
-          'wei_tiger': 25,
-          'wei_scout': 20,
-          'wei_cavalry': 15,
-          'wei_elite_cavalry': 10,
-          'wei_ram': 5,
-          'wei_catapult': 3
-        }
-      }
-      
-      const units = []
-      Object.keys(this.gameStore.army).forEach(unitId => {
-        const count = this.gameStore.army[unitId]
-        if (count > 0) {
-          const unitConfig = getUnitById(unitId)
-          if (unitConfig) {
-            units.push({
-              unitId,
-              name: unitConfig.name,
-              count,
-              attack: unitConfig.attack,
-              infantryDefense: unitConfig.infantryDefense,
-              cavalryDefense: unitConfig.cavalryDefense,
-              unitType: unitConfig.unitType,
-              speed: unitConfig.speed,
-              carryCapacity: unitConfig.carryCapacity
-            })
-          }
-        }
-      })
-      
-      return {
-        faction: this.gameStore.userFaction || 'wei',
-        units
-      }
-    },
-    
-    //=== generateNpcArmyForBattle 生成NPC军队用于战斗
-    async generateNpcArmyForBattle() {
-      const factions = ['wei', 'shu', 'wu']
-      const faction = factions[Math.floor(Math.random() * factions.length)]
-      const level = 10 + Math.floor(Math.random() * 10) // 10-20级
-      
-      // 生成随机军队
-      const { getFactionUnits } = await import('@/config/factionConfig.js')
-      const factionUnits = getFactionUnits(faction)
-      
-      if (!factionUnits.length) {
-        return { faction, units: [] }
-      }
-      
-      // 随机选择3-5种兵种
-      const selectedCount = 3 + Math.floor(Math.random() * 3)
-      const shuffled = [...factionUnits].sort(() => 0.5 - Math.random())
-      const selectedUnits = shuffled.slice(0, selectedCount)
-      
-      const units = selectedUnits.map(unitConfig => {
-        const count = Math.floor(level * (5 + Math.random() * 10)) // 根据等级生成数量
+      // 创建一个包含所有兵种的数组，没有的兵种数量为0
+      return allFactionUnits.map(unitConfig => {
+        const existingUnit = originalUnits.find(unit => unit.id === unitConfig.id)
         return {
-          unitId: unitConfig.id,
+          id: unitConfig.id,
           name: unitConfig.name,
-          count,
-          attack: unitConfig.attack,
-          infantryDefense: unitConfig.infantryDefense,
-          cavalryDefense: unitConfig.cavalryDefense,
-          unitType: unitConfig.unitType,
-          speed: unitConfig.speed,
-          carryCapacity: unitConfig.carryCapacity
+          count: existingUnit ? existingUnit.count : 0
         }
       })
-      
-      return { faction, units }
     },
     
-    //=== calculateBattle 计算战斗结果
-    calculateBattle(playerArmy, npcArmy, battleRule) {
-      try {
-        console.log('计算战斗:', { playerArmy, npcArmy, battleRule })
+    //=== getAllUnitsWithLosses 获取所有兵种的阵亡数量（按出动-损耗计算）
+    getAllUnitsWithLosses(originalUnits, losses) {
+      // 如果没有原始兵种数据，返回空数组
+      if (!originalUnits || originalUnits.length === 0) {
+        return []
+      }
+      
+      // 从原始兵种数据中获取阵营信息
+      const faction = originalUnits[0]?.faction || this.gameStore.userFaction || 'wei'
+      
+      // 获取该阵营的所有兵种类型
+      const allFactionUnits = getFactionUnits(faction)
+      
+      // 创建一个包含所有兵种阵亡数量的数组
+      return allFactionUnits.map(unitConfig => {
+        const existingUnit = originalUnits.find(unit => unit.id === unitConfig.id)
+        const originalCount = existingUnit ? existingUnit.count : 0
+        const lossCount = this.getLossCount(losses, unitConfig.id)
         
-        // 使用新的统一 calculateBattle 方法
-        const battleResult = battleRule.calculateBattle(playerArmy, npcArmy)
-        console.log('战斗结果:', battleResult)
-        
-        return battleResult
-      } catch (error) {
-        console.error('战斗计算错误:', error)
         return {
-          result: 'error',
-          summary: '战斗计算出错: ' + error.message,
-          details: { error: error.message },
-          ruleUsed: battleRule.id
+          id: unitConfig.id,
+          name: unitConfig.name,
+          lossCount: lossCount
         }
-      }
+      })
     },
     
-    //=== getBattleResultClass 获取战斗结果样式类
-    getBattleResultClass(result) {
-      switch (result) {
-        case 'ATTACKER_VICTORY':
-          return 'result-victory'
-        case 'DEFENDER_VICTORY':
-          return 'result-defeat'
-        case 'DRAW':
-          return 'result-draw'
-        default:
-          return 'result-error'
-      }
-    },
-    
-    //=== getBattleResultIcon 获取战斗结果图标
-    getBattleResultIcon(result) {
-      switch (result) {
-        case 'ATTACKER_VICTORY':
-          return '🏆'
-        case 'DEFENDER_VICTORY':
-          return '💀'
-        case 'DRAW':
-          return '⚖️'
-        default:
-          return '❌'
-      }
-    },
-    
-    //=== getBattleResultTitle 获取战斗结果标题
-    getBattleResultTitle(result) {
-      switch (result) {
-        case 'ATTACKER_VICTORY':
-          return '进攻方胜利！'
-        case 'DEFENDER_VICTORY':
-          return '防守方胜利！'
-        case 'DRAW':
-          return '平局！'
-        default:
-          return '错误！'
-      }
-    },
-    
-    //=== formatDetailLabel 格式化详情标签
-    formatDetailLabel(key) {
-      const labelMap = {
-        attackerDamage: '玩家造成伤害',
-        defenderDamage: 'NPC造成伤害',
-        attackerLosses: '玩家损失兵力',
-        defenderLosses: 'NPC损失兵力',
-        attackerLossRatio: '玩家损失率',
-        defenderLossRatio: 'NPC损失率',
-        playerPower: '玩家战力',
-        npcPower: 'NPC战力',
-        powerComparison: '战力对比',
-        error: '错误信息'
-      }
-      return labelMap[key] || key
-    },
-    
-    //=== formatDetailValue 格式化详情值
-    formatDetailValue(key, value) {
-      // 检查值是否为 null、undefined 或非数字
-      if (value === null || value === undefined || (typeof value !== 'number' && isNaN(Number(value)))) {
-        return value || '未知'
+    //=== getPlunderedResource 获取掠夺的资源数量（没有就返回0）
+    getPlunderedResource(resourceType) {
+      if (!this.currentData || !this.currentData.battleResult || !this.currentData.battleResult.details) {
+        return 0
       }
       
-      // 确保 value 是数字类型
-      const numValue = typeof value === 'number' ? value : Number(value)
+      const plundered = this.currentData.battleResult.details.plundered
+      if (!plundered) {
+        return 0
+      }
       
-      if (key.includes('Ratio')) {
-        return `${(numValue * 100).toFixed(1)}%`
-      }
-      if (key === 'powerComparison') {
-        return `${numValue.toFixed(2)}:1`
-      }
-      if (typeof numValue === 'number' && !isNaN(numValue)) {
-        return Math.floor(numValue).toLocaleString()
-      }
-      return value
+      return plundered[resourceType] || 0
     },
+    
+    //=== handleShowData 处理子组件显示数据事件
+    handleShowData(data) {
+      this.dataTitle = data.title
+      this.currentData = data.data
+      this.showData = true
+    },
+    
+
+
     
     //=== getResourceName 获取资源名称
     getResourceName(resource) {
@@ -739,6 +582,69 @@ export default {
       this.showData = false
       this.currentData = null
       this.dataTitle = ''
+    },
+    
+    //=== syntaxHighlight JSON语法高亮
+    syntaxHighlight(json) {
+      if (typeof json !== 'string') {
+        json = JSON.stringify(json, undefined, 2)
+      }
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      return json.replace(/"([^"]+)":/g, '<span class="json-key">"$1":</span>')
+        .replace(/: "([^"]*)"/g, ': <span class="json-string">"$1"</span>')
+        .replace(/: (\d+)/g, ': <span class="json-number">$1</span>')
+        .replace(/: (true|false)/g, ': <span class="json-boolean">$1</span>')
+        .replace(/: (null)/g, ': <span class="json-null">$1</span>')
+    },
+    
+    //=== copyJsonToClipboard 复制JSON到剪贴板
+    async copyJsonToClipboard() {
+      if (!this.currentData) return
+      
+      try {
+        const jsonString = JSON.stringify(this.currentData, null, 2)
+        await navigator.clipboard.writeText(jsonString)
+        
+        // 显示复制成功提示
+        this.$message?.success?.('JSON数据已复制到剪贴板') || 
+        alert('JSON数据已复制到剪贴板')
+      } catch (error) {
+        console.error('复制失败:', error)
+        this.$message?.error?.('复制失败') || 
+        alert('复制失败')
+      }
+    },
+    
+    //=== toggleJsonCollapse 切换JSON折叠状态
+    toggleJsonCollapse() {
+      this.isJsonCollapsed = !this.isJsonCollapsed
+    },
+    
+    //=== downloadJson 下载JSON文件
+    downloadJson() {
+      if (!this.currentData) return
+      
+      try {
+        const jsonString = JSON.stringify(this.currentData, null, 2)
+        const blob = new Blob([jsonString], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `battle-data-${new Date().getTime()}.json`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        URL.revokeObjectURL(url)
+        
+        this.$message?.success?.('JSON文件下载成功') || 
+        console.log('JSON文件下载成功')
+      } catch (error) {
+        console.error('下载失败:', error)
+        this.$message?.error?.('下载失败') || 
+        alert('下载失败')
+      }
     }
   }
 }
@@ -1197,5 +1103,348 @@ export default {
   color: white;
   font-weight: bold;
   font-size: 16px;
+}
+
+/* 战斗结果完整数据展示样式 */
+.battle-result-data-section {
+  margin-top: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.8), rgba(17, 24, 39, 0.9));
+  border-radius: 12px;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(34, 197, 94, 0.3);
+}
+
+.section-title {
+  color: #22c55e;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.section-desc {
+  color: #9ca3af;
+  font-size: 14px;
+  margin: 0;
+}
+
+.data-card {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+}
+
+.data-card:last-child {
+  margin-bottom: 0;
+}
+
+.data-card-title {
+  color: #fbbf24;
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.data-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.data-label {
+  color: #d1d5db;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.data-value {
+  color: #ffffff;
+  font-weight: bold;
+  text-align: right;
+}
+
+.participant-data {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+}
+
+.basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.army-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.stat-label {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  color: #22c55e;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.battle-details-data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.detail-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-title {
+  color: #fbbf24;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.loss-data, .plunder-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loss-item, .plunder-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+}
+
+.unit-name, .resource-name {
+  color: #d1d5db;
+  font-weight: 500;
+}
+
+.loss-count {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.resource-amount {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+/* JSON容器样式 */
+.json-container {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  overflow: hidden;
+}
+
+/* JSON工具栏样式 */
+.json-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.json-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.copy-btn {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.copy-btn:hover {
+  background: rgba(34, 197, 94, 0.3);
+  transform: translateY(-1px);
+}
+
+.collapse-btn {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.collapse-btn:hover {
+  background: rgba(251, 191, 36, 0.3);
+  transform: translateY(-1px);
+}
+
+.download-btn {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.download-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.btn-text {
+  font-size: 12px;
+}
+
+/* JSON显示区域样式 */
+.json-display-wrapper {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.json-display-wrapper.collapsed {
+  max-height: 100px;
+  overflow: hidden;
+}
+
+.json-display-wrapper.collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+}
+
+.json-raw-display {
+  background: rgba(0, 0, 0, 0.5);
+  color: #e5e7eb;
+  padding: 16px;
+  margin: 0;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  max-height: 500px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* JSON语法高亮样式 */
+.json-key {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.json-string {
+  color: #22c55e;
+}
+
+.json-number {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.json-boolean {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.json-null {
+  color: #ef4444;
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* 滚动条美化 */
+.json-raw-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+.json-raw-display::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.json-raw-display::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.5);
+  border-radius: 4px;
+}
+
+.json-raw-display::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.7);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .participant-data {
+    grid-template-columns: 1fr;
+  }
+  
+  .army-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .battle-details-data {
+    grid-template-columns: 1fr;
+  }
+  
+  .data-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

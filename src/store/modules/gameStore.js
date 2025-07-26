@@ -104,7 +104,7 @@ export const useGameStore = defineStore('game', {
     //=== 仓库容量加成状态
     warehouseBoost: {
       isActive: false,        // 是否正在加成
-      multiplier: 1.4,        // 容量加成倍数（40%加成）
+      multiplier: 2.0,        // 容量加成倍数（100%加成）
       startTime: null,        // 加成开始时间
       duration: 24 * 60 * 60 * 1000, // 加成持续时间（24小时，毫秒）
       endTime: null           // 加成结束时间
@@ -1188,7 +1188,7 @@ export const useGameStore = defineStore('game', {
       // 更新加成状态
       this.warehouseBoost = {
         isActive: true,
-        multiplier: 1.4, // 40%加成
+        multiplier: 2.0, // 100%加成
         startTime: this.warehouseBoost.isActive ? this.warehouseBoost.startTime : now,
         duration: 24 * 60 * 60 * 1000, // 24小时
         endTime: newEndTime
@@ -1206,7 +1206,7 @@ export const useGameStore = defineStore('game', {
       const notificationStore = useNotificationStore()
       notificationStore.addSuccessNotification(
         '仓库容量加成启动',
-        `消耗 ${cost} 金币，仓库容量提升40%，持续24小时`
+        `消耗 ${cost} 金币，仓库容量提升100%，持续24小时`
       )
       
       return true
@@ -1219,7 +1219,7 @@ export const useGameStore = defineStore('game', {
       if (this.warehouseBoost.isActive) {
         this.warehouseBoost = {
           isActive: false,
-          multiplier: 1.4,
+          multiplier: 2.0,
           startTime: null,
           duration: 24 * 60 * 60 * 1000,
           endTime: null
@@ -1300,7 +1300,7 @@ export const useGameStore = defineStore('game', {
       // 重置仓库容量加成状态
       this.warehouseBoost = {
         isActive: false,
-        multiplier: 1.4,
+        multiplier: 2.0,
         startTime: null,
         duration: 24 * 60 * 60 * 1000,
         endTime: null
