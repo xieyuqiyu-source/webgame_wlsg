@@ -4,7 +4,10 @@
     <PlayerButtons @show-data="handleShowData" />
     
     <!-- NPC按钮区域 -->
-    <NpcButtons @show-data="handleShowData" />
+    <NpcButtons @show-data="handleShowData" :npc-list="npcList" />
+    
+    <!-- 隐藏的NpcList组件，用于生成NPC数据 -->
+    <NpcList ref="npcListRef" @npcs-updated="handleNpcsUpdated" style="display: none;" />
     
     <!-- 数据显示区域 -->
     <div v-if="showData" class="data-display">
@@ -58,7 +61,7 @@
             <span class="label">掠夺资源：</span>
             <span class="plunder-info">
               <span>木材{{ getPlunderedResource('wood') }}</span>
-              <span>泥土{{ getPlunderedResource('clay') }}</span>
+              <span>泥土{{ getPlunderedResource('soil') }}</span>
               <span>铁{{ getPlunderedResource('iron') }}</span>
               <span>食物{{ getPlunderedResource('food') }}</span>
             </span>
@@ -114,10 +117,10 @@
               <span class="resource-label">木材</span>
               <span class="resource-value">+{{ currentData.battleResult.details.plundered.wood }}</span>
             </div>
-            <div class="resource-item" v-if="currentData.battleResult.details.plundered.clay > 0">
+            <div class="resource-item" v-if="currentData.battleResult.details.plundered.soil > 0">
               <span class="resource-icon">🧱</span>
               <span class="resource-label">泥土</span>
-              <span class="resource-value">+{{ currentData.battleResult.details.plundered.clay }}</span>
+              <span class="resource-value">+{{ currentData.battleResult.details.plundered.soil }}</span>
             </div>
             <div class="resource-item" v-if="currentData.battleResult.details.plundered.iron > 0">
               <span class="resource-icon">⚒️</span>
@@ -287,7 +290,7 @@
               </div>
               <div class="plunder-item">
                 <span class="resource-name">泥土:</span>
-                <span class="resource-amount">{{ currentData.battleResult.details.plundered?.clay || 0 }}</span>
+                <span class="resource-amount">{{ currentData.battleResult.details.plundered?.soil || 0 }}</span>
               </div>
               <div class="plunder-item">
                 <span class="resource-name">铁:</span>
@@ -335,13 +338,15 @@ import { getUnitById, getFactionConfig, getFactionUnits } from '@/config/faction
 import { getAllBattleRules, getBattleRule } from '@/config/battleRulesConfig.js'
 import PlayerButtons from './Test/PlayerButtons.vue'
 import NpcButtons from './Test/NpcButtons.vue'
+import NpcList from './NpcList.vue'
 
 export default {
   name: 'TestList',
   
   components: {
     PlayerButtons,
-    NpcButtons
+    NpcButtons,
+    NpcList
   },
   data() {
     return {
@@ -352,7 +357,9 @@ export default {
       //=== currentData 当前显示的数据
       currentData: null,
       //=== isJsonCollapsed JSON是否折叠
-      isJsonCollapsed: false
+      isJsonCollapsed: false,
+      //=== npcList NPC城池列表数据
+      npcList: []
     }
   },
   computed: {
@@ -468,7 +475,7 @@ export default {
       if (!plundered) return 0
       // 按照游戏中的资源价值比例计算（木材:泥土:铁:食物 = 1:1:2:0.5）
       const woodValue = plundered.wood || 0
-      const clayValue = plundered.clay || 0
+      const clayValue = plundered.soil || 0
       const ironValue = (plundered.iron || 0) * 2
       const foodValue = (plundered.food || 0) * 0.5
       return Math.floor(woodValue + clayValue + ironValue + foodValue)
@@ -645,7 +652,28 @@ export default {
         this.$message?.error?.('下载失败') || 
         alert('下载失败')
       }
+    },
+    
+    //=== handleNpcsUpdated 处理NPC数据更新
+    handleNpcsUpdated(npcs) {
+      this.npcList = npcs
+      console.log('NPC数据已更新:', npcs)
+    },
+    
+    //=== initializeNpcData 初始化NPC数据
+    initializeNpcData() {
+      // 通过ref调用NpcList组件的生成方法
+      if (this.$refs.npcListRef) {
+        this.$refs.npcListRef.generateNpcs()
+      }
     }
+  },
+  
+  //=== mounted 组件挂载后初始化NPC数据
+  mounted() {
+    this.$nextTick(() => {
+      this.initializeNpcData()
+    })
   }
 }
 </script>

@@ -115,14 +115,14 @@ export default {
         console.log('没有军队数据，添加测试数据...')
         this.gameStore.userFaction = 'wei'
         this.gameStore.army = {
-          'wei_qingzhou': 100,    // 青州兵
-          'wei_guard': 80,        // 虎卫军
-          'wei_tiger': 60,        // 虎贲军
-          'wei_scout': 40,        // 斥候
-          'wei_cavalry': 30,      // 魏骑兵
-          'wei_elite_cavalry': 2, // 虎豹骑
-          'wei_ram': 1,           // 冲撞车
-          'wei_catapult': 1       // 露雷车
+          'qingZhouArmy': 100,      // 青州军
+          'jinWeiSoldier': 80,      // 禁卫甲士
+          'huWei': 60,              // 虎卫
+          'zhanYingTanMa': 40,      // 战鹰探马
+          'qiQiYing': 30,           // 骁骑营
+          'huBaoQi': 2,             // 虎豹骑
+          'chongZhuangChe': 1,      // 冲撞车
+          'luLeiChe': 1             // 露雷车
         }
         console.log('已添加测试军队数据:', this.gameStore.army)
       }
@@ -213,14 +213,14 @@ export default {
         // 自动添加测试数据
         this.gameStore.userFaction = 'wei'
         this.gameStore.army = {
-          'wei_qingzhou': 50,
-          'wei_guard': 30,
-          'wei_tiger': 25,
-          'wei_scout': 20,
-          'wei_cavalry': 15,
-          'wei_elite_cavalry': 10,
-          'wei_ram': 5,
-          'wei_catapult': 3
+          'qingZhouArmy': 50,       // 青州军
+          'jinWeiSoldier': 30,      // 禁卫甲士
+          'huWei': 25,              // 虎卫
+          'zhanYingTanMa': 20,      // 战鹰探马
+          'qiQiYing': 15,           // 骁骑营
+          'huBaoQi': 10,            // 虎豹骑
+          'chongZhuangChe': 5,      // 冲撞车
+          'luLeiChe': 3             // 露雷车
         }
       }
       

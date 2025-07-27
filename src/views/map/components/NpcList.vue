@@ -210,6 +210,7 @@ import { formatNumber } from '@/utils/formatters.js'
 import { getFactionUnits, UNIT_TYPES, getUnitById } from '@/config/factionConfig.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { useNotificationStore } from '@/store/modules/notificationStore.js'
+import { useNpcStore } from '@/store/modules/npcStore.js'
 import { getResourceIcon, getResourceName } from '@/config/resources.js'
 
 export default {
@@ -217,9 +218,11 @@ export default {
   setup() {
     const gameStore = useGameStore()
     const notificationStore = useNotificationStore()
+    const npcStore = useNpcStore()
     return {
       gameStore,
-      notificationStore
+      notificationStore,
+      npcStore
     }
   },
   data() {
@@ -235,22 +238,22 @@ export default {
         { key: 'shu', label: '蜀' },
         { key: 'wu', label: '吴' }
       ],
-      //=== npcs NPC数据
-      npcs: [],
       //=== currentPage 当前页码
       currentPage: 1,
       //=== pageSize 每页显示数量
       pageSize: 12,
-      
-      //=== 刷新相关
-      refreshTimer: null,        // 定时器
-      refreshCountdown: 0,       // 倒计时（秒）
-      refreshInterval: 3600,     // 刷新间隔（1小时 = 3600秒）
-      manualRefreshCost: 50,     // 手动刷新消耗金币
-      lastRefreshTime: 0         // 上次刷新时间戳
+      //=== refreshTimer 刷新倒计时定时器
+      refreshTimer: null,
+      //=== currentTime 用于触发响应式更新
+      currentTime: Date.now()
     }
   },
   computed: {
+    //=== npcs 从store获取NPC列表
+    npcs() {
+      return this.npcStore.npcs
+    },
+
     //=== filteredNpcs 过滤后的NPC列表
     filteredNpcs() {
       let filtered = this.npcs
@@ -282,11 +285,18 @@ export default {
       return Math.ceil(this.filteredNpcs.length / this.pageSize)
     },
     
+    //=== refreshCountdown 刷新倒计时（秒）
+    refreshCountdown() {
+      // 传入currentTime以触发响应式更新
+      return Math.floor(this.npcStore.timeUntilNextRefresh(this.currentTime) / 1000)
+    },
+    
     //=== 格式化倒计时显示
     formattedCountdown() {
-      const hours = Math.floor(this.refreshCountdown / 3600)
-      const minutes = Math.floor((this.refreshCountdown % 3600) / 60)
-      const seconds = this.refreshCountdown % 60
+      const totalSeconds = this.refreshCountdown
+      const hours = Math.floor(totalSeconds / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = totalSeconds % 60
       
       if (hours > 0) {
         return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
@@ -297,25 +307,23 @@ export default {
     
     //=== 检查是否可以手动刷新
     canManualRefresh() {
-      return this.gameStore.coins >= this.manualRefreshCost
+      return this.gameStore.coins >= this.npcStore.manualRefreshCost
     }
   },
-  mounted() {
-    //=== 初始化刷新定时器（会自动处理数据恢复或生成）
-    this.initRefreshTimer()
+  async mounted() {
+    //=== 初始化NPC数据
+    await this.npcStore.initializeNpcs()
     
-    //=== 如果没有恢复到数据，则生成新的NPC数据
-    if (this.npcs.length === 0) {
-      this.generateNpcs()
-      this.saveRefreshState()
-    }
+    //=== 触发npcs-updated事件，将NPC数据传递给父组件
+    this.$emit('npcs-updated', this.npcs)
+    
+    //=== 启动倒计时定时器
+    this.startCountdownTimer()
   },
   
   beforeUnmount() {
     //=== 清理定时器
-    this.clearRefreshTimer()
-    //=== 组件销毁前保存状态
-    this.saveRefreshState()
+    this.clearCountdownTimer()
   },
   watch: {
     //=== 监听搜索条件变化，重置分页
@@ -328,172 +336,6 @@ export default {
     }
   },
   methods: {
-    //=== generateNpcs 生成随机NPC数据
-    generateNpcs(isManualRefresh = false) {
-      const factions = ['wei', 'shu', 'wu']
-      const cityNames = [
-        '洛阳', '长安', '成都', '建业', '襄阳', '江陵', '合肥', '濮阳', '徐州', '荆州',
-        '益州', '扬州', '兖州', '青州', '冀州', '并州', '凉州', '交州', '幽州', '豫州'
-      ]
-      
-      // 保存当前已侦查且未过期的完整NPC数据（手动刷新时跳过）
-      const scoutedNpcs = new Map()
-      
-      if (!isManualRefresh && this.npcs && this.npcs.length > 0) {
-        const currentTime = Date.now()
-        const oneHour = 60 * 60 * 1000 // 一小时的毫秒数
-        
-        this.npcs.forEach(npc => {
-          if (npc.scoutedAt) {
-            // 检查侦查时间是否在一小时内
-            const scoutTime = new Date(npc.scoutedAt).getTime()
-            if (currentTime - scoutTime < oneHour) {
-              // 侦查时间在一小时内，保存整个NPC对象
-              scoutedNpcs.set(npc.id, { ...npc })
-            }
-            // 如果超过一小时，不保存，让其重新生成
-          }
-        })
-      }
-      
-      this.npcs = []
-      
-      for (let i = 0; i < 12; i++) {
-        const npcId = `npc_${i + 1}`
-        
-        // 检查是否有未过期的已侦查NPC数据
-        const existingScoutedNpc = scoutedNpcs.get(npcId)
-        if (existingScoutedNpc) {
-          // 如果已侦查过且未过期，直接使用原有数据，不重新生成
-          this.npcs.push(existingScoutedNpc)
-          continue
-        }
-        
-        // 未侦查过或已过期的NPC重新生成
-        const faction = factions[Math.floor(Math.random() * factions.length)]
-        const name = cityNames[Math.floor(Math.random() * cityNames.length)] + (Math.floor(Math.random() * 999) + 1)
-        const level = Math.floor(Math.random() * 20) + 1
-        
-        // 生成防守军队
-        const defenseArmy = this.generateNpcArmy(faction, level)
-        
-        // 生成防守资源（基于等级）
-        const baseResource = level * 2000 + 10000
-        const defenderResources = {
-          wood: Math.floor(baseResource + Math.random() * baseResource * 0.5),
-          soil: Math.floor(baseResource + Math.random() * baseResource * 0.5),
-          iron: Math.floor(baseResource + Math.random() * baseResource * 0.5),
-          food: Math.floor(baseResource + Math.random() * baseResource * 0.5)
-        }
-        
-        // 生成城池资源
-        const resources = {
-          wood: Math.floor(Math.random() * 50000) + 10000,
-          soil: Math.floor(Math.random() * 50000) + 10000,
-          iron: Math.floor(Math.random() * 50000) + 10000,
-          food: Math.floor(Math.random() * 50000) + 10000
-        }
-        
-        const newNpc = {
-          id: npcId,
-          name,
-          faction,
-          level,
-          resources: resources,
-          defenseArmy,
-          defenderResources: resources // 防守资源就是城池的原本资源
-        }
-        
-        this.npcs.push(newNpc)
-      }
-    },
-    
-    //=== generateNpcArmy 根据阵营和等级生成NPC防守军队
-    generateNpcArmy(faction, level) {
-      const factionUnits = getFactionUnits(faction)
-      if (!factionUnits.length) return { faction, units: [] }
-      
-      // 根据等级确定军队规模
-      const armyScale = Math.max(1, Math.floor(level / 3)) // 每3级增加一个规模等级
-      const maxUnits = Math.min(4, 1 + armyScale) // 最多4种兵种
-      
-      // 按兵种类型分组
-      const infantryUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.INFANTRY)
-      const cavalryUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.CAVALRY)
-      const siegeUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.SIEGE)
-      const specialUnits = factionUnits.filter(unit => unit.unitType === UNIT_TYPES.SPECIAL)
-      
-      const selectedUnits = []
-      
-      // 确保至少有一个步兵单位（基础防守）
-      if (infantryUnits.length > 0) {
-        const randomInfantry = infantryUnits[Math.floor(Math.random() * infantryUnits.length)]
-        const count = Math.floor((level * 10 + Math.random() * level * 5))
-        selectedUnits.push({
-          ...randomInfantry,
-          count
-        })
-      }
-      
-      // 根据等级添加其他兵种
-      if (level >= 5 && cavalryUnits.length > 0 && selectedUnits.length < maxUnits) {
-        const randomCavalry = cavalryUnits[Math.floor(Math.random() * cavalryUnits.length)]
-        const count = Math.floor((level * 5 + Math.random() * level * 3))
-        selectedUnits.push({
-          ...randomCavalry,
-          count
-        })
-      }
-      
-      // 高等级添加攻城武器
-      if (level >= 10 && siegeUnits.length > 0 && selectedUnits.length < maxUnits) {
-        const randomSiege = siegeUnits[Math.floor(Math.random() * siegeUnits.length)]
-        const count = Math.floor((level * 2 + Math.random() * level))
-        selectedUnits.push({
-          ...randomSiege,
-          count
-        })
-      }
-      
-      // 极高等级添加特殊兵种
-      if (level >= 15 && specialUnits.length > 0 && selectedUnits.length < maxUnits) {
-        const randomSpecial = specialUnits[Math.floor(Math.random() * specialUnits.length)]
-        const count = Math.floor((level + Math.random() * level * 0.5))
-        selectedUnits.push({
-          ...randomSpecial,
-          count
-        })
-      }
-      
-      return {
-        faction,
-        units: selectedUnits
-      }
-    },
-    
-    //=== getFactionName 获取阵营名称
-    getFactionName(faction) {
-      const names = {
-        wei: '魏',
-        shu: '蜀', 
-        wu: '吴'
-      }
-      return names[faction] || '未知'
-    },
-    
-    //=== getResourceIcon 获取资源图标URL
-    getResourceIcon(resourceType) {
-      return getResourceIcon(resourceType)
-    },
-    
-    //=== getResourceName 获取资源名称
-    getResourceName(resourceType) {
-      return getResourceName(resourceType)
-    },
-    
-    //=== formatNumber 格式化数字
-    formatNumber,
-    
     //=== handleNpcClick 处理NPC点击事件
     handleNpcClick(npc) {
       console.log('点击NPC:', npc)
@@ -502,10 +344,6 @@ export default {
     
     //=== handleScout 处理侦查事件
     handleScout(npc) {
-      console.log('侦查NPC112:', npc)
-      // 字符串输出
-      console.log('字符串输出:', JSON.stringify(npc))
-      
       // 检查是否已经侦查过
       if (npc.scoutedAt) {
         this.notificationStore.addNotification({
@@ -556,7 +394,13 @@ export default {
       this.gameStore.army[scoutUnitId] -= requiredScouts
       
       // 执行侦查
-      this.performScout(npc, requiredScouts)
+      this.npcStore.scoutNpc(npc.id, {
+        scoutsUsed: requiredScouts,
+        playerFaction: playerFaction
+      })
+      
+      // 保存游戏数据
+      this.gameStore.saveGame()
       
       this.notificationStore.addNotification({
         type: 'success',
@@ -595,49 +439,17 @@ export default {
     
     //=== calculateRequiredScouts 计算需要消耗的侦查兵数量
     calculateRequiredScouts(faction, targetLevel) {
-      // 消耗比例：魏国 0.5，蜀国 1.5，吴国 1
       const consumptionRates = {
-        'wei': 0.5,
-        'shu': 1.5,
-        'wu': 1.0
+        'wei': 0.8,   // 魏国：战鹰探马消耗较少
+        'shu': 2.5,   // 蜀国：飞鸢消耗最多
+        'wu': 1.5     // 吴国：密探消耗中等
       }
       
-      const baseConsumption = targetLevel // 基础消耗等于目标等级
-      const rate = consumptionRates[faction] || 1.0
+      // 基础消耗改为指数增长
+      const baseConsumption = Math.pow(targetLevel, 1.8) * 2 + targetLevel * 3
+      const rate = consumptionRates[faction] || 1.5
       
-      return Math.max(1, Math.ceil(baseConsumption * rate))
-    },
-    
-    //=== performScout 执行侦查
-    performScout(npc, scoutsUsed) {
-      // 记录侦查时间
-      npc.scoutedAt = Date.now()
-      
-      // 生成侦查数据
-      const scoutData = {
-        totalUnits: 0,
-        unitTypes: 0,
-        units: []
-      }
-      
-      if (npc.defenseArmy && npc.defenseArmy.units) {
-        scoutData.units = npc.defenseArmy.units.map(unit => ({
-          id: unit.id,
-          name: unit.name,
-          count: unit.count
-        }))
-        
-        scoutData.totalUnits = npc.defenseArmy.units.reduce((total, unit) => total + unit.count, 0)
-        scoutData.unitTypes = npc.defenseArmy.units.length
-      }
-      
-      npc.scoutData = scoutData
-      
-      // 立即保存侦查数据到localStorage
-      this.saveRefreshState()
-      
-      // 同时保存游戏数据（包含军队变化）
-      this.gameStore.saveGame()
+      return Math.max(2, Math.ceil(baseConsumption * rate))
     },
     
     //=== formatScoutTime 格式化侦查时间
@@ -646,89 +458,41 @@ export default {
       const diff = now - timestamp
       const minutes = Math.floor(diff / (1000 * 60))
       
-      if (minutes < 1) {
-        return '刚刚'
-      } else if (minutes < 60) {
-        return `${minutes}分钟前`
-      } else {
-        const hours = Math.floor(minutes / 60)
-        return `${hours}小时前`
-      }
+      if (minutes < 1) return '刚刚'
+      if (minutes < 60) return `${minutes}分钟前`
+      
+      const hours = Math.floor(minutes / 60)
+      return `${hours}小时前`
     },
     
-    //=== initRefreshTimer 初始化刷新定时器
-    initRefreshTimer() {
-      // 从localStorage恢复状态
-      const savedLastRefreshTime = localStorage.getItem('npc_last_refresh_time')
-      const savedNpcData = localStorage.getItem('npc_list_data')
+    //=== startCountdownTimer 启动倒计时定时器
+    startCountdownTimer() {
+      this.clearCountdownTimer()
       
-      if (savedLastRefreshTime) {
-        this.lastRefreshTime = parseInt(savedLastRefreshTime)
-        const elapsed = Math.floor((Date.now() - this.lastRefreshTime) / 1000)
-        
-        // 如果已经超过刷新间隔，立即刷新
-        if (elapsed >= this.refreshInterval) {
-          this.autoRefresh()
-          return
-        }
-        
-        // 否则设置剩余倒计时
-        this.refreshCountdown = this.refreshInterval - elapsed
-        
-        // 恢复NPC数据（如果存在）
-        if (savedNpcData) {
-          try {
-            this.npcs = JSON.parse(savedNpcData)
-          } catch (e) {
-            console.warn('恢复NPC数据失败，重新生成:', e)
-            this.generateNpcs()
-          }
-        }
-      } else {
-        // 首次访问，设置初始倒计时
-        this.refreshCountdown = this.refreshInterval
-        this.lastRefreshTime = Date.now()
-        this.saveRefreshState()
-      }
-      
-      // 启动倒计时定时器
+      // 启动定时器，每秒更新一次
       this.refreshTimer = setInterval(() => {
-        this.refreshCountdown--
+        // 更新currentTime以触发响应式更新
+        this.currentTime = Date.now()
         
-        // 每10秒保存一次状态
-        if (this.refreshCountdown % 10 === 0) {
-          this.saveRefreshState()
-        }
-        
-        // 倒计时结束，自动刷新
-        if (this.refreshCountdown <= 0) {
+        // 检查是否需要自动刷新，传入currentTime参数
+        if (this.npcStore.needsRegeneration(this.currentTime)) {
           this.autoRefresh()
         }
       }, 1000)
     },
     
-    //=== clearRefreshTimer 清理刷新定时器
-    clearRefreshTimer() {
+    //=== clearCountdownTimer 清理倒计时定时器
+    clearCountdownTimer() {
       if (this.refreshTimer) {
         clearInterval(this.refreshTimer)
         this.refreshTimer = null
       }
     },
     
-    //=== saveRefreshState 保存刷新状态到localStorage
-    saveRefreshState() {
-      localStorage.setItem('npc_last_refresh_time', this.lastRefreshTime.toString())
-      localStorage.setItem('npc_list_data', JSON.stringify(this.npcs))
-    },
-    
     //=== autoRefresh 自动刷新NPC列表
     autoRefresh() {
-      this.generateNpcs()
-      this.refreshCountdown = this.refreshInterval
-      this.lastRefreshTime = Date.now()
-      
-      // 保存刷新状态
-      this.saveRefreshState()
+      this.npcStore.generateNpcs()
+      this.$emit('npcs-updated', this.npcs)
       
       this.notificationStore.addNotification({
         type: 'info',
@@ -744,23 +508,17 @@ export default {
         this.notificationStore.addNotification({
           type: 'error',
           title: '刷新失败',
-          message: `金币不足！需要${this.manualRefreshCost}金币，当前只有${this.gameStore.coins}金币`
+          message: `金币不足！需要${this.npcStore.manualRefreshCost}金币，当前只有${this.gameStore.coins}金币`
         })
         return
       }
       
       // 扣除金币
-      this.gameStore.coins -= this.manualRefreshCost
+      this.gameStore.coins -= this.npcStore.manualRefreshCost
       
-      // 刷新NPC列表（手动刷新清除所有侦查数据）
-      this.generateNpcs(true)
-      
-      // 重置倒计时
-      this.refreshCountdown = this.refreshInterval
-      this.lastRefreshTime = Date.now()
-      
-      // 保存刷新状态
-      this.saveRefreshState()
+      // 手动刷新NPC列表
+      this.npcStore.manualRefresh()
+      this.$emit('npcs-updated', this.npcs)
       
       // 保存游戏数据
       this.gameStore.saveGame()
@@ -768,9 +526,28 @@ export default {
       this.notificationStore.addNotification({
         type: 'success',
         title: '手动刷新成功',
-        message: `消耗${this.manualRefreshCost}金币，NPC列表已刷新！`
+        message: `消耗${this.npcStore.manualRefreshCost}金币，NPC列表已刷新！`
       })
-    }
+    },
+
+    //=== getFactionName 获取阵营名称
+    getFactionName(faction) {
+      const names = { wei: '魏', shu: '蜀', wu: '吴' }
+      return names[faction] || '未知'
+    },
+    
+    //=== getResourceIcon 获取资源图标URL
+    getResourceIcon(resourceType) {
+      return getResourceIcon(resourceType)
+    },
+    
+    //=== getResourceName 获取资源名称
+    getResourceName(resourceType) {
+      return getResourceName(resourceType)
+    },
+    
+    //=== formatNumber 格式化数字
+    formatNumber
   }
 }
 </script>

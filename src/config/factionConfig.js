@@ -127,7 +127,7 @@ export const FACTION_CONFIG = {
       },
       // 骑兵营
       qiQiYing: {
-        name: '骑骑营',
+        name: '骁骑营',
         description: '魏国重装骑兵，攻击力强劲',
         attack: 24,
         infantryDefense: 13,
