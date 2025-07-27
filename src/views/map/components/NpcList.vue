@@ -41,7 +41,7 @@
           <svg class="coin-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
           </svg>
-          <span class="cost-text">手动刷新: {{ manualRefreshCost }}金币</span>
+          <span class="cost-text">手动刷新: {{ npcStore.manualRefreshCost }}金币</span>
         </div>
       </div>
       
@@ -338,7 +338,7 @@ export default {
   methods: {
     //=== handleNpcClick 处理NPC点击事件
     handleNpcClick(npc) {
-      console.log('点击NPC:', npc)
+      console.log('点击NPC:', JSON.stringify(npc))
       // TODO: 显示NPC详情
     },
     

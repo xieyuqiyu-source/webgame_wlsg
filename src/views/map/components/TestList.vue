@@ -666,6 +666,34 @@ export default {
       if (this.$refs.npcListRef) {
         this.$refs.npcListRef.generateNpcs()
       }
+    },
+    
+    //=== getBattleResultClass 获取战斗结果样式类
+    getBattleResultClass(result) {
+      switch (result) {
+        case 'victory':
+          return 'result-victory-text'
+        case 'defeat':
+          return 'result-defeat-text'
+        case 'draw':
+          return 'result-draw-text'
+        default:
+          return 'result-unknown-text'
+      }
+    },
+    
+    //=== getBattleResultTitle 获取战斗结果标题
+    getBattleResultTitle(result) {
+      switch (result) {
+        case 'victory':
+          return '胜利'
+        case 'defeat':
+          return '失败'
+        case 'draw':
+          return '平局'
+        default:
+          return '未知'
+      }
     }
   },
   
@@ -1474,5 +1502,26 @@ export default {
   .data-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* 战斗结果文本样式 */
+.result-victory-text {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.result-defeat-text {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.result-draw-text {
+  color: #fbbf24;
+  font-weight: bold;
+}
+
+.result-unknown-text {
+  color: #9ca3af;
+  font-weight: bold;
 }
 </style>
