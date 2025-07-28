@@ -57,6 +57,12 @@ export default {
           icon: 'DungeonIcon'
         },
         {
+          key: 'battle',
+          label: '战斗模拟器',
+          count: 0,
+          icon: 'BattleIcon'
+        },
+        {
           key: 'test',
           label: 'Test',
           count: 0,
@@ -95,6 +101,14 @@ export default {
       template: `
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M7 2V4H8V18C8 19.1 8.9 20 10 20H14C15.1 20 16 19.1 16 18V4H17V2H7M10 4H14V18H10V4M11 6V16H13V6H11Z"/>
+        </svg>
+      `
+    },
+    //=== BattleIcon 战斗图标
+    BattleIcon: {
+      template: `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.92 5H5L6.5 6.5L5 8H6.92L8.42 6.5L6.92 5M13 2.05V5.08C16.39 5.57 19 8.47 19 12C19 12.9 18.82 13.75 18.5 14.54L21.12 16.07C21.68 14.83 22 13.45 22 12C22 6.82 18.05 2.55 13 2.05M12 19C8.13 19 5 15.87 5 12C5 8.47 7.61 5.57 11 5.08V2.05C5.94 2.55 2 6.81 2 12C2 17.52 6.48 22 12 22C14.8 22 17.32 20.75 19 18.72L16.37 17.19C15.17 18.43 13.67 19 12 19Z"/>
         </svg>
       `
     }

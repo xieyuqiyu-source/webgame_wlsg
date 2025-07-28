@@ -315,11 +315,8 @@ export default {
   methods: {
     // === 获取规则名称 ===
     getRuleName(ruleId) {
-      const rules = {
-        'PLUNDER': '掠夺规则',
-        'COMPREHENSIVE': '综合实力规则'
-      }
-      return rules[ruleId] || '未知规则'
+     
+      return ruleId || '未知规则'
     },
 
     // === 获取战斗结果文本 ===

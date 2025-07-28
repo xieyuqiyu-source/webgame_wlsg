@@ -21,6 +21,8 @@
           
           <!-- 测试页面 -->
           <TestList v-show="activeTab === 'test'" />
+          <!-- 战斗模拟器 -->
+          <BattleSimulator v-show="activeTab === 'battle'" />
         </MapTabs>
       </div>
     </div>
@@ -32,6 +34,7 @@ import GameSidebar from '@/components/GameSidebar.vue'
 import MapTabs from './components/MapTabs.vue'
 import NpcList from './components/NpcList.vue'
 import PlayerList from './components/PlayerList.vue'
+import BattleSimulator from './components/BattleSimulator.vue'
 import DungeonList from './components/DungeonList.vue'
 import TestList from './components/TestList.vue'
 
@@ -43,7 +46,8 @@ export default {
     NpcList,
     PlayerList,
     DungeonList,
-    TestList
+    TestList,
+    BattleSimulator
   },
   data() {
     return {

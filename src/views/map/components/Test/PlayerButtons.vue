@@ -91,7 +91,7 @@ export default {
         title: '玩家军队信息',
         data: this.playerArmyData
       })
-      console.log('显示玩家军队信息:', this.playerArmyData)
+      console.log('有数据，显示玩家军队信息:', this.playerArmyData)
     }
   }
 }

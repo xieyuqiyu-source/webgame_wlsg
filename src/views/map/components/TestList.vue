@@ -2,6 +2,8 @@
   <div class="test-list">
     <!-- 测试按钮区域 -->
     <PlayerButtons ref="playerButtonsRef" @show-data="handleShowData" />
+    <!-- 添加一个下拉选项 -->
+    
     
     <!-- NPC按钮区域 -->
     <NpcButtons ref="npcButtonsRef" @show-data="handleShowData" :npc-list="npcList" @npc-selected="handleNpcSelected" />
