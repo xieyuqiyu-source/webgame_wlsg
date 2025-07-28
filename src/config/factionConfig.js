@@ -58,9 +58,9 @@ export const FACTION_CONFIG = {
     borderColor: '#3B82F6',
     // 阵营特性
     traits: {
-      economyBonus: 1.8,      // 经济加成 80% (非常强)
-      militaryBonus: 0.8,     // 军事加成 -20% (弱)
-      buildingBonus: 1.2      // 建筑速度加成 20% (比较快)
+      economyBonus: 1.2,      // 经济加成 
+      militaryBonus: 1.8,     // 军事加成 
+      buildingBonus: 0.8      // 建筑速度加成 
     },
     // 阵营图标
     icon: '⚔️',
@@ -127,7 +127,7 @@ export const FACTION_CONFIG = {
       },
       // 骑兵营
       qiQiYing: {
-        name: '骁骑营',
+        name: '骁骑营1',
         description: '魏国重装骑兵，攻击力强劲',
         attack: 24,
         infantryDefense: 13,
@@ -238,9 +238,9 @@ export const FACTION_CONFIG = {
     borderColor: '#EF4444',
     // 阵营特性
     traits: {
-      economyBonus: 1.2,      // 经济加成 20% (强)
-      militaryBonus: 1.8,     // 军事加成 80% (非常强)
-      buildingBonus: 0.8      // 建筑速度加成 -20% (弱，建筑时间增加)
+      economyBonus: 1.8,      // 经济加成 
+      militaryBonus: 0.8,     // 军事加成 
+      buildingBonus: 1.2      // 建筑速度加成 
     },
     // 阵营图标
     icon: '🛡️',

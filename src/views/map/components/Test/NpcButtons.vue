@@ -43,7 +43,7 @@ export default {
   name: 'NpcButtons',
   
   //=== 组件事件定义
-  emits: ['show-data'],
+  emits: ['show-data', 'npc-selected'],
   
   //=== props 接收父组件传递的NPC列表数据
   props: {
@@ -65,11 +65,18 @@ export default {
   methods: {
     //=== handleNpcSelection 处理NPC选择
     handleNpcSelection() {
-      if (!this.selectedNpcId) return
+      if (!this.selectedNpcId) {
+        // 如果没有选中NPC，通知父组件清除选择
+        this.$emit('npc-selected', null)
+        return
+      }
       
       const selectedNpc = this.npcList.find(npc => npc.id === this.selectedNpcId)
       if (selectedNpc) {
         console.log('选中的NPC城池:', selectedNpc)
+        
+        // 通知父组件选中的NPC
+        this.$emit('npc-selected', selectedNpc)
         
         // 构建完整的NPC数据，包含军队、资源、建筑等信息
         const npcData = {
