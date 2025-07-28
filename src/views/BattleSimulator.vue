@@ -354,7 +354,7 @@ export default {
         if (battleResults.value.length > 50) {
           battleResults.value = battleResults.value.slice(0, 50)
         }
-
+        console.log('战斗结果已添加到列表',battleResults.value)
       } catch (error) {
         console.error('战斗模拟失败:', error)
         alert(`战斗模拟失败: ${error.message}`)
