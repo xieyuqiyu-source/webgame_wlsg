@@ -702,8 +702,8 @@ function createStandardBattleResult(ruleId, attackerArmy, defenderArmy, battleRe
       lossRatio: attackerLossRatio
     },
     defender: {
-      uuid: defenderArmy.npcInfo?.id || 'npc-uuid',
-      nickname: defenderArmy.npcInfo?.name || 'NPC城池',
+      uuid: defenderArmy.npcInfo?.id ||defenderArmy.playerInfo?.userUUID || 'npc-uuid',
+      nickname: defenderArmy.npcInfo?.name || defenderArmy.playerInfo?.nickname || 'NPC城池',
       faction: defenderArmy.armyGroup?.faction || defenderArmy.faction || 'unknown',
       originalUnits: defenderArmy.units || [],
       losses: calculateLossesInternal(defenderArmy, defenderLossRatio),
