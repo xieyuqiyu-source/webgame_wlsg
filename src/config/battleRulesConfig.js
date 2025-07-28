@@ -7,7 +7,9 @@
 export const BATTLE_RULE_IDS = {
   PLUNDER: 'PLUNDER',       // 掠夺战斗规则
   COMPREHENSIVE: 'COMPREHENSIVE',  // 综合实力战斗规则
-  KILL_ENEMY: 'KILL_ENEMY'  // 杀敌战斗规则
+  KILL_ENEMY: 'KILL_ENEMY',  // 杀敌战斗规则
+  // 其他战斗规则...
+  BALANCED_STRATEGY: 'BALANCED_STRATEGY'  // 平衡策略战斗规则
 }
 
 //=== 战斗结果常量
@@ -846,6 +848,78 @@ Object.values(BATTLE_RULES).forEach(rule => {
     }
   }
 })
+
+
+
+BATTLE_RULES[BATTLE_RULE_IDS.BALANCED_STRATEGY] = {
+  id: 'BALANCED_STRATEGY',
+  name: '平衡策略战斗',
+  description: '综合考量攻防均衡与兵种搭配，中等损耗，适合常规消耗型战斗',
+
+  calculateDamage(attackerArmy, defenderArmy) {
+    const attackerPower = this.calculateArmyPower(attackerArmy)
+    const defenderPower = this.calculateArmyPower(defenderArmy)
+
+    const powerRatio = defenderPower > 0 ? attackerPower / defenderPower : (attackerPower > 0 ? 10 : 1)
+
+    // 损耗逻辑：实力接近时损耗接近，差距越大强者越省兵
+    let attackerLossRatio = 0.15
+    let defenderLossRatio = 0.15
+
+    if (powerRatio > 1.25) {
+      const advantage = Math.min(powerRatio / 1.25, 5)
+      attackerLossRatio = Math.max(0.05, 0.15 / advantage)
+      defenderLossRatio = Math.min(0.5, 0.15 * advantage)
+    } else if (powerRatio < 0.8) {
+      const advantage = Math.min(0.8 / powerRatio, 5)
+      defenderLossRatio = Math.max(0.05, 0.15 / advantage)
+      attackerLossRatio = Math.min(0.5, 0.15 * advantage)
+    }
+
+    const attackerLosses = this.calculateUnitLosses(attackerArmy, attackerLossRatio)
+    const defenderLosses = this.calculateUnitLosses(defenderArmy, defenderLossRatio)
+
+    return {
+      attackerLossRatio,
+      defenderLossRatio,
+      attackerLosses,
+      defenderLosses,
+      powerRatio,
+      attackerPower,
+      defenderPower
+    }
+  },
+
+  calculateArmyPower(army) {
+    if (!army.units) return 0
+    return army.units.reduce((sum, unit) => {
+      const count = unit.count || 0
+      const power = (unit.attack || 0) + (unit.infantryDefense || 0) + (unit.cavalryDefense || 0)
+      return sum + power * count
+    }, 0)
+  },
+
+  calculateUnitLosses(army, lossRatio) {
+    if (!army.units) return []
+    return army.units.map(unit => {
+      const count = unit.count || 0
+      const losses = Math.floor(count * lossRatio)
+      return {
+        ...unit,
+        losses,
+        lossRatio
+      }
+    })
+  },
+
+  calculateBattleResult(damage) {
+    const { powerRatio } = damage
+    if (powerRatio >= 0.9 && powerRatio <= 1.1) return BATTLE_RESULTS.DRAW
+    if (powerRatio > 1.1) return BATTLE_RESULTS.ATTACKER_VICTORY
+    return BATTLE_RESULTS.DEFENDER_VICTORY
+  }
+}
+
 
 //=== 获取战斗规则
 export function getBattleRule(ruleId) {

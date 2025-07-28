@@ -149,7 +149,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
-import { BATTLE_RULE_IDS, BATTLE_RULES, calculateLosses } from '@/config/battleRulesConfig.js'
+import { BATTLE_RULE_IDS, BATTLE_RULES, calculateLosses, getAllBattleRules } from '@/config/battleRulesConfig.js'
 import { getAllUnits } from '@/config/factionConfig.js'
 import ArmyConfigurator from './components/ArmyConfigurator.vue'
 import BattleResults from './components/BattleResults.vue'
@@ -178,24 +178,12 @@ export default {
       units: []
     })
 
-    //=== 战斗规则配置
-    const battleRules = ref([
-      {
-        id: BATTLE_RULE_IDS.COMPREHENSIVE,
-        name: '综合实力战斗',
-        description: '基于双方综合实力对比的平衡战斗'
-      },
-      {
-        id: BATTLE_RULE_IDS.PLUNDER,
-        name: '掠夺战斗',
-        description: '快速战斗，损耗较低，适合资源掠夺'
-      },
-      {
-        id: BATTLE_RULE_IDS.KILL_ENEMY,
-        name: '杀敌战斗',
-        description: '不死不休的激烈战斗，必须分出胜负'
-      }
-    ])
+    //=== 战斗规则配置（从配置文件动态获取）
+    const battleRules = ref(getAllBattleRules().map(rule => ({
+      id: rule.id,
+      name: rule.name,
+      description: rule.description
+    })))
 
     //=== 战斗规则详细说明数据
     const ruleDetailsData = ref({
@@ -259,6 +247,28 @@ export default {
           { name: '荣誉奖励', formula: 'floor(杀敌数 / 5) (翻倍)' }
         ],
         useCase: '适合决定性战斗，高风险高回报，用于彻底消灭敌军或获得大量经验奖励。'
+      },
+      'BALANCED_STRATEGY': {
+        name: '平衡策略战斗',
+        overview: '综合考量攻防均衡与兵种搭配，中等损耗，适合常规消耗型战斗。平衡各兵种的作用，不偏向任何特定战术。',
+        lossRules: [
+          { condition: '实力接近 (0.8-1.25倍)', description: '双方均等损失15%' },
+          { condition: '攻击方强势 (>1.25倍)', description: '强势方最少5%损失，弱势方最多50%损失' },
+          { condition: '防守方强势 (<0.8倍)', description: '同上规则，角色互换' },
+          { condition: '最大优势限制', description: '最大考虑5倍优势差距' }
+        ],
+        specialMechanics: [
+          { name: '综合实力计算', description: '攻击力 + 步兵防御力 + 骑兵防御力的总和' },
+          { name: '均衡损耗', description: '所有兵种使用相同的损耗比例' },
+          { name: '中等风险', description: '损耗介于掠夺战斗和杀敌战斗之间' }
+        ],
+        formulas: [
+          { name: '军团实力', formula: '∑(单位数量 * (攻击力 + 步兵防御 + 骑兵防御))' },
+          { name: '实力比值', formula: '攻击方实力 / 防守方实力' },
+          { name: '强势方损耗', formula: 'max(0.05, 0.15 / advantage)' },
+          { name: '弱势方损耗', formula: 'min(0.5, 0.15 * advantage)' }
+        ],
+        useCase: '适合日常练兵和中等规模战斗，平衡风险与收益，不追求极端的战术效果。'
       }
     })
 
