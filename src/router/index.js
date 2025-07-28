@@ -8,7 +8,6 @@ import MapView from '@/views/map/index.vue'
 import SettingsView from '@/views/settings/index.vue'
 import NotificationTest from '@/views/NotificationTest.vue'
 import MessageView from '@/views/MessageView.vue'
-import BattleSimulator from '@/views/BattleSimulator.vue'
 
 //=== createRouter 创建路由实例
 const router = createRouter({
@@ -48,11 +47,6 @@ const router = createRouter({
       path: '/message',
       name: 'Message',
       component: MessageView
-    },
-    {
-      path: '/battle-simulator',
-      name: 'BattleSimulator',
-      component: BattleSimulator
     }
   ]
 })
