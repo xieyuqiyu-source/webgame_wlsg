@@ -9,7 +9,9 @@
         @click="$emit('tab-change', tab.key)"
       >
         <div class="tab-icon">
-          <component :is="tab.icon" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path :d="tab.iconPath" />
+          </svg>
         </div>
         <span class="tab-label">{{ tab.label }}</span>
         <span v-if="tab.count" class="tab-count">{{ tab.count }}</span>
@@ -42,75 +44,33 @@ export default {
           key: 'npc',
           label: 'NPC城池',
           count: 0,
-          icon: 'NpcIcon'
+          iconPath: 'M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 4L13.5 7H10.5L9 4L3 7V9H5V20H7V14H9V20H11V9H13V20H15V14H17V20H19V9H21Z'
         },
         {
           key: 'player',
           label: '玩家城池',
           count: 0,
-          icon: 'PlayerIcon'
+          iconPath: 'M16 4C18.2 4 20 5.8 20 8S18.2 12 16 12S12 10.2 12 8S13.8 4 16 4M16 14C20.4 14 24 15.8 24 18V20H8V18C8 15.8 11.6 14 16 14M8 4C10.2 4 12 5.8 12 8C12 10.2 10.2 12 8 12C5.8 12 4 10.2 4 8C4 5.8 5.8 4 8 4M8 14C12.4 14 16 15.8 16 18V20H0V18C0 15.8 3.6 14 8 14Z'
         },
         {
           key: 'dungeon',
           label: '副本',
           count: 0,
-          icon: 'DungeonIcon'
+          iconPath: 'M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 12V14H15V16H13V14H11V12H13V10H15V12H17Z'
         },
         {
           key: 'battle',
           label: '战斗模拟器',
           count: 0,
-          icon: 'BattleIcon'
+          iconPath: 'M6.92 5H5L6.5 6.5L5 8H6.92L8.42 6.5L6.92 5M13 2.05V5.08C16.39 5.57 19 8.47 19 12C19 12.9 18.82 13.75 18.5 14.54L21.12 16.07C21.68 14.83 22 13.45 22 12C22 6.82 18.05 2.55 13 2.05M12 19C8.13 19 5 15.87 5 12C5 8.47 7.61 5.57 11 5.08V2.05C5.94 2.55 2 6.81 2 12C2 17.52 6.48 22 12 22C14.8 22 17.32 20.75 19 18.72L16.37 17.19C15.17 18.43 13.67 19 12 19Z'
         },
         {
           key: 'test',
           label: 'Test',
           count: 0,
-          icon: 'TestIcon'
+          iconPath: 'M7 2V4H8V18C8 19.1 8.9 20 10 20H14C15.1 20 16 19.1 16 18V4H17V2H7M10 4H14V18H10V4M11 6V16H13V6H11Z'
         }
       ]
-    }
-  },
-  components: {
-    //=== NpcIcon NPC图标
-    NpcIcon: {
-      template: `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 4L13.5 7H10.5L9 4L3 7V9H5V20H7V14H9V20H11V9H13V20H15V14H17V20H19V9H21Z"/>
-        </svg>
-      `
-    },
-    //=== PlayerIcon 玩家图标
-    PlayerIcon: {
-      template: `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M16 4C18.2 4 20 5.8 20 8S18.2 12 16 12S12 10.2 12 8S13.8 4 16 4M16 14C20.4 14 24 15.8 24 18V20H8V18C8 15.8 11.6 14 16 14M8 4C10.2 4 12 5.8 12 8C12 10.2 10.2 12 8 12C5.8 12 4 10.2 4 8C4 5.8 5.8 4 8 4M8 14C12.4 14 16 15.8 16 18V20H0V18C0 15.8 3.6 14 8 14Z"/>
-        </svg>
-      `
-    },
-    //=== DungeonIcon 副本图标
-    DungeonIcon: {
-      template: `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 12V14H15V16H13V14H11V12H13V10H15V12H17Z"/>
-        </svg>
-      `
-    },
-    //=== TestIcon 测试图标
-    TestIcon: {
-      template: `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7 2V4H8V18C8 19.1 8.9 20 10 20H14C15.1 20 16 19.1 16 18V4H17V2H7M10 4H14V18H10V4M11 6V16H13V6H11Z"/>
-        </svg>
-      `
-    },
-    //=== BattleIcon 战斗图标
-    BattleIcon: {
-      template: `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6.92 5H5L6.5 6.5L5 8H6.92L8.42 6.5L6.92 5M13 2.05V5.08C16.39 5.57 19 8.47 19 12C19 12.9 18.82 13.75 18.5 14.54L21.12 16.07C21.68 14.83 22 13.45 22 12C22 6.82 18.05 2.55 13 2.05M12 19C8.13 19 5 15.87 5 12C5 8.47 7.61 5.57 11 5.08V2.05C5.94 2.55 2 6.81 2 12C2 17.52 6.48 22 12 22C14.8 22 17.32 20.75 19 18.72L16.37 17.19C15.17 18.43 13.67 19 12 19Z"/>
-        </svg>
-      `
     }
   }
 }

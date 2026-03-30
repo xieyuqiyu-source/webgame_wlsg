@@ -1,36 +1,19 @@
 <template>
-  <div class="map-view">
-    <!-- 游戏侧边栏 -->
-    <GameSidebar @toggle="handleSidebarToggle" />
-    
-    <!-- 主要内容区域 -->
-    <div class="main-content" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
-     
-      
-      <div class="content-area">
-        <!-- Tab 切换组件 -->
-        <MapTabs :active-tab="activeTab" @tab-change="handleTabChange">
-          <!-- NPC城池列表 -->
-          <NpcList v-show="activeTab === 'npc'" />
-          
-          <!-- 玩家城池列表 -->
-          <PlayerList v-show="activeTab === 'player'" />
-          
-          <!-- 副本列表 -->
-          <DungeonList v-show="activeTab === 'dungeon'" />
-          
-          <!-- 测试页面 -->
-          <TestList v-show="activeTab === 'test'" />
-          <!-- 战斗模拟器 -->
-          <BattleSimulator v-show="activeTab === 'battle'" />
-        </MapTabs>
-      </div>
+  <GamePageLayout page-class="map-view">
+    <div class="content-area">
+      <MapTabs :active-tab="activeTab" @tab-change="handleTabChange">
+        <NpcList v-show="activeTab === 'npc'" />
+        <PlayerList v-show="activeTab === 'player'" />
+        <DungeonList v-show="activeTab === 'dungeon'" />
+        <TestList v-show="activeTab === 'test'" />
+        <BattleSimulator v-show="activeTab === 'battle'" />
+      </MapTabs>
     </div>
-  </div>
+  </GamePageLayout>
 </template>
 
 <script>
-import GameSidebar from '@/components/GameSidebar.vue'
+import GamePageLayout from '@/components/GamePageLayout.vue'
 import MapTabs from './components/MapTabs.vue'
 import NpcList from './components/NpcList.vue'
 import PlayerList from './components/PlayerList.vue'
@@ -41,7 +24,7 @@ import TestList from './components/TestList.vue'
 export default {
   name: 'MapView',
   components: {
-    GameSidebar,
+    GamePageLayout,
     MapTabs,
     NpcList,
     PlayerList,
@@ -51,19 +34,10 @@ export default {
   },
   data() {
     return {
-      //=== sidebarCollapsed 侧边栏是否折叠
-      sidebarCollapsed: false,
-      //=== activeTab 当前激活的Tab页
       activeTab: 'npc'
     }
   },
   methods: {
-    //=== handleSidebarToggle 处理侧边栏切换事件
-    handleSidebarToggle(collapsed) {
-      this.sidebarCollapsed = collapsed
-    },
-    
-    //=== handleTabChange 处理Tab切换事件
     handleTabChange(tabKey) {
       this.activeTab = tabKey
       console.log('切换到Tab:', tabKey)
@@ -74,7 +48,7 @@ export default {
 
 <style scoped>
 .map-view {
-  @apply flex h-screen;
+  @apply min-h-screen;
   /* background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%); */
   position: relative;
 }
@@ -92,17 +66,12 @@ export default {
   z-index: 0;
 }
 
-.main-content {
-  @apply flex-1 ml-80 transition-all duration-300 ease-in-out;
+.map-view :deep(.page-main) {
   position: relative;
   z-index: 1;
 }
 
-.main-content.sidebar-collapsed {
-  @apply ml-16;
-}
-
 .content-area {
-  @apply p-6;
+  @apply min-h-full;
 }
 </style>

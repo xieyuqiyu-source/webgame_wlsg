@@ -1,10 +1,6 @@
 <template>
-  <div class="settings-view">
-    <!-- 游戏侧边栏 -->
-    <GameSidebar @toggle="handleSidebarToggle" />
-    
-    <!-- 主要内容区域 -->
-    <div class="main-content" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <GamePageLayout page-class="settings-view">
+    <div>
       <div class="page-header">
         <h1 class="page-title">游戏设置</h1>
         <p class="page-subtitle">管理你的游戏配置和数据</p>
@@ -268,11 +264,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </GamePageLayout>
 </template>
 
 <script>
-import GameSidebar from '@/components/GameSidebar.vue'
+import GamePageLayout from '@/components/GamePageLayout.vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { getResourceName } from '@/config/resources.js'
 import { getFactionConfig } from '@/config/factionConfig.js'
@@ -281,13 +277,12 @@ import { ref, reactive } from 'vue'
 export default {
   name: 'SettingsView',
   components: {
-    GameSidebar
+    GamePageLayout
   },
   setup() {
     const gameStore = useGameStore()
     
     // 响应式数据
-    const sidebarCollapsed = ref(false)
     const gmEnabled = ref(false)
     const gmPassword = ref('')
     const gmError = ref('')
@@ -297,11 +292,6 @@ export default {
     
     // GM密码常量
     const GM_PASSWORD = '12xyqXYQ'
-    
-    //=== handleSidebarToggle 处理侧边栏切换
-    const handleSidebarToggle = (collapsed) => {
-      sidebarCollapsed.value = collapsed
-    }
     
     //=== exportGameData 导出游戏数据
     const exportGameData = () => {
@@ -527,14 +517,12 @@ export default {
     
     return {
       gameStore,
-      sidebarCollapsed,
       gmEnabled,
       gmPassword,
       gmError,
       autoSaveInterval,
       soundEnabled,
       notificationEnabled,
-      handleSidebarToggle,
       exportGameData,
       importGameData,
       resetGame,
@@ -559,15 +547,7 @@ export default {
 
 <style scoped>
 .settings-view {
-  @apply flex h-screen ;
-}
-
-.main-content {
-  @apply flex-1 ml-80 transition-all duration-300 ease-in-out;
-}
-
-.main-content.sidebar-collapsed {
-  @apply ml-16;
+  @apply min-h-screen;
 }
 
 .page-header {

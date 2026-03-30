@@ -43,35 +43,14 @@
 
 <script>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useGameStore } from '../../../store/modules/gameStore.js'
-import { getUnitById } from '../../../config/factionConfig.js'
+import { useMilitaryHelpers } from '@/hooks/useMilitaryHelpers.js'
 
 export default {
   name: 'RecruitmentQueue',
   setup() {
-    const gameStore = useGameStore()
+    const { gameStore, getUnitIcon, recruitmentQueue } = useMilitaryHelpers()
     const updateTimer = ref(null)
     const currentTime = ref(Date.now()) // 用于强制触发响应式更新
-    
-    //=== 获取征兵队列
-    const recruitmentQueue = computed(() => gameStore.recruitmentQueue)
-    
-    //=== 获取兵种图标
-    const getUnitIcon = (unitId) => {
-      const unit = getUnitById(unitId)
-      return unit?.icon || '⚔️'
-    }
-    
-    //=== 获取资源图标
-    const getResourceIcon = (resource) => {
-      const icons = {
-        wood: '🪵',
-        soil: '🏔️',
-        iron: '⚒️',
-        food: '🌾'
-      }
-      return icons[resource] || '❓'
-    }
     
     //=== 计算进度百分比
     const getProgressPercentage = (task) => {
@@ -155,7 +134,6 @@ export default {
     return {
       recruitmentQueue,
       getUnitIcon,
-      getResourceIcon,
       getProgressPercentage,
       getProgressText,
       getTimeRemaining,

@@ -92,7 +92,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
-import { useGameStore } from '../../../store/modules/gameStore.js'
+import { useMilitaryHelpers } from '@/hooks/useMilitaryHelpers.js'
 
 export default {
   name: 'RecruitmentModal',
@@ -108,7 +108,7 @@ export default {
   },
   emits: ['close'],
   setup(props, { emit }) {
-    const gameStore = useGameStore()
+    const { gameStore, getResourceIcon, formatTrainTime } = useMilitaryHelpers()
     
     // 征兵数量
     const recruitCount = ref(1)
@@ -168,17 +168,6 @@ export default {
       recruitCount.value = Math.max(1, Math.floor(maxRecruitableCount.value * ratio))
     }
     
-    //=== 资源相关方法
-    const getResourceIcon = (resource) => {
-      const icons = {
-        wood: '🪵',
-        soil: '🏔️',
-        iron: '⚒️',
-        food: '🌾'
-      }
-      return icons[resource] || '❓'
-    }
-    
     const getResourceName = (resource) => {
       const names = {
         wood: '木材',
@@ -191,12 +180,6 @@ export default {
     
     const hasEnoughResource = (resource, cost) => {
       return gameStore.resources[resource] >= cost
-    }
-    
-    //=== 时间格式化
-    const formatTrainTime = (milliseconds) => {
-      const minutes = Math.ceil(milliseconds / 60000)
-      return `${minutes} 分钟`
     }
     
     //=== 弹窗控制方法

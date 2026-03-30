@@ -71,7 +71,9 @@
         <!-- 副本头部 -->
         <div class="dungeon-header">
           <div class="dungeon-icon">
-            <component :is="getDifficultyIcon(dungeon.difficulty)" />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" :class="getDifficultyIconMeta(dungeon.difficulty).iconClass">
+              <path :d="getDifficultyIconMeta(dungeon.difficulty).iconPath" />
+            </svg>
             <div v-if="dungeon.isCompleted" class="completed-badge">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
@@ -118,7 +120,9 @@
           <h4 class="rewards-title">奖励预览</h4>
           <div class="rewards-grid">
             <div v-for="reward in dungeon.rewards" :key="reward.type" class="reward-item">
-              <component :is="getRewardIcon(reward.type)" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" :class="getRewardIconMeta(reward.type).iconClass">
+                <path :d="getRewardIconMeta(reward.type).iconPath" />
+              </svg>
               <span class="reward-amount">{{ formatReward(reward) }}</span>
             </div>
           </div>
@@ -173,6 +177,48 @@
 
 <script>
 import { formatNumber } from '@/utils/formatters.js'
+
+const DIFFICULTY_META = {
+  easy: {
+    iconPath: 'M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z',
+    iconClass: 'text-green-500'
+  },
+  normal: {
+    iconPath: 'M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 12V14H15V16H13V14H11V12H13V10H15V12H17Z',
+    iconClass: 'text-blue-500'
+  },
+  hard: {
+    iconPath: 'M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z',
+    iconClass: 'text-orange-500'
+  },
+  hell: {
+    iconPath: 'M17.66,11.2C17.43,10.9 17.15,10.64 16.89,10.38C16.22,9.78 15.46,9.35 14.82,8.72C13.33,7.26 13,4.85 13.95,3C13,3.23 12.17,3.75 11.46,4.32C8.87,6.4 7.85,10.07 9.07,13.22C9.11,13.32 9.15,13.42 9.15,13.55C9.15,13.77 9,13.97 8.8,14.05C8.57,14.15 8.33,14.09 8.14,13.93C8.08,13.88 8.04,13.83 8,13.76C6.87,12.33 6.69,10.28 7.45,8.64C5.78,10 4.87,12.3 5,14.47C5.06,14.97 5.12,15.47 5.29,15.97C5.43,16.57 5.7,17.17 6,17.7C7.08,19.43 8.95,20.67 10.96,20.92C13.1,21.19 15.39,20.8 17.03,19.32C18.86,17.66 19.5,15 18.56,12.72L18.43,12.46C18.22,12 17.66,11.2 17.66,11.2M14.5,17.5C14.22,17.74 13.76,18 13.4,18.1C12.28,18.5 11.16,17.94 10.5,17.28C11.69,17 12.4,16.12 12.61,15.23C12.78,14.43 12.46,13.77 12.33,13C12.21,12.26 12.23,11.63 12.5,10.94C12.69,11.32 12.89,11.7 13.13,12C13.9,13 15.11,13.44 15.37,14.8C15.41,14.94 15.43,15.08 15.43,15.23C15.46,16.05 15.1,16.95 14.5,17.5H14.5Z',
+    iconClass: 'text-red-500'
+  }
+}
+
+const REWARD_META = {
+  coins: {
+    iconPath: 'M5,6.09L7.91,4L9,5.09L6.09,8L9,10.91L7.91,12L5,9.09L2.09,12L1,10.91L3.91,8L1,5.09L2.09,4L5,6.09M16,6.09L18.91,4L20,5.09L17.09,8L20,10.91L18.91,12L16,9.09L13.09,12L12,10.91L14.91,8L12,5.09L13.09,4L16,6.09M11,14V16H13V20H15V16H17V14H15V12H13V14H11Z',
+    iconClass: 'text-yellow-500'
+  },
+  exp: {
+    iconPath: 'M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z',
+    iconClass: 'text-purple-500'
+  },
+  equipment: {
+    iconPath: 'M6.92,5H5L6.5,6.5L5,8H6.92L8.42,6.5L6.92,5M13,19H11V17.5L2.5,9H4.42L11,15.58V14H13V19M20.5,2.5L19,4L15.5,0.5L17,2L15.5,3.5L19,7L20.5,5.5L22,7L20.5,8.5L17,5L20.5,2.5Z',
+    iconClass: 'text-gray-600'
+  },
+  gem: {
+    iconPath: 'M6,2L2,8L12,22L22,8L18,2H6M6.5,4H17.5L20.5,8L12,18L3.5,8L6.5,4Z',
+    iconClass: 'text-blue-500'
+  },
+  legendary: {
+    iconPath: 'M5,16L3,5L8.5,12L12,4L15.5,12L21,5L19,16H5M12,18A2,2 0 0,1 14,20A2,2 0 0,1 12,22A2,2 0 0,1 10,20A2,2 0 0,1 12,18Z',
+    iconClass: 'text-orange-500'
+  }
+}
 
 export default {
   name: 'DungeonList',
@@ -325,27 +371,12 @@ export default {
       return texts[difficulty] || '未知'
     },
     
-    //=== getDifficultyIcon 获取难度图标组件
-    getDifficultyIcon(difficulty) {
-      const icons = {
-        easy: 'EasyIcon',
-        normal: 'NormalIcon',
-        hard: 'HardIcon',
-        hell: 'HellIcon'
-      }
-      return icons[difficulty] || 'EasyIcon'
+    getDifficultyIconMeta(difficulty) {
+      return DIFFICULTY_META[difficulty] || DIFFICULTY_META.easy
     },
     
-    //=== getRewardIcon 获取奖励图标组件
-    getRewardIcon(rewardType) {
-      const icons = {
-        coins: 'CoinsIcon',
-        exp: 'ExpIcon',
-        equipment: 'EquipmentIcon',
-        gem: 'GemIcon',
-        legendary: 'LegendaryIcon'
-      }
-      return icons[rewardType] || 'CoinsIcon'
+    getRewardIconMeta(rewardType) {
+      return REWARD_META[rewardType] || REWARD_META.coins
     },
     
     //=== formatReward 格式化奖励显示
@@ -377,73 +408,6 @@ export default {
     handleChallenge(dungeon) {
       console.log('挑战副本:', dungeon)
       // TODO: 实现副本挑战功能
-    }
-  },
-  components: {
-    //=== 难度图标组件
-    EasyIcon: {
-      template: `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-green-500">
-          <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
-        </svg>
-      `
-    },
-    NormalIcon: {
-      template: `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-blue-500">
-          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 12V14H15V16H13V14H11V12H13V10H15V12H17Z"/>
-        </svg>
-      `
-    },
-    HardIcon: {
-      template: `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-orange-500">
-          <path d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z"/>
-        </svg>
-      `
-    },
-    HellIcon: {
-      template: `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-red-500">
-          <path d="M17.66,11.2C17.43,10.9 17.15,10.64 16.89,10.38C16.22,9.78 15.46,9.35 14.82,8.72C13.33,7.26 13,4.85 13.95,3C13,3.23 12.17,3.75 11.46,4.32C8.87,6.4 7.85,10.07 9.07,13.22C9.11,13.32 9.15,13.42 9.15,13.55C9.15,13.77 9,13.97 8.8,14.05C8.57,14.15 8.33,14.09 8.14,13.93C8.08,13.88 8.04,13.83 8,13.76C6.87,12.33 6.69,10.28 7.45,8.64C5.78,10 4.87,12.3 5,14.47C5.06,14.97 5.12,15.47 5.29,15.97C5.43,16.57 5.7,17.17 6,17.7C7.08,19.43 8.95,20.67 10.96,20.92C13.1,21.19 15.39,20.8 17.03,19.32C18.86,17.66 19.5,15 18.56,12.72L18.43,12.46C18.22,12 17.66,11.2 17.66,11.2M14.5,17.5C14.22,17.74 13.76,18 13.4,18.1C12.28,18.5 11.16,17.94 10.5,17.28C11.69,17 12.4,16.12 12.61,15.23C12.78,14.43 12.46,13.77 12.33,13C12.21,12.26 12.23,11.63 12.5,10.94C12.69,11.32 12.89,11.7 13.13,12C13.9,13 15.11,13.44 15.37,14.8C15.41,14.94 15.43,15.08 15.43,15.23C15.46,16.05 15.1,16.95 14.5,17.5H14.5Z"/>
-        </svg>
-      `
-    },
-    //=== 奖励图标组件
-    CoinsIcon: {
-      template: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-500">
-          <path d="M5,6.09L7.91,4L9,5.09L6.09,8L9,10.91L7.91,12L5,9.09L2.09,12L1,10.91L3.91,8L1,5.09L2.09,4L5,6.09M16,6.09L18.91,4L20,5.09L17.09,8L20,10.91L18.91,12L16,9.09L13.09,12L12,10.91L14.91,8L12,5.09L13.09,4L16,6.09M11,14V16H13V20H15V16H17V14H15V12H13V14H11Z"/>
-        </svg>
-      `
-    },
-    ExpIcon: {
-      template: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-purple-500">
-          <path d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z"/>
-        </svg>
-      `
-    },
-    EquipmentIcon: {
-      template: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-gray-600">
-          <path d="M6.92,5H5L6.5,6.5L5,8H6.92L8.42,6.5L6.92,5M13,19H11V17.5L2.5,9H4.42L11,15.58V14H13V19M20.5,2.5L19,4L15.5,0.5L17,2L15.5,3.5L19,7L20.5,5.5L22,7L20.5,8.5L17,5L20.5,2.5Z"/>
-        </svg>
-      `
-    },
-    GemIcon: {
-      template: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-blue-500">
-          <path d="M6,2L2,8L12,22L22,8L18,2H6M6.5,4H17.5L20.5,8L12,18L3.5,8L6.5,4Z"/>
-        </svg>
-      `
-    },
-    LegendaryIcon: {
-      template: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-orange-500">
-          <path d="M5,16L3,5L8.5,12L12,4L15.5,12L21,5L19,16H5M12,18A2,2 0 0,1 14,20A2,2 0 0,1 12,22A2,2 0 0,1 10,20A2,2 0 0,1 12,18Z"/>
-        </svg>
-      `
     }
   }
 }
