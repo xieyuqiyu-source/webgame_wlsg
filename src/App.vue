@@ -1,8 +1,6 @@
 <script>
-import { StagewiseToolbar } from '@stagewise/toolbar-vue'
-import VuePlugin from '@stagewise-plugins/vue'
+import { onMounted, ref, shallowRef } from 'vue'
 import { useGameTimer } from './hooks/useGameTimer'
-import { onMounted, ref } from 'vue'
 import { useGameStore } from './store/modules/gameStore'
 import UserInitDialog from './components/UserInitDialog.vue'
 import GlobalNotification from './components/GlobalNotification.vue'
@@ -10,46 +8,51 @@ import GlobalNotification from './components/GlobalNotification.vue'
 export default {
   name: 'App',
   components: {
-    StagewiseToolbar,
     UserInitDialog,
     GlobalNotification
   },
   setup() {
     const gameStore = useGameStore()
     const showUserInitDialog = ref(false)
-    
-    // 启动游戏定时器
-    const gameTimer = useGameTimer()
-    
-    // 处理用户信息提交
+    const stagewiseToolbar = shallowRef(null)
+    const stagewiseConfig = ref(null)
+    const isStagewiseEnabled = import.meta.env.DEV && import.meta.env.VITE_ENABLE_STAGEWISE === 'true'
+
+    useGameTimer()
+
     const handleUserInfoSubmit = (userInfo) => {
       gameStore.setUserInfo(userInfo.nickname, userInfo.faction)
       showUserInitDialog.value = false
     }
-    
-    // 确保在组件挂载后启动定时器并检查是否需要显示初始化对话框
+
+    const loadStagewise = async () => {
+      if (!isStagewiseEnabled) return
+
+      const [{ StagewiseToolbar }, vuePluginModule] = await Promise.all([
+        import('@stagewise/toolbar-vue'),
+        import('@stagewise-plugins/vue')
+      ])
+
+      stagewiseToolbar.value = StagewiseToolbar
+      stagewiseConfig.value = {
+        plugins: [vuePluginModule.default]
+      }
+    }
+
     onMounted(() => {
-      console.log('App组件已挂载，游戏定时器应该已启动')
-      
-      // 检查是否为首次进入游戏
       if (gameStore.isFirstTime) {
         showUserInitDialog.value = true
       }
+
+      loadStagewise()
     })
-    
+
     return {
+      handleUserInfoSubmit,
+      isStagewiseEnabled,
       showUserInitDialog,
-      handleUserInfoSubmit
-    }
-  },
-  data() {
-    return {
-      //=== stagewise配置 - AI辅助开发工具栏配置
-      stagewiseConfig: {
-        plugins: [VuePlugin]
-      },
-      //=== 开发模式检测 - 仅在开发环境显示工具栏
-      isDev: import.meta.env.DEV
+      stagewiseConfig,
+      stagewiseToolbar
     }
   }
 }
@@ -70,9 +73,10 @@ export default {
     <GlobalNotification />
     
     <!-- stagewise AI开发工具栏 - 仅开发模式显示 -->
-    <StagewiseToolbar 
-      v-if="isDev" 
-      :config="stagewiseConfig" 
+    <component
+      :is="stagewiseToolbar"
+      v-if="isStagewiseEnabled && stagewiseToolbar && stagewiseConfig"
+      :config="stagewiseConfig"
     />
   </div>
 </template>

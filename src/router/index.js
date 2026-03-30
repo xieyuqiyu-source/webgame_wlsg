@@ -1,52 +1,46 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 导入页面组件
-import GameDemo from '@/views/GameDemo.vue'
-import CityView from '@/views/city/index.vue'
-import MilitaryView from '@/views/military/index.vue'
-import MapView from '@/views/map/index.vue'
-import SettingsView from '@/views/settings/index.vue'
-import NotificationTest from '@/views/NotificationTest.vue'
-import MessageView from '@/views/MessageView.vue'
-
-//=== createRouter 创建路由实例
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'GameDemo',
-      component: GameDemo
+      redirect: '/city'
     },
     {
       path: '/city',
       name: 'City',
-      component: CityView
+      component: () => import('@/views/city/index.vue')
     },
     {
       path: '/military',
-      name: 'Military', 
-      component: MilitaryView
+      name: 'Military',
+      component: () => import('@/views/military/index.vue')
     },
     {
       path: '/map',
       name: 'Map',
-      component: MapView
+      component: () => import('@/views/map/index.vue')
     },
     {
       path: '/settings',
       name: 'Settings',
-      component: SettingsView
-    },
-    {
-      path: '/notification-test',
-      name: 'NotificationTest',
-      component: NotificationTest
+      component: () => import('@/views/settings/index.vue')
     },
     {
       path: '/message',
       name: 'Message',
-      component: MessageView
+      component: () => import('@/views/MessageView.vue')
+    },
+    {
+      path: '/demo',
+      name: 'GameDemo',
+      component: () => import('@/views/GameDemo.vue')
+    },
+    {
+      path: '/notification-test',
+      name: 'NotificationTest',
+      component: () => import('@/views/NotificationTest.vue')
     }
   ]
 })
