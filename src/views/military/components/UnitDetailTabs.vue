@@ -74,6 +74,7 @@
           <!-- 征募按钮 -->
           <button 
             class="recruit-button"
+            :data-testid="`recruit-unit-${unit.id}`"
             @click="handleUnitTrain(unit)"
           >
             征募

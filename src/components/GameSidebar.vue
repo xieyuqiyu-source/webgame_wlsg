@@ -1,6 +1,5 @@
 <template>
   <div class="game-sidebar" :class="{ 'collapsed': isCollapsed }">
-    <!-- 折叠/展开按钮 -->
     <div class="sidebar-toggle" @click="toggleSidebar">
       <div class="toggle-icon">
         <svg v-if="!isCollapsed" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -12,731 +11,113 @@
       </div>
     </div>
 
-    <!-- 侧边栏内容 -->
     <div class="sidebar-content" v-show="!isCollapsed">
-      <!-- 可滚动的主要内容区域 -->
       <div class="scrollable-content">
-        <!-- 城池信息卡片 -->
-        <div class="city-info-card">
-          <div class="city-header">
-            <div class="city-title-row">
-              <div class="city-title">新的城池p0sg (101|38)</div>
-              <div class="coins-display" @click="handleCoinsClick">
-                <span class="coins-icon">💰</span>
-                <span class="coins-amount">{{ gameStore.coins }}</span>
-              </div>
-            </div>
-            <div class="city-details">
-              <div class="detail-item civilization-row">
-                <div class="civilization-left">
-                  <div class="status-dot red"></div>
-                  <span>城池文明度: {{ formatCivilization(gameStore.citycivilization) }}</span>
-                </div>
-                <div class="civilization-right">
-                  <div class="status-dot" :class="gameStore.civilizationLevel.statusColor || 'blue'"></div>
-                  <span :class="gameStore.civilizationLevel.color">{{ gameStore.civilizationLevel.level }}</span>
-                </div>
-              </div>
-              <div class="detail-item">
-                <div class="status-dot yellow"></div>
-                <span>首次充值赠送100礼金券</span>
-              </div>
-              <div class="detail-item">
-                <div class="status-dot green"></div>
-                <span>社区群组上线，邀您共加入</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SidebarCityInfo
+          :citycivilization="gameStore.citycivilization"
+          :civilization-level="gameStore.civilizationLevel"
+          :coins="gameStore.coins"
+          :format-civilization="formatCivilization"
+          @coins-click="handleCoinsClick"
+        />
 
-        <!-- 资源信息 -->
-        <div class="section">
-          <div class="section-header">
-            <span>本城资源</span>
-            <!-- 资源管理小圆点 -->
-            <div class="resource-dots-container">
-              <!-- 一键爆仓小圆点 -->
-              <div 
-                @click="fillWarehouse" 
-                @mouseenter="showFillTooltip = true"
-                @mouseleave="showFillTooltip = false"
-                :class="{ 'disabled': gameStore.coins < 10 }"
-                class="resource-dot fill-dot"
-              >
-                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                </svg>
-                
-                <!-- 一键爆仓悬浮提示 -->
-                <Transition name="tooltip-fade">
-                  <div v-if="showFillTooltip" class="resource-tooltip">
-                    <div class="tooltip-content">
-                      <div v-if="gameStore.coins < 10" class="tooltip-item insufficient">
-                        <span class="tooltip-label">金币不足</span>
-                        <span class="tooltip-value">需要10金币 (当前: {{ gameStore.coins }})</span>
-                      </div>
-                      <div v-else class="tooltip-item">
-                        <span class="tooltip-label">一键爆仓</span>
-                        <span class="tooltip-value">消耗10金币填满所有资源</span>
-                      </div>
-                    </div>
-                  </div>
-                </Transition>
-              </div>
-              
-              <!-- 容量加成小圆点 -->
-              <div 
-                @click="activateWarehouseBoost" 
-                @mouseenter="showBoostTooltip = true"
-                @mouseleave="showBoostTooltip = false"
-                :class="{ 
-                  'disabled': gameStore.coins < warehouseBoostCost,
-                  'active': isWarehouseBoostActive 
-                }"
-                class="resource-dot boost-dot"
-              >
-                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                
-                <!-- 容量加成悬浮提示 -->
-                <Transition name="tooltip-fade">
-                  <div v-if="showBoostTooltip" class="resource-tooltip">
-                    <div class="tooltip-content">
-                      <div v-if="isWarehouseBoostActive" class="tooltip-item active">
-                        <span class="tooltip-label">容量加成激活中</span>
-                        <span class="tooltip-value">剩余时间: {{ formatTime(warehouseBoostTimeLeft) }}</span>
-                        <span class="tooltip-value">当前容量: {{ formatNumber(gameStore.warehouseCapacity) }} (2倍加成)</span>
-                      </div>
-                      <div v-else-if="gameStore.coins < warehouseBoostCost" class="tooltip-item insufficient">
-                        <span class="tooltip-label">金币不足</span>
-                        <span class="tooltip-value">需要{{ warehouseBoostCost }}金币 (当前: {{ gameStore.coins }})</span>
-                      </div>
-                      <div v-else class="tooltip-item">
-                        <span class="tooltip-label">容量加成</span>
-                        <span class="tooltip-value">消耗{{ warehouseBoostCost }}金币获得2倍仓库容量</span>
-                        <span class="tooltip-value">持续1小时</span>
-                      </div>
-                    </div>
-                  </div>
-                </Transition>
-              </div>
-            </div>
-          </div>
-          <div class="resource-list">
-            <div class="resource-item" v-for="resource in resources" :key="resource.name">
-              <div class="resource-info">
-                <img v-if="resource.icon" :src="resource.icon" :alt="resource.name" class="resource-icon" />
-                <div v-else class="resource-icon resource-icon-fallback"></div>
-                <span class="resource-name">{{ resource.name }}</span>
-              </div>
-              <div class="resource-value">{{ resource.current }}/{{ resource.max }}</div>
-            </div>
-          </div>
-        </div>
+        <SidebarResources
+          :coins="gameStore.coins"
+          :format-number="formatNumber"
+          :format-time="formatTime"
+          :is-warehouse-boost-active="isWarehouseBoostActive"
+          :resources="resources"
+          :show-boost-tooltip="showBoostTooltip"
+          :show-fill-tooltip="showFillTooltip"
+          :warehouse-boost-cost="warehouseBoostCost"
+          :warehouse-boost-time-left="warehouseBoostTimeLeft"
+          :warehouse-capacity="gameStore.warehouseCapacity"
+          @activate-warehouse-boost="activateWarehouseBoost"
+          @fill-warehouse="fillWarehouse"
+          @update:show-boost-tooltip="showBoostTooltip = $event"
+          @update:show-fill-tooltip="showFillTooltip = $event"
+        />
 
-        <!-- 生产力信息 -->
-        <div class="section">
-          <div class="section-header">
-            <span>城池生产力</span>
-            <button 
-              @click="showBoostDialog = true"
-              class="boost-btn"
-              :class="{ 'boost-active': gameStore.isProductionBoostActive }"
-              :title="gameStore.isProductionBoostActive ? `加速中，剩余${formatTime(gameStore.productionBoostTimeLeft)}` : '生产力加速'"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13,2.05V5.08C16.39,5.57 19,8.47 19,12C19,12.9 18.82,13.75 18.5,14.54L21.12,16.07C21.68,14.83 22,13.45 22,12C22,6.82 18.05,2.55 13,2.05M12,19C8.13,19 5,15.87 5,12C5,8.47 7.61,5.57 11,5.08V2.05C5.94,2.55 2,6.81 2,12C2,17.52 6.48,22 12,22C13.45,22 14.83,21.68 16.07,21.12L14.54,18.5C13.75,18.82 12.9,19 12,19M15,12A3,3 0 0,0 12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12Z"/>
-              </svg>
-              <span v-if="gameStore.isProductionBoostActive" class="boost-text">{{ formatTime(gameStore.productionBoostTimeLeft) }}</span>
-              <span v-else class="boost-text">加速</span>
-            </button>
-          </div>
-          <div class="production-list">
-            <div 
-              class="production-item" 
-              v-for="production in productions" 
-              :key="production.name"
-              @mouseenter="showProductionTooltip = production.type"
-              @mouseleave="showProductionTooltip = null"
-            >
-              <div class="production-info">
-                <img v-if="production.icon" :src="production.icon" :alt="production.name" class="production-icon" />
-                <div v-else class="production-icon production-icon-fallback"></div>
-                <span class="production-name">{{ production.name }}</span>
-              </div>
-              <div class="production-details">
-                <span class="production-rate">{{ production.rate }} 每小时</span>
-              </div>
-              
-              <!-- 生产力详情提示框 -->
-              <Transition name="tooltip-fade">
-                <div v-if="showProductionTooltip === production.type" class="production-tooltip">
-                  <div class="tooltip-arrow"></div>
-                  <!-- <div class="tooltip-header">{{ production.name }}产量详情</div> -->
-                  <div class="tooltip-content">
-                    <div class="tooltip-item">
-                      <span class="tooltip-label">基础产量: <span class="tooltip-value">{{ production.baseProduction }} 每小时</span></span>
-                     
-                    </div>
-                    <div class="tooltip-item" v-if="gameStore.userFaction">
-                      <span class="tooltip-label">阵营加成: <span class="tooltip-value" :class="production.bonusClass">{{ production.bonusText }}</span></span>
-                      
-                    </div>
-                    <div class="tooltip-item total">
-                      <span class="tooltip-label">总产量: <span class="tooltip-value text-yellow-400">{{ production.rate }} 每小时</span></span>
-                    </div>
-                  </div>
-                </div>
-              </Transition>
-            </div>
-          </div>
-        </div>
+        <SidebarProduction
+          :format-time="formatTime"
+          :is-production-boost-active="gameStore.isProductionBoostActive"
+          :productions="productions"
+          :production-boost-time-left="gameStore.productionBoostTimeLeft"
+          :show-production-tooltip="showProductionTooltip"
+          :user-faction="gameStore.userFaction"
+          @open-boost-dialog="showBoostDialog = true"
+          @update:show-production-tooltip="showProductionTooltip = $event"
+        />
 
-        <!-- 仓库管理 -->
-        <div class="section">
-          <div class="section-header">仓库管理</div>
-          <div class="warehouse-info">
-            <div class="warehouse-level">
-              <span class="warehouse-label">仓库等级:</span>
-              <span class="warehouse-value">{{ gameStore.warehouseLevel }}/{{ WAREHOUSE_CONFIG.maxLevel }}</span>
-            </div>
-            <div class="warehouse-upgrade-container" @mouseenter="showTooltip = true" @mouseleave="showTooltip = false">
-              <button
-                @mouseenter="showTooltip = true"
-                @mouseleave="showTooltip = false"
-                @click="upgradeWarehouse"
-                :disabled="!gameStore.canUpgradeWarehouse || isWarehouseUpgrading"
-                class="warehouse-upgrade-btn relative overflow-hidden"
-                :class="gameStore.canUpgradeWarehouse && !isWarehouseUpgrading ? 'enabled' : 'disabled'"
-              >
-                <!-- 进度条背景 -->
-                <div 
-                  v-if="isWarehouseUpgrading" 
-                  class="absolute inset-0 bg-green-500 transition-all duration-100 ease-linear"
-                  :style="{ width: warehouseUpgradeProgress + '%' }"
-                ></div>
-                
-                <!-- 按钮文字 -->
-                <span class="relative z-10 color-white">
-                  <template v-if="isWarehouseUpgrading">
-                    升级中... {{ Math.round(warehouseUpgradeProgress) }}%
-                  </template>
-                  <template v-else>
-                    {{ gameStore.warehouseLevel >= WAREHOUSE_CONFIG.maxLevel ? '已满级' : `升级 (${gameStore.warehouseLevel} → ${gameStore.warehouseLevel + 1})` }}
-                  </template>
-                </span>
-              </button>
-              <!-- 浮动提醒 -->
-              <div v-if="showTooltip && (!gameStore.canUpgradeWarehouse || isWarehouseUpgrading)" class="upgrade-tooltip">
-                <div class="tooltip-arrow"></div>
-                <div class="tooltip-header">升级条件</div>
-                <div v-if="isWarehouseUpgrading" class="tooltip-content">
-                  <div class="tooltip-item upgrading">仓库正在升级中...</div>
-                  <div class="tooltip-item">
-                    <div class="text-green-400 text-center mt-1">剩余时间: {{ formatTime(warehouseUpgradeTimeLeft) }}</div>
-                  </div>
-                </div>
-                <div v-else-if="gameStore.warehouseLevel >= WAREHOUSE_CONFIG.maxLevel" class="tooltip-content">
-                  <div class="tooltip-item max-level">仓库已达到最大等级</div>
-                </div>
-                <div v-else class="tooltip-content">
-                  <div class="tooltip-item" v-for="(cost, resourceType) in warehouseUpgradeCost" :key="resourceType">
-                    <div class="resource-requirement" :class="{ 'insufficient': gameStore.resources[resourceType] < cost }">
-                      <span class="resource-name">{{ getResourceName(resourceType) }}:</span>
-                      <span class="resource-amount">{{ gameStore.resources[resourceType] }}/{{ cost }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SidebarWarehouse
+          :can-upgrade-warehouse="gameStore.canUpgradeWarehouse"
+          :format-time="formatTime"
+          :get-resource-name="getResourceName"
+          :is-warehouse-upgrading="isWarehouseUpgrading"
+          :resource-amounts="gameStore.resources"
+          :show-tooltip="showTooltip"
+          :warehouse-level="gameStore.warehouseLevel"
+          :warehouse-max-level="WAREHOUSE_CONFIG.maxLevel"
+          :warehouse-upgrade-cost="warehouseUpgradeCost"
+          :warehouse-upgrade-progress="warehouseUpgradeProgress"
+          :warehouse-upgrade-time-left="warehouseUpgradeTimeLeft"
+          @upgrade-warehouse="upgradeWarehouse"
+          @update:show-tooltip="showTooltip = $event"
+        />
 
-        <!-- 军队信息 -->
-        <div class="section">
-          <div class="section-header">
-            <span>本城直属军队</span>
-            <span class="army-count">总数: {{ gameStore.totalArmyCount }}</span>
-          </div>
-          <div class="army-grid">
-            <div v-if="Object.keys(gameStore.army).length === 0" class="empty-army">
-              <span class="empty-text">暂无军队</span>
-            </div>
-            <div v-else class="army-item" v-for="(count, unitId) in gameStore.army" :key="unitId">
-              <div class="army-icon">{{ getUnitIcon(unitId) }}</div>
-              <div class="army-info">
-                <span class="army-name">{{ getUnitName(unitId) }}</span>
-                <span class="army-count-text">×{{ count }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SidebarArmy
+          :army="gameStore.army"
+          :get-unit-icon="getUnitIcon"
+          :get-unit-name="getUnitName"
+          :total-army-count="gameStore.totalArmyCount"
+        />
       </div>
 
-      <!-- 生产力加速弹窗 -->
-      <div v-if="showBoostDialog" class="boost-dialog-overlay" @click="showBoostDialog = false">
-        <div class="boost-dialog" @click.stop>
-          <div class="boost-dialog-header">
-            <h3>生产力加速</h3>
-            <button @click="showBoostDialog = false" class="close-btn">×</button>
-          </div>
-          <div class="boost-dialog-content">
-            <div class="boost-info">
-              <p class="boost-description">消耗金币获得生产力40%加成</p>
-              <div class="current-coins">
-                <span class="coins-label">当前金币:</span>
-                <span class="coins-value">{{ gameStore.coins }}</span>
-              </div>
-            </div>
-            
-            <div class="boost-options">
-              <div 
-                v-for="option in boostOptions" 
-                :key="option.hours"
-                class="boost-option"
-                :class="{ 'disabled': gameStore.coins < option.cost }"
-                @click="startBoost(option.hours)"
-              >
-                <div class="option-header">
-                  <span class="option-duration">{{ option.hours }}小时</span>
-                  <span class="option-cost">{{ option.cost }}金币</span>
-                </div>
-                <div class="option-description">{{ option.description }}</div>
-              </div>
-            </div>
-            
-            <div v-if="gameStore.isProductionBoostActive" class="current-boost">
-              <div class="current-boost-info">
-                <span class="boost-status">当前加速状态: 激活中</span>
-                <span class="boost-remaining">剩余时间: {{ formatTime(gameStore.productionBoostTimeLeft) }}</span>
-              </div>
-              <p class="boost-note">选择新的加速时间将延长当前加速效果</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <SidebarBoostDialog
+        :boost-options="boostOptions"
+        :coins="gameStore.coins"
+        :format-time="formatTime"
+        :is-production-boost-active="gameStore.isProductionBoostActive"
+        :production-boost-time-left="gameStore.productionBoostTimeLeft"
+        :show="showBoostDialog"
+        @close="showBoostDialog = false"
+        @start-boost="startBoost"
+      />
 
-      <!-- 固定在底部的导航区域 -->
-      <div class="bottom-nav">
-        <div class="nav-buttons">
-          <div class="nav-button" @click="handleNavClick('city')">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
-              </svg>
-            </div>
-            <span class="nav-label">城池</span>
-          </div>
-          <div class="nav-button" @click="handleNavClick('military')">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L13.09 8.26L22 9L17 14L18.18 22.74L12 19.27L5.82 22.74L7 14L2 9L10.91 8.26L12 2Z"/>
-              </svg>
-            </div>
-            <span class="nav-label">军事</span>
-          </div>
-          <div class="nav-button" @click="handleNavClick('map')">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.5 3L20.34 3.03L15 5.1L9 3L3.36 4.9C3.15 4.97 3 5.15 3 5.38V20.5C3 20.78 3.22 21 3.5 21L3.66 20.97L9 18.9L15 21L20.64 19.1C20.85 19.03 21 18.85 21 18.62V3.5C21 3.22 20.78 3 20.5 3Z"/>
-              </svg>
-            </div>
-            <span class="nav-label">地图</span>
-          </div>
-          <div class="nav-button" @click="handleNavClick('settings')">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
-              </svg>
-            </div>
-            <span class="nav-label">设置</span>
-          </div>
-          <div class="nav-button" @click="handleNavClick('message')">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.17L4 17.17V4H20V16Z"/>
-              </svg>
-            </div>
-            <span class="nav-label">信函</span>
-          </div>
-          <div class="nav-button" @click="handleNavClick('notification-test')">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 6.5C21 8.43 19.43 10 17.5 10S14 8.43 14 6.5 15.57 3 17.5 3 21 4.57 21 6.5ZM10 6.5C10 8.43 8.43 10 6.5 10S3 8.43 3 6.5 4.57 3 6.5 3 10 4.57 10 6.5ZM12 8C15.31 8 18 10.69 18 14V16L20 18V19H4V18L6 16V14C6 10.69 8.69 8 12 8ZM10 20H14C14 21.1 13.1 22 12 22S10 21.1 10 20Z"/>
-              </svg>
-            </div>
-            <span class="nav-label">通知</span>
-          </div>
-        </div>
-      </div>
+      <SidebarBottomNav :nav-items="NAV_ITEMS" @nav-click="handleNavClick" />
     </div>
   </div>
 </template>
 
 <script>
-import { RESOURCE_ICONS, getResourceIcon, getResourceName } from '@/config/resources.js'
-import { useGameStore } from '@/store/modules/gameStore.js'
-import { computed, ref, onMounted, onUnmounted, watchEffect } from 'vue'
-import { calculateWarehouseUpgradeTime, calculateWarehouseUpgradeCost, calculateProduction, BUILDING_TYPES, WAREHOUSE_CONFIG } from '@/config/gameConfig.js'
-import { formatCivilization, formatTime, formatNumber } from '@/utils/formatters.js'
-import { getFactionConfig, getUnitById } from '@/config/factionConfig.js'
+import SidebarArmy from '@/components/sidebar/SidebarArmy.vue'
+import SidebarBottomNav from '@/components/sidebar/SidebarBottomNav.vue'
+import SidebarBoostDialog from '@/components/sidebar/SidebarBoostDialog.vue'
+import SidebarCityInfo from '@/components/sidebar/SidebarCityInfo.vue'
+import SidebarProduction from '@/components/sidebar/SidebarProduction.vue'
+import SidebarResources from '@/components/sidebar/SidebarResources.vue'
+import SidebarWarehouse from '@/components/sidebar/SidebarWarehouse.vue'
+import { useGameSidebar } from '@/hooks/useGameSidebar.js'
 
 export default {
   name: 'GameSidebar',
+  components: {
+    SidebarArmy,
+    SidebarBottomNav,
+    SidebarBoostDialog,
+    SidebarCityInfo,
+    SidebarProduction,
+    SidebarResources,
+    SidebarWarehouse
+  },
   emits: ['toggle', 'nav-click'],
-  setup() {
-    const gameStore = useGameStore()
-    
-    // 仓库升级相关状态
-    const showTooltip = ref(false)
-    // 生产力提示框状态
-    const showProductionTooltip = ref(null)
-    // 生产力加速弹窗状态
-    const showBoostDialog = ref(false)
-    // 资源管理小圆点悬浮提示状态
-    const showFillTooltip = ref(false)
-    const showBoostTooltip = ref(false)
-    let progressTimer = null
-    
-    //=== 仓库升级状态（从gameStore获取）
-    const isWarehouseUpgrading = computed(() => {
-      return gameStore.isWarehouseUpgrading
-    })
-    
-    // 响应式时间戳，用于强制更新计算属性
-    const currentTime = ref(Date.now())
-    
-    //=== 仓库升级进度
-    const warehouseUpgradeProgress = computed(() => {
-      if (!gameStore.warehouseUpgrade) return 0
-      // 使用响应式时间戳确保计算属性能够更新
-      const now = currentTime.value
-      const elapsed = now - gameStore.warehouseUpgrade.startTime
-      const progress = Math.min((elapsed / gameStore.warehouseUpgrade.duration) * 100, 100)
-      return progress
-    })
-    
-    //=== 仓库升级剩余时间
-    const warehouseUpgradeTimeLeft = computed(() => {
-      if (!gameStore.warehouseUpgrade) return 0
-      // 使用响应式时间戳确保计算属性能够更新
-      const now = currentTime.value
-      const elapsed = now - gameStore.warehouseUpgrade.startTime
-      const remaining = Math.max(0, gameStore.warehouseUpgrade.duration - elapsed)
-      return Math.ceil(remaining / 1000)
-    })
-    
-    //=== 计算资源数据
-    const resources = computed(() => {
-      const resourceTypes = ['wood', 'soil', 'iron', 'food']
-      return resourceTypes.map(type => ({
-        name: getResourceName(type),
-        type,
-        icon: getResourceIcon(type),
-        current: Math.floor(gameStore.resources[type] || 0),
-        max: Math.floor(gameStore.warehouseCapacity || 0)
-      }))
-    })
-    
-    //=== 计算生产力数据
-    const productions = computed(() => {
-      const resourceTypes = ['wood', 'soil', 'iron', 'food']
-      return resourceTypes.map(type => {
-        // 计算基础产量（不含阵营加成）
-        let baseProduction = 0
-        const buildingTypeMap = {
-          'wood': BUILDING_TYPES.WOOD_MILL,
-          'soil': BUILDING_TYPES.SOIL_MINE,
-          'iron': BUILDING_TYPES.IRON_MINE,
-          'food': BUILDING_TYPES.FARM
-        }
-        
-        const buildingType = buildingTypeMap[type]
-        if (buildingType && gameStore.buildings[buildingType]) {
-          gameStore.buildings[buildingType].forEach(level => {
-            if (level > 0) {
-              // 计算不含阵营加成的基础产量
-              baseProduction += calculateProduction(buildingType, level, null)
-            }
-          })
-        }
-        
-        // 获取总产量（含阵营加成）
-        const totalProduction = Math.floor(gameStore.hourlyProduction[type] || 0)
-        
-        // 计算阵营加成信息
-        let bonusText = '无加成'
-        let bonusClass = 'text-gray-400'
-        
-        if (gameStore.userFaction) {
-          const factionConfig = getFactionConfig(gameStore.userFaction)
-          if (factionConfig && factionConfig.traits) {
-            const economyBonus = factionConfig.traits.economyBonus || 1.0
-            const bonusPercent = Math.round((economyBonus - 1) * 100)
-            
-            if (bonusPercent > 0) {
-              bonusText = `+${bonusPercent}% (${factionConfig.name})`
-              bonusClass = 'text-green-400'
-            } else if (bonusPercent < 0) {
-              bonusText = `${bonusPercent}% (${factionConfig.name})`
-              bonusClass = 'text-red-400'
-            } else {
-              bonusText = '无加成'
-              bonusClass = 'text-gray-400'
-            }
-          }
-        }
-        
-        return {
-          name: getResourceName(type),
-          type,
-          icon: getResourceIcon(type),
-          rate: totalProduction,
-          baseProduction: Math.floor(baseProduction),
-          bonusText,
-          bonusClass
-        }
-      })
-    })
-    
-    //=== 计算仓库升级成本
-    const warehouseUpgradeCost = computed(() => {
-      return calculateWarehouseUpgradeCost(gameStore.warehouseLevel)
-    })
-    
-    // 格式化时间显示
-    const formatTime = (seconds) => {
-      const hours = Math.floor(seconds / 3600)
-      const minutes = Math.floor((seconds % 3600) / 60)
-      const secs = seconds % 60
-      
-      if (hours > 0) {
-        return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-      } else {
-        return `${minutes}:${secs.toString().padStart(2, '0')}`
-      }
-    }
-    
-    //=== 启动进度定时器
-    const startProgressTimer = () => {
-      if (progressTimer) {
-        clearInterval(progressTimer)
-      }
-      progressTimer = setInterval(() => {
-        // 更新响应式时间戳，触发计算属性重新计算
-        currentTime.value = Date.now()
-      }, 100)
-    }
-    
-    //=== 停止进度定时器
-    const stopProgressTimer = () => {
-      if (progressTimer) {
-        clearInterval(progressTimer)
-        progressTimer = null
-      }
-    }
-    
-    //=== 监听升级状态变化
-    const watchUpgradeStatus = () => {
-      if (isWarehouseUpgrading.value) {
-        startProgressTimer()
-      } else {
-        stopProgressTimer()
-      }
-    }
-    
-    onMounted(() => {
-      watchUpgradeStatus()
-      // 监听升级状态变化
-      watchEffect(() => {
-        watchUpgradeStatus()
-      })
-    })
-    
-    //=== getUnitIcon 获取兵种图标
-    const getUnitIcon = (unitId) => {
-      const unit = getUnitById(unitId)
-      return unit?.icon || '⚔️'
-    }
-    
-    //=== getUnitName 获取兵种名称
-    const getUnitName = (unitId) => {
-      const unit = getUnitById(unitId)
-      return unit?.name || '未知兵种'
-    }
-    
-    //=== 生产力加速选项配置
-    const boostOptions = computed(() => [
-      {
-        hours: 1,
-        cost: gameStore.calculateBoostCost(1),
-        description: '短期加速，适合快速收集资源'
-      },
-      {
-        hours: 4,
-        cost: gameStore.calculateBoostCost(4),
-        description: '中期加速，性价比较高'
-      },
-      {
-        hours: 8,
-        cost: gameStore.calculateBoostCost(8),
-        description: '长期加速，适合离线挂机'
-      },
-      {
-        hours: 24,
-        cost: gameStore.calculateBoostCost(24),
-        description: '全天加速，效果最佳'
-      }
-    ])
-    
-    //=== 启动生产力加速
-    const startBoost = (hours) => {
-      if (gameStore.coins < gameStore.calculateBoostCost(hours)) {
-        return // 金币不足，不执行
-      }
-      
-      const success = gameStore.startProductionBoost(hours)
-      if (success) {
-        showBoostDialog.value = false
-      }
-    }
-    
-    //=== 仓库容量加成相关
-    const warehouseBoostCost = computed(() => {
-      return 50 // 仓库容量加成花费50金币
-    })
-    
-    const isWarehouseBoostActive = computed(() => {
-      return gameStore.isWarehouseBoostActive
-    })
-    
-    const warehouseBoostTimeLeft = computed(() => {
-      if (!gameStore.warehouseBoost) return 0
-      const now = currentTime.value
-      const elapsed = now - gameStore.warehouseBoost.startTime
-      const remaining = Math.max(0, gameStore.warehouseBoost.duration - elapsed)
-      return Math.ceil(remaining / 1000)
-    })
-    
-    //=== 一键爆仓功能
-    const fillWarehouse = () => {
-      if (gameStore.coins < 10) {
-        return // 金币不足
-      }
-      
-      const success = gameStore.fillWarehouse()
-      if (success) {
-        console.log('一键爆仓成功')
-      }
-    }
-    
-    //=== 激活仓库容量加成
-    const activateWarehouseBoost = () => {
-      if (gameStore.coins < warehouseBoostCost.value || isWarehouseBoostActive.value) {
-        return // 金币不足或已激活
-      }
-      
-      const success = gameStore.activateWarehouseBoost()
-      if (success) {
-        console.log('仓库容量加成激活成功')
-      }
-    }
-    
-    // 清理定时器
-    onUnmounted(() => {
-      stopProgressTimer()
-    })
-    
-    return {
-      gameStore,
-      resources,
-      productions,
-      isWarehouseUpgrading,
-      warehouseUpgradeTimeLeft,
-      warehouseUpgradeProgress,
-      showTooltip,
-      showProductionTooltip,
-      showBoostDialog,
-      showFillTooltip,
-      showBoostTooltip,
-      boostOptions,
-      startBoost,
-      warehouseUpgradeCost,
-      warehouseBoostCost,
-      isWarehouseBoostActive,
-      warehouseBoostTimeLeft,
-      fillWarehouse,
-      activateWarehouseBoost,
-      getResourceName,
-      formatTime,
-      formatCivilization,
-      getUnitIcon,
-      getUnitName,
-      WAREHOUSE_CONFIG
-    }
-  },
-  data() {
-    return {
-      //=== isCollapsed 侧边栏折叠状态
-      isCollapsed: false
-    }
-  },
-  methods: {
-    //=== toggleSidebar 切换侧边栏展开/折叠状态
-    toggleSidebar() {
-      this.isCollapsed = !this.isCollapsed
-      this.$emit('toggle', this.isCollapsed)
-    },
-    //=== upgradeWarehouse 升级仓库
-    upgradeWarehouse() {
-      this.gameStore.upgradeWarehouse()
-    },
-    //=== handleNavClick 处理底部导航按钮点击事件
-    handleNavClick(navType) {
-      console.log('导航点击:', navType)
-      this.$emit('nav-click', navType)
-      
-      // 根据navType进行路由跳转
-      const routeMap = {
-        'city': '/city',
-        'military': '/military', 
-        'map': '/map',
-        'message': '/message', // 信函页面
-        'settings': '/settings', // 设置按钮跳转到设置页面
-        'notification-test': '/notification-test' // 通知测试页面
-      }
-      
-      const targetRoute = routeMap[navType]
-      if (targetRoute && this.$router.currentRoute.value.path !== targetRoute) {
-        this.$router.push(targetRoute)
-      }
-    },
-    //=== handleCoinsClick 处理金币点击事件（GM功能）
-    handleCoinsClick() {
-      const amount = prompt('GM操作：请输入要添加的金币数量', '100')
-      if (amount && !isNaN(amount) && parseInt(amount) > 0) {
-        this.gameStore.addCoins(parseInt(amount))
-      }
-    },
-    //=== formatNumber 格式化数字显示
-    formatNumber(num) {
-      if (num >= 1000000000) {
-        return (num / 1000000000).toFixed(1) + 'B'
-      }
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M'
-      }
-      if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K'
-      }
-      return num.toString()
-    }
+  setup(_, { emit }) {
+    return useGameSidebar(emit)
   }
 }
 </script>
 
-<style scoped>
+<style>
 .game-sidebar {
   @apply fixed left-0 top-0 h-full z-50 transition-all duration-300;
   width: 300px;

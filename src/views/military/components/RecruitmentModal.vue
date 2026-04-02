@@ -1,8 +1,8 @@
 <template>
   <!-- 征兵弹窗 -->
   <Transition name="modal" appear>
-    <div v-if="visible" class="recruitment-modal-overlay" @click="handleOverlayClick">
-      <div class="recruitment-modal" @click.stop>
+    <div v-if="visible" class="recruitment-modal-overlay" data-testid="recruitment-modal-overlay" @click="handleOverlayClick">
+      <div class="recruitment-modal" data-testid="recruitment-modal" @click.stop>
       <!-- 弹窗头部 -->
       <div class="modal-header">
         <div class="header-content">
@@ -40,7 +40,7 @@
           <span class="item-label">数量:</span>
           <div class="quantity-inline">
             <button class="quantity-btn" @click="decreaseQuantity" :disabled="recruitCount <= 1">-</button>
-            <input v-model.number="recruitCount" type="number" min="1" :max="maxRecruitableCount" class="quantity-input" @input="validateQuantity">
+            <input v-model.number="recruitCount" type="number" min="1" :max="maxRecruitableCount" class="quantity-input" data-testid="recruitment-quantity-input" @input="validateQuantity">
             <button class="quantity-btn" @click="increaseQuantity" :disabled="recruitCount >= maxRecruitableCount">+</button>
             <button class="quick-btn" @click="setQuantityByRatio(0.5)" :disabled="maxRecruitableCount < 2">50%</button>
             <button class="quick-btn" @click="setQuantityByRatio(1)" :disabled="maxRecruitableCount < 1">最大</button>
@@ -79,6 +79,7 @@
         </button>
         <button 
           class="recruit-btn"
+          data-testid="recruitment-start-button"
           @click="startRecruitment"
           :disabled="!canRecruit"
         >

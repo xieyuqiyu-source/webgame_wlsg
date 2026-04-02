@@ -17,6 +17,7 @@
         v-for="(task, index) in recruitmentQueue.slice(0, 5)" 
         :key="task.id || index"
         class="task-item"
+        :data-testid="`recruitment-task-${task.unitId}`"
       >
         <!-- 任务信息一行展示 -->
         <div class="task-info">

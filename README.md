@@ -41,6 +41,12 @@ pnpm dev
 pnpm build
 ```
 
+运行 Playwright 逻辑冒烟测试：
+
+```bash
+pnpm test:e2e
+```
+
 本地预览构建结果：
 
 ```bash
@@ -87,13 +93,14 @@ http://localhost:5173/
 开发中或待整理：
 - 调度器链路仍需进一步按 Pinia 彻底收口
 - 页面模块仍有部分测试视图和演示残留
-- 缺少自动化测试
+- 自动化测试目前只有基础 Playwright 逻辑冒烟用例
 - 首屏资源与分包还可以继续优化
 
 ## 开发约定
 
 - 当前状态数据主要持久化在浏览器 `localStorage`
 - 默认首页为 `/city`，`/demo` 不再作为正式入口
+- `tests/e2e/` 提供基础 Playwright 冒烟测试，当前覆盖建筑升级、仓库操作、征兵与路由切换
 - Stagewise 开发工具默认关闭，如需启用可在本地设置：
 
 ```bash

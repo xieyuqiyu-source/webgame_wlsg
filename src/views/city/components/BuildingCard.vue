@@ -1,5 +1,8 @@
 <template>
-  <div class="building-card game-card p-3 cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-105 relative min-h-[120px] flex flex-col justify-between">
+  <div
+    class="building-card game-card p-3 cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-105 relative min-h-[120px] flex flex-col justify-between"
+    :data-testid="`building-card-${buildingType}-${buildingIndex}`"
+  >
     <!-- 建筑等级 -->
     <div class="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
       {{ currentLevel }}
@@ -29,6 +32,7 @@
           :disabled="!canUpgrade || isUpgrading"
           class="w-full py-1.5 px-2 text-xs rounded-md transition-all duration-200 relative overflow-hidden"
           :class="getButtonClass"
+          :data-testid="`building-upgrade-button-${buildingType}-${buildingIndex}`"
         >
           <!-- 进度条背景 -->
           <div 
@@ -286,6 +290,7 @@ export default {
     return {
       gameStore,
       currentLevel,
+      maxLevel,
       buildingName,
       currentProduction,
       upgradeCost,
