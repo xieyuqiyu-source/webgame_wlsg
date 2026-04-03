@@ -1,20 +1,110 @@
 <template>
   <div class="battle-simulator">
-    <!-- 标题区域 -->
     <div class="simulator-header">
-      <h2 class="title">⚔️ 战斗模拟器</h2>
-      <p class="subtitle">自定义军队配置，模拟战斗结果</p>
+      <div>
+        <h2 class="title">战斗模拟器</h2>
+        <p class="subtitle">极简录入模式，优先方便数值调试</p>
+      </div>
+      <div class="battle-actions header-actions">
+        <button @click="clearAllUnits" class="action-button ghost-button">
+          清空
+        </button>
+        <button @click="randomizeArmies" class="action-button ghost-button">
+          随机
+        </button>
+        <button
+          @click="startBattle"
+          :disabled="!canStartBattle"
+          :class="['action-button', 'primary-button', { disabled: !canStartBattle }]"
+        >
+          开始战斗
+        </button>
+      </div>
     </div>
 
-    <!-- 军队配置区域 -->
+    <section class="preset-panel">
+      <div class="preset-block">
+        <div class="preset-block-header">
+          <h3 class="preset-title">单兵种快捷预设</h3>
+          <div class="preset-header-actions">
+            <p class="preset-subtitle">一键给攻方或守方填入指定兵种和数量</p>
+            <div class="apply-mode-toggle">
+              <button
+                :class="['mode-button', { active: presetApplyMode === 'replace' }]"
+                @click="presetApplyMode = 'replace'"
+              >
+                覆盖
+              </button>
+              <button
+                :class="['mode-button', { active: presetApplyMode === 'append' }]"
+                @click="presetApplyMode = 'append'"
+              >
+                追加
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="preset-grid">
+          <div
+            v-for="preset in quickUnitPresets"
+            :key="preset.id"
+            class="preset-card"
+          >
+            <div class="preset-card-main">
+              <div class="preset-card-title">{{ preset.label }}</div>
+              <div class="preset-card-meta">
+                {{ getFactionLabel(preset.faction) }} · {{ preset.unitName }} × {{ preset.count }}
+              </div>
+            </div>
+            <div class="preset-card-actions">
+              <button class="mini-button" @click="applySingleUnitPreset('attacker', preset)">攻</button>
+              <button class="mini-button" @click="applySingleUnitPreset('defender', preset)">守</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="preset-block">
+        <div class="preset-block-header">
+          <h3 class="preset-title">常用对战场景</h3>
+          <p class="preset-subtitle">一键填入整场攻守兵力，方便快速压测战斗规则</p>
+        </div>
+        <div class="scenario-grid">
+          <button
+            v-for="preset in battleScenarioPresets"
+            :key="preset.id"
+            class="scenario-button"
+            @click="applyScenarioPreset(preset)"
+          >
+            <span class="scenario-name">{{ preset.label }}</span>
+            <span class="scenario-detail">{{ preset.summary }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="preset-block">
+        <div class="preset-block-header">
+          <h3 class="preset-title">极端压测场景</h3>
+          <p class="preset-subtitle">专门拿来测试破防、僵持、碾压、近乎无损这些边界情况</p>
+        </div>
+        <div class="scenario-grid">
+          <button
+            v-for="preset in extremeScenarioPresets"
+            :key="preset.id"
+            class="scenario-button extreme-button"
+            @click="applyScenarioPreset(preset)"
+          >
+            <span class="scenario-name">{{ preset.label }}</span>
+            <span class="scenario-detail">{{ preset.summary }}</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <div class="army-config-container">
-      <!-- 攻击方配置 -->
-      <div class="army-config attacker">
-        <h3 class="army-title">🗡️ 攻击方</h3>
-        
-        <!-- 阵营选择 -->
-        <div class="faction-selector">
-          <label class="config-label">选择阵营：</label>
+      <section class="army-config">
+        <div class="army-panel-header">
+          <h3 class="army-title">攻击方</h3>
           <select v-model="attackerFaction" class="faction-select">
             <option v-for="faction in availableFactions" :key="faction.id" :value="faction.id">
               {{ faction.icon }} {{ faction.name }}
@@ -22,71 +112,41 @@
           </select>
         </div>
 
-        <!-- 兵种配置 -->
         <div class="units-config">
-          <h4 class="units-title">兵种配置</h4>
-          <div class="unit-categories">
-            <div v-for="category in unitCategories" :key="category.type" class="category-section">
-              <h5 class="category-title">{{ category.icon }} {{ category.name }}</h5>
-              <div class="units-list">
-                <div v-for="unit in getUnitsByCategory(attackerFaction, category.type)" :key="unit.id" class="unit-item">
-                  <div class="unit-info">
-                    <span class="unit-icon">{{ unit.icon }}</span>
-                    <span class="unit-name">{{ unit.name }}</span>
-                    <span class="unit-stats">攻击:{{ unit.attack }} 步防:{{ unit.infantryDefense }} 骑防:{{ unit.cavalryDefense }} 速度:{{ unit.speed }}</span>
-                  </div>
-                  <div class="unit-controls">
-                    <input 
-                      type="number" 
-                      v-model.number="attackerUnits[unit.id]" 
-                      min="0" 
-                      max="9999"
-                      class="unit-count-input"
-                      placeholder="0"
-                    />
-                  </div>
+          <div v-for="category in unitCategories" :key="category.type" class="category-section">
+            <div class="category-title">{{ category.icon }} {{ category.name }}</div>
+            <div class="units-list">
+              <div v-for="unit in getUnitsByCategory(attackerFaction, category.type)" :key="unit.id" class="unit-item">
+                <div class="unit-main">
+                  <span class="unit-name">{{ unit.icon }} {{ unit.name }}</span>
+                  <span class="unit-stats">攻{{ unit.attack }} / 步防{{ unit.infantryDefense }} / 骑防{{ unit.cavalryDefense }} / 速{{ unit.speed }}</span>
                 </div>
+                <input
+                  type="number"
+                  v-model.number="attackerUnits[unit.id]"
+                  min="0"
+                  max="999999"
+                  class="unit-count-input"
+                  placeholder="0"
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 攻击方总计 -->
         <div class="army-summary">
-          <div class="summary-item">
-            <span class="summary-label">总兵力：</span>
-            <span class="summary-value">{{ getArmyTotalUnits(attackerUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">总攻击力：</span>
-            <span class="summary-value">{{ getArmyTotalAttack(attackerFaction, attackerUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">步兵防御：</span>
-            <span class="summary-value">{{ getArmyTotalInfantryDefense(attackerFaction, attackerUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">骑兵防御：</span>
-            <span class="summary-value">{{ getArmyTotalCavalryDefense(attackerFaction, attackerUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">总载重：</span>
-            <span class="summary-value">{{ getArmyTotalCarryCapacity(attackerFaction, attackerUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">最慢速度：</span>
-            <span class="summary-value">{{ getArmySlowestSpeed(attackerFaction, attackerUnits) }}</span>
-          </div>
+          <div class="summary-item">兵力 {{ getArmyTotalUnits(attackerUnits) }}</div>
+          <div class="summary-item">攻击 {{ getArmyTotalAttack(attackerFaction, attackerUnits) }}</div>
+          <div class="summary-item">步防 {{ getArmyTotalInfantryDefense(attackerFaction, attackerUnits) }}</div>
+          <div class="summary-item">骑防 {{ getArmyTotalCavalryDefense(attackerFaction, attackerUnits) }}</div>
+          <div class="summary-item">载重 {{ getArmyTotalCarryCapacity(attackerFaction, attackerUnits) }}</div>
+          <div class="summary-item">最低速度 {{ getArmySlowestSpeed(attackerFaction, attackerUnits) }}</div>
         </div>
-      </div>
+      </section>
 
-      <!-- 防守方配置 -->
-      <div class="army-config defender">
-        <h3 class="army-title">🛡️ 防守方</h3>
-        
-        <!-- 阵营选择 -->
-        <div class="faction-selector">
-          <label class="config-label">选择阵营：</label>
+      <section class="army-config">
+        <div class="army-panel-header">
+          <h3 class="army-title">防守方</h3>
           <select v-model="defenderFaction" class="faction-select">
             <option v-for="faction in availableFactions" :key="faction.id" :value="faction.id">
               {{ faction.icon }} {{ faction.name }}
@@ -94,103 +154,59 @@
           </select>
         </div>
 
-        <!-- 兵种配置 -->
         <div class="units-config">
-          <h4 class="units-title">兵种配置</h4>
-          <div class="unit-categories">
-            <div v-for="category in unitCategories" :key="category.type" class="category-section">
-              <h5 class="category-title">{{ category.icon }} {{ category.name }}</h5>
-              <div class="units-list">
-                <div v-for="unit in getUnitsByCategory(defenderFaction, category.type)" :key="unit.id" class="unit-item">
-                  <div class="unit-info">
-                    <span class="unit-icon">{{ unit.icon }}</span>
-                    <span class="unit-name">{{ unit.name }}</span>
-                    <span class="unit-stats">攻击:{{ unit.attack }} 步防:{{ unit.infantryDefense }} 骑防:{{ unit.cavalryDefense }} 速度:{{ unit.speed }}</span>
-                  </div>
-                  <div class="unit-controls">
-                    <!-- 去掉上下点击的 -->
-                    <input 
-                      type="number" 
-                      v-model.number="defenderUnits[unit.id]" 
-                      min="0" 
-                      max="9999"
-                      class="unit-count-input"
-                      placeholder="0"
-                    />
-                  </div>
-               
+          <div v-for="category in unitCategories" :key="category.type" class="category-section">
+            <div class="category-title">{{ category.icon }} {{ category.name }}</div>
+            <div class="units-list">
+              <div v-for="unit in getUnitsByCategory(defenderFaction, category.type)" :key="unit.id" class="unit-item">
+                <div class="unit-main">
+                  <span class="unit-name">{{ unit.icon }} {{ unit.name }}</span>
+                  <span class="unit-stats">攻{{ unit.attack }} / 步防{{ unit.infantryDefense }} / 骑防{{ unit.cavalryDefense }} / 速{{ unit.speed }}</span>
                 </div>
+                <input
+                  type="number"
+                  v-model.number="defenderUnits[unit.id]"
+                  min="0"
+                  max="999999"
+                  class="unit-count-input"
+                  placeholder="0"
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 防守方总计 -->
         <div class="army-summary">
-          <div class="summary-item">
-            <span class="summary-label">总兵力：</span>
-            <span class="summary-value">{{ getArmyTotalUnits(defenderUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">总攻击力：</span>
-            <span class="summary-value">{{ getArmyTotalAttack(defenderFaction, defenderUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">步兵防御：</span>
-            <span class="summary-value">{{ getArmyTotalInfantryDefense(defenderFaction, defenderUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">骑兵防御：</span>
-            <span class="summary-value">{{ getArmyTotalCavalryDefense(defenderFaction, defenderUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">总载重：</span>
-            <span class="summary-value">{{ getArmyTotalCarryCapacity(defenderFaction, defenderUnits) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">最慢速度：</span>
-            <span class="summary-value">{{ getArmySlowestSpeed(defenderFaction, defenderUnits) }}</span>
-          </div>
+          <div class="summary-item">兵力 {{ getArmyTotalUnits(defenderUnits) }}</div>
+          <div class="summary-item">攻击 {{ getArmyTotalAttack(defenderFaction, defenderUnits) }}</div>
+          <div class="summary-item">步防 {{ getArmyTotalInfantryDefense(defenderFaction, defenderUnits) }}</div>
+          <div class="summary-item">骑防 {{ getArmyTotalCavalryDefense(defenderFaction, defenderUnits) }}</div>
+          <div class="summary-item">载重 {{ getArmyTotalCarryCapacity(defenderFaction, defenderUnits) }}</div>
+          <div class="summary-item">最低速度 {{ getArmySlowestSpeed(defenderFaction, defenderUnits) }}</div>
         </div>
-      </div>
+      </section>
     </div>
 
-    <!-- 战斗配置区域 -->
     <div class="battle-config">
-      <div class="battle-rule-selector">
-        <label class="config-label">战斗规则：</label>
+      <div class="config-row">
+        <label class="config-label">战斗规则</label>
         <select v-model="selectedBattleRule" class="rule-select">
           <option v-for="rule in availableBattleRules" :key="rule.id" :value="rule.id">
-            {{ rule.name }} - {{ rule.description }}
+            {{ rule.name }}
           </option>
         </select>
       </div>
-
-      <div class="battle-actions">
-        <button @click="clearAllUnits" class="action-button clear-button">
-          🗑️ 清空配置
-        </button>
-        <button @click="randomizeArmies" class="action-button random-button">
-          🎲 随机配置
-        </button>
-        <button 
-          @click="startBattle" 
-          :disabled="!canStartBattle"
-          :class="['action-button', 'battle-button', { 'disabled': !canStartBattle }]"
-        >
-          ⚔️ 开始战斗
-        </button>
+      <div class="rule-description">
+        {{ availableBattleRules.find(rule => rule.id === selectedBattleRule)?.description }}
       </div>
     </div>
 
-    <!-- 战报显示区域 -->
     <BattleReport 
       v-if="showBattleReport" 
       :battle-report-data="battleReportData" 
       @close="closeBattleReport" 
     />
 
-    <!-- 数据显示区域 -->
     <div v-if="showData" class="data-display">
       <div class="data-header">
         <h3 class="data-title">{{ dataTitle }}</h3>
@@ -224,7 +240,8 @@ export default {
       defenderUnits: {},
       
       //=== 战斗配置
-      selectedBattleRule: BATTLE_RULE_IDS.PLUNDER,
+      selectedBattleRule: BATTLE_RULE_IDS.CLASSIC_CRUSH,
+      presetApplyMode: 'replace',
       
       //=== 显示控制
       showBattleReport: false,
@@ -263,6 +280,69 @@ export default {
       }))
     },
 
+    quickUnitPresets() {
+      return [
+        this.createSingleUnitPreset('wei-qingzhou-100', FACTION_TYPES.WEI, 'qingZhouArmy', 100),
+        this.createSingleUnitPreset('wei-qingzhou-300', FACTION_TYPES.WEI, 'qingZhouArmy', 300),
+        this.createSingleUnitPreset('wei-jinwei-100', FACTION_TYPES.WEI, 'jinWeiSoldier', 100),
+        this.createSingleUnitPreset('wei-hubao-50', FACTION_TYPES.WEI, 'huBaoQi', 50),
+        this.createSingleUnitPreset('wei-hubao-100', FACTION_TYPES.WEI, 'huBaoQi', 100),
+        this.createSingleUnitPreset('shu-greedy-100', FACTION_TYPES.SHU, 'greedyWolf', 100),
+        this.createSingleUnitPreset('shu-qilin-100', FACTION_TYPES.SHU, 'qilinGuard', 100),
+        this.createSingleUnitPreset('shu-xiliang-80', FACTION_TYPES.SHU, 'xiLiangCavalry', 80),
+        this.createSingleUnitPreset('shu-elephant-50', FACTION_TYPES.SHU, 'southernElephant', 50),
+        this.createSingleUnitPreset('wu-shadow-100', FACTION_TYPES.WU, 'shadowGuard', 100),
+        this.createSingleUnitPreset('wu-xiuluo-100', FACTION_TYPES.WU, 'xiuLuo', 100),
+        this.createSingleUnitPreset('wu-zhuque-80', FACTION_TYPES.WU, 'zhuQueRider', 80),
+        this.createSingleUnitPreset('wu-overlord-50', FACTION_TYPES.WU, 'overlordRider', 50),
+        this.createSingleUnitPreset('wu-divine-120', FACTION_TYPES.WU, 'divineWind', 120)
+      ]
+    },
+
+    battleScenarioPresets() {
+      return [
+        this.createScenarioPreset('mirror-qingzhou', '100青州军 vs 100青州军', FACTION_TYPES.WEI, { qingZhouArmy: 100 }, FACTION_TYPES.WEI, { qingZhouArmy: 100 }),
+        this.createScenarioPreset('qingzhou-vs-jinwei', '300青州军 vs 100禁卫甲士', FACTION_TYPES.WEI, { qingZhouArmy: 300 }, FACTION_TYPES.WEI, { jinWeiSoldier: 100 }),
+        this.createScenarioPreset('hubao-vs-qilin', '50虎豹骑 vs 200麒麟卫', FACTION_TYPES.WEI, { huBaoQi: 50 }, FACTION_TYPES.SHU, { qilinGuard: 200 }),
+        this.createScenarioPreset('hubao-vs-xiliang', '100虎豹骑 vs 100西凉铁骑', FACTION_TYPES.WEI, { huBaoQi: 100 }, FACTION_TYPES.SHU, { xiLiangCavalry: 100 }),
+        this.createScenarioPreset('elephant-vs-hubao', '60南蛮象 vs 80虎豹骑', FACTION_TYPES.SHU, { southernElephant: 60 }, FACTION_TYPES.WEI, { huBaoQi: 80 }),
+        this.createScenarioPreset('overlord-vs-jinwei', '60霸王骑 vs 200禁卫甲士', FACTION_TYPES.WU, { overlordRider: 60 }, FACTION_TYPES.WEI, { jinWeiSoldier: 200 }),
+        this.createScenarioPreset('xiuluo-vs-qingzhou', '150修罗 vs 200青州军', FACTION_TYPES.WU, { xiuLuo: 150 }, FACTION_TYPES.WEI, { qingZhouArmy: 200 }),
+        this.createScenarioPreset('zhuque-vs-divine', '120朱雀骑 vs 120神风', FACTION_TYPES.WU, { zhuQueRider: 120 }, FACTION_TYPES.WU, { divineWind: 120 }),
+        this.createScenarioPreset('greedy-vs-shadow', '300贪狼营 vs 300影卫', FACTION_TYPES.SHU, { greedyWolf: 300 }, FACTION_TYPES.WU, { shadowGuard: 300 }),
+        this.createScenarioPreset('tuzu-vs-han', '10土族 vs 10汉室宗亲', FACTION_TYPES.WEI, { tuZu: 10 }, FACTION_TYPES.SHU, { hanRoyalty: 10 }),
+        this.createScenarioPreset('taiping-vs-elephant', '20太平士 vs 80南蛮象', FACTION_TYPES.WU, { taiPingShi: 20 }, FACTION_TYPES.SHU, { southernElephant: 80 }),
+        this.createScenarioPreset(
+          'mixed-mainline',
+          '主力混编对撞',
+          FACTION_TYPES.WEI,
+          { qingZhouArmy: 240, jinWeiSoldier: 80, huBaoQi: 60 },
+          FACTION_TYPES.SHU,
+          { greedyWolf: 200, qilinGuard: 120, southernElephant: 40 }
+        )
+      ]
+    },
+
+    extremeScenarioPresets() {
+      return [
+        this.createScenarioPreset('stall-jinwei-zhuque', '破防测试: 80禁卫甲士 vs 60朱雀骑', FACTION_TYPES.WEI, { jinWeiSoldier: 80 }, FACTION_TYPES.WU, { zhuQueRider: 60 }),
+        this.createScenarioPreset('draw-hubao-elephant', '势均力敌: 80虎豹骑 vs 90南蛮象', FACTION_TYPES.WEI, { huBaoQi: 80 }, FACTION_TYPES.SHU, { southernElephant: 90 }),
+        this.createScenarioPreset('crush-hubao-greedy', '碾压: 300虎豹骑 vs 120贪狼营', FACTION_TYPES.WEI, { huBaoQi: 300 }, FACTION_TYPES.SHU, { greedyWolf: 120 }),
+        this.createScenarioPreset('crush-overlord-qilin', '大优: 180霸王骑 vs 90麒麟卫', FACTION_TYPES.WU, { overlordRider: 180 }, FACTION_TYPES.SHU, { qilinGuard: 90 }),
+        this.createScenarioPreset('anti-cavalry-wall', '反骑墙: 220麒麟卫 vs 80虎豹骑', FACTION_TYPES.SHU, { qilinGuard: 220 }, FACTION_TYPES.WEI, { huBaoQi: 80 }),
+        this.createScenarioPreset('anti-infantry-charge', '步兵海: 500青州军 vs 120霸王骑', FACTION_TYPES.WEI, { qingZhouArmy: 500 }, FACTION_TYPES.WU, { overlordRider: 120 }),
+        this.createScenarioPreset('special-elite-duel', '顶级兵试压: 12太平士 vs 10土族', FACTION_TYPES.WU, { taiPingShi: 12 }, FACTION_TYPES.WEI, { tuZu: 10 }),
+        this.createScenarioPreset(
+          'mixed-crush',
+          '混编碾压: 魏主力 vs 吴轻骑',
+          FACTION_TYPES.WEI,
+          { qingZhouArmy: 300, jinWeiSoldier: 180, huBaoQi: 90 },
+          FACTION_TYPES.WU,
+          { shadowGuard: 80, divineWind: 60, zhuQueRider: 30 }
+        )
+      ]
+    },
+
     //=== canStartBattle 是否可以开始战斗
     canStartBattle() {
       const attackerHasUnits = this.getArmyTotalUnits(this.attackerUnits) > 0
@@ -277,6 +357,84 @@ export default {
   },
 
   methods: {
+    createSingleUnitPreset(id, faction, unitId, count) {
+      const unit = FACTION_CONFIG[faction]?.units?.[unitId]
+      return {
+        id,
+        faction,
+        unitId,
+        unitName: unit?.name || unitId,
+        label: `${count}${unit?.name || unitId}`,
+        count
+      }
+    },
+
+    createScenarioPreset(id, label, attackerFaction, attackerUnits, defenderFaction, defenderUnits) {
+      return {
+        id,
+        label,
+        attackerFaction,
+        attackerUnits,
+        defenderFaction,
+        defenderUnits,
+        summary: `${this.getFactionLabel(attackerFaction)}攻 · ${this.getFactionLabel(defenderFaction)}守`
+      }
+    },
+
+    getFactionLabel(factionId) {
+      return FACTION_CONFIG[factionId]?.name || factionId
+    },
+
+    normalizeUnits(units) {
+      return Object.entries(units).reduce((result, [unitId, count]) => {
+        if (count > 0) {
+          result[unitId] = count
+        }
+        return result
+      }, {})
+    },
+
+    mergeUnits(baseUnits, patchUnits) {
+      const mergedUnits = { ...baseUnits }
+
+      Object.entries(patchUnits).forEach(([unitId, count]) => {
+        const nextCount = (mergedUnits[unitId] || 0) + count
+        if (nextCount > 0) {
+          mergedUnits[unitId] = nextCount
+        }
+      })
+
+      return this.normalizeUnits(mergedUnits)
+    },
+
+    applyArmyPreset(side, factionId, units) {
+      const normalizedUnits = this.normalizeUnits(units)
+      const shouldAppend = this.presetApplyMode === 'append'
+
+      if (side === 'attacker') {
+        this.attackerFaction = factionId
+        this.attackerUnits = shouldAppend
+          ? this.mergeUnits(this.attackerUnits, normalizedUnits)
+          : normalizedUnits
+        return
+      }
+
+      this.defenderFaction = factionId
+      this.defenderUnits = shouldAppend
+        ? this.mergeUnits(this.defenderUnits, normalizedUnits)
+        : normalizedUnits
+    },
+
+    applySingleUnitPreset(side, preset) {
+      this.applyArmyPreset(side, preset.faction, {
+        [preset.unitId]: preset.count
+      })
+    },
+
+    applyScenarioPreset(preset) {
+      this.applyArmyPreset('attacker', preset.attackerFaction, preset.attackerUnits)
+      this.applyArmyPreset('defender', preset.defenderFaction, preset.defenderUnits)
+    },
     
     //=== getUnitsByCategory 根据阵营和兵种类型获取兵种列表
     getUnitsByCategory(factionId, unitType) {
@@ -630,75 +788,232 @@ export default {
 
 <style scoped>
 .battle-simulator {
-  padding: 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  min-height: 100vh;
+  padding: 16px;
+  background: #f5f6f8;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
+  color: #111827;
 }
 
 .simulator-header {
-  text-align: center;
-  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #d9dde5;
+  border-radius: 8px;
 }
 
 .title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #1f2937;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
 }
 
 .subtitle {
   color: #6b7280;
-  font-size: 1.125rem;
+  font-size: 12px;
+  margin: 0;
+}
+
+.preset-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preset-block {
+  background: #ffffff;
+  border: 1px solid #d9dde5;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preset-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.preset-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.preset-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.preset-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.preset-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.preset-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.preset-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.preset-card-meta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.preset-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.apply-mode-toggle {
+  display: inline-flex;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mode-button {
+  padding: 6px 10px;
+  border: none;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mode-button.active {
+  background: #111827;
+  color: #ffffff;
+}
+
+.mode-button + .mode-button {
+  border-left: 1px solid #cfd5df;
+}
+
+.mini-button {
+  min-width: 36px;
+  padding: 6px 8px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mini-button:hover,
+.scenario-button:hover {
+  background: #f3f4f6;
+}
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.scenario-button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+.extreme-button {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.scenario-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.scenario-detail {
+  font-size: 11px;
+  color: #6b7280;
 }
 
 .army-config-container {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-@media (min-width: 1024px) {
+@media (max-width: 1024px) {
   .army-config-container {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
 
 .army-config {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 24px;
-  border: 2px solid;
-}
-
-.army-config.attacker {
-  border-color: #fca5a5;
-  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
-}
-
-.army-config.defender {
-  border-color: #93c5fd;
-  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+  background: #ffffff;
+  border: 1px solid #d9dde5;
+  border-radius: 8px;
+  padding: 12px;
 }
 
 .army-title {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 16px;
-  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
 }
 
-.army-config.attacker .army-title {
-  color: #b91c1c;
-}
-
-.army-config.defender .army-title {
-  color: #1d4ed8;
+.army-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .faction-selector {
@@ -707,213 +1022,185 @@ export default {
 
 .config-label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: #374151;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .faction-select, .rule-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  background-color: white;
+  width: 220px;
+  padding: 8px 10px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background-color: #fff;
   color: #111827;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .faction-select:focus, .rule-select:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
 .units-config {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.units-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 12px;
+  gap: 10px;
 }
 
 .category-section {
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #f9fafb;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .category-title {
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 700;
   color: #374151;
-  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .units-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .unit-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-  transition: box-shadow 0.2s;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eef2f7;
 }
 
-.unit-item:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.unit-item:last-child {
+  border-bottom: none;
 }
 
-.unit-info {
+.unit-main {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
 }
 
-.unit-icon {
-  font-size: 1.125rem;
-}
-
 .unit-name {
-  font-weight: 500;
-  color: #1f2937;
-  min-width: 100px;
+  font-weight: 600;
+  color: #111827;
+  font-size: 13px;
 }
 
 .unit-stats {
-  font-size: 0.875rem;
+  font-size: 12px;
   color: #6b7280;
 }
 
-.unit-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .unit-count-input {
-  width: 80px;
-  padding: 4px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  width: 92px;
+  padding: 6px 8px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
+  background: #fff;
 }
 
 .unit-count-input:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
 .army-summary {
-  margin-top: 24px;
-  padding: 16px;
-  background-color: #f3f4f6;
-  border-radius: 8px;
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .summary-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-}
-
-.summary-label {
-  font-weight: 500;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fafafa;
+  font-size: 12px;
+  font-weight: 600;
   color: #374151;
 }
 
-.summary-value {
-  font-weight: bold;
-  color: #059669;
-}
-
 .battle-config {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #d9dde5;
+  border-radius: 8px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
-.battle-rule-selector {
+.config-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .battle-actions {
   display: flex;
-  justify-content: center;
-  gap: 16px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .action-button {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 500;
-  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  border: 1px solid #cfd5df;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 14px;
+  font-size: 13px;
+  background: #fff;
+  color: #111827;
 }
 
 .action-button:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
-.clear-button {
-  background-color: #6b7280;
-  color: white;
+.ghost-button:hover {
+  background: #f3f4f6;
 }
 
-.clear-button:hover {
-  background-color: #4b5563;
+.primary-button {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
 }
 
-.random-button {
-  background-color: #f59e0b;
-  color: white;
+.primary-button:hover:not(.disabled) {
+  background: #000;
+  border-color: #000;
 }
 
-.random-button:hover {
-  background-color: #d97706;
-}
-
-.battle-button {
-  background-color: #059669;
-  color: white;
-}
-
-.battle-button:hover:not(.disabled) {
-  background-color: #047857;
-}
-
-.battle-button.disabled {
-  background-color: #9ca3af;
+.primary-button.disabled {
+  background: #9ca3af;
+  border-color: #9ca3af;
   cursor: not-allowed;
+}
+
+.header-actions {
+  justify-content: flex-end;
+}
+
+.rule-description {
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .data-display {
@@ -984,30 +1271,41 @@ export default {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .battle-simulator {
-    padding: 16px;
-    gap: 16px;
+    padding: 12px;
   }
-  
-  .title {
-    font-size: 1.5rem;
-  }
-  
-  .army-config {
-    padding: 16px;
-  }
-  
-  .battle-actions {
+
+  .simulator-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
-  .action-button {
+
+  .preset-block-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .preset-header-actions {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .army-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .faction-select,
+  .rule-select {
     width: 100%;
   }
-  
-  .data-display {
-    max-width: 95vw;
-    max-height: 85vh;
+
+  .summary-item {
+    font-size: 11px;
+  }
+
+  .army-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

@@ -96,7 +96,7 @@ export default {
       //=== battleReportData 战报数据
       battleReportData: null,
       //=== selectedBattleRule 选中的战斗规则ID
-      selectedBattleRule: BATTLE_RULE_IDS.PLUNDER // 默认选择掠夺规则
+      selectedBattleRule: BATTLE_RULE_IDS.CLASSIC_CRUSH // 默认选择新版规则
     }
   },
   computed: {
@@ -242,7 +242,7 @@ export default {
 
     //=== testPlunderBattle 测试掠夺战斗计算（保留兼容性）
     testPlunderBattle() {
-      this.selectedBattleRule = BATTLE_RULE_IDS.PLUNDER
+      this.selectedBattleRule = BATTLE_RULE_IDS.CLASSIC_CRUSH
       this.testBattleCalculation()
     },
     
