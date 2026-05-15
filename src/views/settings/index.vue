@@ -39,6 +39,50 @@
               </div>
             </div>
 
+            <div class="setting-card">
+              <div class="setting-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-emerald-500">
+                  <path d="M12,13A3,3 0 0,1 9,10A3,3 0 0,1 12,7A3,3 0 0,1 15,10A3,3 0 0,1 12,13M20,10V7H17V10H20M7,10V7H4V10H7M20,17V14H17V17H20M7,17V14H4V17H7M12,20A10,10 0 0,1 2,10A10,10 0 0,1 12,0A10,10 0 0,1 22,10A10,10 0 0,1 12,20M12,2A8,8 0 0,0 4,10A8,8 0 0,0 12,18A8,8 0 0,0 20,10A8,8 0 0,0 12,2Z"/>
+                </svg>
+              </div>
+              <div class="setting-content">
+                <h3 class="setting-title">云存档同步</h3>
+                <p class="setting-desc">使用同步码在电脑和手机之间上传或下载同一份存档</p>
+                <div class="cloud-sync-panel">
+                  <label class="cloud-sync-label" for="cloud-sync-id">同步码</label>
+                  <div class="cloud-sync-row">
+                    <input
+                      id="cloud-sync-id"
+                      v-model.trim="cloudSyncId"
+                      type="text"
+                      class="cloud-sync-input"
+                      placeholder="请输入同步码或当前UUID"
+                    >
+                    <button @click="useCurrentUUIDAsSyncId" class="setting-btn secondary">
+                      用当前UUID
+                    </button>
+                    <button @click="copyCloudSyncId" class="setting-btn secondary">
+                      复制
+                    </button>
+                  </div>
+                  <div class="cloud-sync-actions">
+                    <button @click="uploadToCloud" :disabled="cloudSyncBusy" class="setting-btn primary">
+                      {{ cloudSyncBusy ? '处理中...' : '上传云存档' }}
+                    </button>
+                    <button @click="downloadFromCloud" :disabled="cloudSyncBusy" class="setting-btn secondary">
+                      {{ cloudSyncBusy ? '处理中...' : '下载云存档' }}
+                    </button>
+                    <button @click="checkCloudStatus" :disabled="cloudSyncBusy" class="setting-btn secondary">
+                      检查云状态
+                    </button>
+                  </div>
+                  <div class="cloud-sync-status" v-if="cloudSyncStatus">
+                    {{ cloudSyncStatus }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 用户信息与标识 -->
             <div class="setting-card">
               <div class="setting-icon">
@@ -272,6 +316,7 @@ import GamePageLayout from '@/components/GamePageLayout.vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { getResourceName } from '@/config/resources.js'
 import { getFactionConfig } from '@/config/factionConfig.js'
+import { checkCloudSaveHealth, fetchCloudSave, getStoredCloudSyncId, setStoredCloudSyncId, uploadCloudSave } from '@/services/cloudSaveService.js'
 import { ref } from 'vue'
 
 export default {
@@ -289,6 +334,9 @@ export default {
     const autoSaveInterval = ref(300) // 默认5分钟
     const soundEnabled = ref(true)
     const notificationEnabled = ref(true)
+    const cloudSyncId = ref(getStoredCloudSyncId(gameStore.userUUID))
+    const cloudSyncBusy = ref(false)
+    const cloudSyncStatus = ref('')
     
     // GM密码常量
     const GM_PASSWORD = '12xyqXYQ'
@@ -342,6 +390,98 @@ export default {
       
       // 清空文件输入
       event.target.value = ''
+    }
+
+    const persistCloudSyncId = () => {
+      const normalizedId = setStoredCloudSyncId(cloudSyncId.value || gameStore.userUUID)
+      cloudSyncId.value = normalizedId
+      return normalizedId
+    }
+
+    const useCurrentUUIDAsSyncId = () => {
+      cloudSyncId.value = gameStore.userUUID
+      persistCloudSyncId()
+      cloudSyncStatus.value = '已将当前UUID设为同步码'
+    }
+
+    const copyCloudSyncId = async () => {
+      const syncId = persistCloudSyncId()
+      if (!syncId) {
+        alert('当前没有可复制的同步码')
+        return
+      }
+
+      try {
+        await navigator.clipboard.writeText(syncId)
+        cloudSyncStatus.value = '同步码已复制到剪贴板'
+      } catch (error) {
+        console.error('复制同步码失败:', error)
+        alert('复制失败，请手动复制同步码')
+      }
+    }
+
+    const checkCloudStatus = async () => {
+      cloudSyncBusy.value = true
+      try {
+        const result = await checkCloudSaveHealth()
+        cloudSyncStatus.value = `云存档服务正常：${result.service || 'save-api'}`
+      } catch (error) {
+        console.error('检查云存档服务失败:', error)
+        cloudSyncStatus.value = `云存档服务不可用：${error.message}`
+      } finally {
+        cloudSyncBusy.value = false
+      }
+    }
+
+    const uploadToCloud = async () => {
+      const syncId = persistCloudSyncId()
+      if (!syncId) {
+        alert('请先填写同步码')
+        return
+      }
+
+      cloudSyncBusy.value = true
+      try {
+        const saveData = gameStore.exportSaveData()
+        const result = await uploadCloudSave(syncId, saveData)
+        cloudSyncStatus.value = `云存档上传成功，服务器时间：${result.meta?.updatedAt || '未知'}`
+      } catch (error) {
+        console.error('上传云存档失败:', error)
+        cloudSyncStatus.value = `上传失败：${error.message}`
+      } finally {
+        cloudSyncBusy.value = false
+      }
+    }
+
+    const downloadFromCloud = async () => {
+      const syncId = persistCloudSyncId()
+      if (!syncId) {
+        alert('请先填写同步码')
+        return
+      }
+
+      cloudSyncBusy.value = true
+      try {
+        const result = await fetchCloudSave(syncId)
+        if (!result.exists || !result.save) {
+          cloudSyncStatus.value = '云端没有找到对应存档'
+          return
+        }
+
+        if (!confirm('确定要下载并覆盖当前本地存档吗？')) {
+          return
+        }
+
+        gameStore.importSaveData(result.save)
+        cloudSyncStatus.value = `云存档下载成功，服务器时间：${result.meta?.updatedAt || '未知'}`
+        alert('云存档下载成功，即将刷新页面')
+        window.location.reload()
+      } catch (error) {
+        console.error('下载云存档失败:', error)
+        cloudSyncStatus.value = `下载失败：${error.message}`
+      } finally {
+        cloudSyncBusy.value = false
+      }
     }
     
     //=== resetGame 重置游戏
@@ -486,8 +626,16 @@ export default {
       autoSaveInterval,
       soundEnabled,
       notificationEnabled,
+      cloudSyncId,
+      cloudSyncBusy,
+      cloudSyncStatus,
       exportGameData,
       importGameData,
+      uploadToCloud,
+      downloadFromCloud,
+      checkCloudStatus,
+      useCurrentUUIDAsSyncId,
+      copyCloudSyncId,
       resetGame,
       enableGM,
       disableGM,
@@ -583,6 +731,30 @@ export default {
 
 .backup-actions .setting-btn {
   @apply w-full;
+}
+
+.cloud-sync-panel {
+  @apply space-y-3;
+}
+
+.cloud-sync-label {
+  @apply block text-sm font-medium text-primary-700;
+}
+
+.cloud-sync-row {
+  @apply flex flex-col gap-2;
+}
+
+.cloud-sync-input {
+  @apply w-full px-3 py-2 border border-primary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/90;
+}
+
+.cloud-sync-actions {
+  @apply flex flex-col gap-2;
+}
+
+.cloud-sync-status {
+  @apply text-sm text-primary-700 bg-primary-50/70 border border-primary-200/60 rounded-md px-3 py-2 break-words;
 }
 
 .uuid-display {
