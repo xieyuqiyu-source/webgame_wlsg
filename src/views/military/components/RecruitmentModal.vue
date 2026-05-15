@@ -6,7 +6,17 @@
       <!-- 弹窗头部 -->
       <div class="modal-header">
         <div class="header-content">
-          <div class="unit-icon">{{ selectedUnit?.icon }}</div>
+          <HoverCard
+            density="compact"
+            :show="showUnitHover"
+            @mouseenter="showUnitHover = true"
+            @mouseleave="showUnitHover = false"
+          >
+            <template #trigger>
+              <div class="unit-icon">{{ selectedUnit?.icon }}</div>
+            </template>
+            <UnitHoverContent v-if="selectedUnit" :unit="selectedUnit" />
+          </HoverCard>
           <div class="unit-info">
             <h3 class="unit-name">征募 {{ selectedUnit?.name }}</h3>
             <p class="unit-description">{{ selectedUnit?.description }}</p>
@@ -94,9 +104,15 @@
 <script>
 import { ref, computed, watch } from 'vue'
 import { useMilitaryHelpers } from '@/hooks/useMilitaryHelpers.js'
+import HoverCard from '@/components/hover/HoverCard.vue'
+import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
 
 export default {
   name: 'RecruitmentModal',
+  components: {
+    HoverCard,
+    UnitHoverContent
+  },
   props: {
     visible: {
       type: Boolean,
@@ -113,6 +129,7 @@ export default {
     
     // 征兵数量
     const recruitCount = ref(1)
+    const showUnitHover = ref(false)
     
     //=== 计算最大可征募数量
     const maxRecruitableCount = computed(() => {
@@ -204,6 +221,7 @@ export default {
     
     return {
       gameStore,
+      showUnitHover,
       recruitCount,
       maxRecruitableCount,
       totalCost,

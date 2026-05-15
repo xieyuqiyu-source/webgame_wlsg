@@ -118,7 +118,17 @@
             <div class="units-list">
               <div v-for="unit in getUnitsByCategory(attackerFaction, category.type)" :key="unit.id" class="unit-item">
                 <div class="unit-main">
-                  <span class="unit-name">{{ unit.icon }} {{ unit.name }}</span>
+                  <HoverCard
+                    density="compact"
+                    :show="hoveredUnitKey === `attacker-${unit.id}`"
+                    @mouseenter="hoveredUnitKey = `attacker-${unit.id}`"
+                    @mouseleave="hoveredUnitKey = null"
+                  >
+                    <template #trigger>
+                      <span class="unit-name">{{ unit.icon }} {{ unit.name }}</span>
+                    </template>
+                    <UnitHoverContent :unit="unit" />
+                  </HoverCard>
                   <span class="unit-stats">攻{{ unit.attack }} / 步防{{ unit.infantryDefense }} / 骑防{{ unit.cavalryDefense }} / 速{{ unit.speed }}</span>
                 </div>
                 <input
@@ -160,7 +170,17 @@
             <div class="units-list">
               <div v-for="unit in getUnitsByCategory(defenderFaction, category.type)" :key="unit.id" class="unit-item">
                 <div class="unit-main">
-                  <span class="unit-name">{{ unit.icon }} {{ unit.name }}</span>
+                  <HoverCard
+                    density="compact"
+                    :show="hoveredUnitKey === `defender-${unit.id}`"
+                    @mouseenter="hoveredUnitKey = `defender-${unit.id}`"
+                    @mouseleave="hoveredUnitKey = null"
+                  >
+                    <template #trigger>
+                      <span class="unit-name">{{ unit.icon }} {{ unit.name }}</span>
+                    </template>
+                    <UnitHoverContent :unit="unit" />
+                  </HoverCard>
                   <span class="unit-stats">攻{{ unit.attack }} / 步防{{ unit.infantryDefense }} / 骑防{{ unit.cavalryDefense }} / 速{{ unit.speed }}</span>
                 </div>
                 <input
@@ -222,12 +242,16 @@ import { FACTION_CONFIG, FACTION_TYPES, UNIT_CATEGORIES, UNIT_TYPES } from '@/co
 import { COMBAT_RULE_IDS } from '@/domain/combat/combatConstants.js'
 import { getAllCombatRules, getCombatRule, resolveCombat } from '@/domain/combat/combatService.js'
 import BattleReport from './Test/BattleReport.vue'
+import HoverCard from '@/components/hover/HoverCard.vue'
+import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
 
 export default {
   name: 'BattleSimulator',
   
   components: {
-    BattleReport
+    BattleReport,
+    HoverCard,
+    UnitHoverContent
   },
 
   data() {
@@ -249,7 +273,8 @@ export default {
       battleReportData: null,
       showData: false,
       dataTitle: '',
-      currentData: null
+      currentData: null,
+      hoveredUnitKey: null
     }
   },
 
