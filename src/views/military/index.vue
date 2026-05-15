@@ -145,4 +145,32 @@ export default {
 .placeholder-text {
   @apply text-gray-500 text-center;
 }
+
+@media (max-width: 768px) {
+  .recruitment-content {
+    @apply space-y-4;
+  }
+
+  .panel-header {
+    @apply px-4 py-4;
+    padding-right: 3.5rem;
+  }
+
+  .panel-help {
+    right: 1rem;
+    top: 1rem;
+  }
+
+  .panel-title {
+    @apply text-lg;
+  }
+
+  .panel-content {
+    @apply p-4;
+  }
+
+  .placeholder-box {
+    @apply h-48 px-4;
+  }
+}
 </style>

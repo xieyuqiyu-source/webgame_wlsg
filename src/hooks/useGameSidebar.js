@@ -45,7 +45,7 @@ const NAV_ITEMS = [
   }
 ]
 
-export function useGameSidebar(emit) {
+export function useGameSidebar(props, emit) {
   const router = useRouter()
   const gameStore = useGameStore()
   const isCollapsed = ref(false)
@@ -189,6 +189,11 @@ export function useGameSidebar(emit) {
   }
 
   const toggleSidebar = () => {
+    if (props.isMobile) {
+      emit('close-mobile')
+      return
+    }
+
     isCollapsed.value = !isCollapsed.value
     emit('toggle', isCollapsed.value)
   }
@@ -202,6 +207,9 @@ export function useGameSidebar(emit) {
     const navItem = NAV_ITEMS.find((item) => item.key === navType)
     if (navItem && router.currentRoute.value.path !== navItem.route) {
       router.push(navItem.route)
+    }
+    if (props.isMobile) {
+      emit('close-mobile')
     }
   }
 

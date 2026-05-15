@@ -1,6 +1,12 @@
 <template>
-  <div class="game-sidebar" :class="{ 'collapsed': isCollapsed }">
-    <div class="sidebar-toggle" @click="toggleSidebar">
+  <div
+    v-if="isMobile && mobileOpen"
+    class="sidebar-backdrop"
+    @click="$emit('close-mobile')"
+  />
+
+  <div class="game-sidebar" :class="sidebarClasses">
+    <div v-if="!isMobile" class="sidebar-toggle" @click="toggleSidebar">
       <div class="toggle-icon">
         <svg v-if="!isCollapsed" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
@@ -11,7 +17,16 @@
       </div>
     </div>
 
-    <div class="sidebar-content" v-show="!isCollapsed">
+    <div class="sidebar-content" v-show="isMobile || !isCollapsed">
+      <div v-if="isMobile" class="mobile-sidebar-header">
+        <div class="mobile-sidebar-title">功能菜单</div>
+        <button class="mobile-sidebar-close" type="button" @click="$emit('close-mobile')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.3 5.71L12 12L5.71 5.71L4.29 7.12L10.59 13.41L4.29 19.71L5.71 21.12L12 14.83L18.3 21.12L19.71 19.71L13.41 13.41L19.71 7.12L18.3 5.71Z" />
+          </svg>
+        </button>
+      </div>
+
       <div class="scrollable-content">
         <SidebarCityInfo
           :citycivilization="gameStore.citycivilization"
@@ -90,6 +105,7 @@
 </template>
 
 <script>
+import { computed } from 'vue'
 import SidebarArmy from '@/components/sidebar/SidebarArmy.vue'
 import SidebarBottomNav from '@/components/sidebar/SidebarBottomNav.vue'
 import SidebarBoostDialog from '@/components/sidebar/SidebarBoostDialog.vue'
@@ -110,14 +126,39 @@ export default {
     SidebarResources,
     SidebarWarehouse
   },
-  emits: ['toggle', 'nav-click'],
-  setup(_, { emit }) {
-    return useGameSidebar(emit)
+  props: {
+    isMobile: {
+      type: Boolean,
+      default: false
+    },
+    mobileOpen: {
+      type: Boolean,
+      default: false
+    }
+  },
+  emits: ['toggle', 'nav-click', 'close-mobile'],
+  setup(props, { emit }) {
+    const sidebarState = useGameSidebar(props, emit)
+    const sidebarClasses = computed(() => ({
+      collapsed: sidebarState.isCollapsed.value,
+      'mobile-open': props.isMobile && props.mobileOpen
+    }))
+
+    return {
+      ...sidebarState,
+      sidebarClasses
+    }
   }
 }
 </script>
 
 <style>
+.sidebar-backdrop {
+  @apply fixed inset-0 z-40;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+}
+
 .game-sidebar {
   @apply fixed left-0 top-0 h-full z-50 transition-all duration-300;
   width: 300px;
@@ -144,6 +185,21 @@ export default {
 
 .sidebar-content {
   @apply h-full flex flex-col;
+}
+
+.mobile-sidebar-header {
+  @apply flex items-center justify-between px-4 py-3 text-white;
+  border-bottom: 1px solid rgba(35, 124, 72, 0.3);
+}
+
+.mobile-sidebar-title {
+  @apply text-sm font-semibold tracking-wide;
+}
+
+.mobile-sidebar-close {
+  @apply inline-flex h-9 w-9 items-center justify-center rounded-md text-white;
+  background: rgba(55, 65, 81, 0.75);
+  border: 1px solid rgba(35, 124, 72, 0.3);
 }
 
 .scrollable-content {
@@ -844,5 +900,21 @@ export default {
 
 .boost-note {
   @apply text-green-200 text-xs opacity-80;
+}
+
+@media (max-width: 1024px) {
+  .game-sidebar {
+    width: min(88vw, 320px);
+    transform: translateX(-100%);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  }
+
+  .game-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .scrollable-content {
+    @apply px-3 pb-4 pt-3;
+  }
 }
 </style>

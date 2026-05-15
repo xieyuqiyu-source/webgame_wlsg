@@ -60,11 +60,11 @@ export default {
 }
 
 .tab-header {
-  @apply flex bg-green-700 bg-opacity-80 rounded-t-md;
+  @apply flex bg-green-700 bg-opacity-80 rounded-t-md overflow-x-auto;
 }
 
 .tab-item {
-  @apply px-6 py-3 cursor-pointer text-white text-sm font-bold transition-all duration-200 flex items-center gap-2;
+  @apply px-4 py-3 cursor-pointer text-white text-sm font-bold transition-all duration-200 flex items-center gap-2 whitespace-nowrap flex-none;
   @apply hover:text-yellow-500; 
 }
 
@@ -79,5 +79,12 @@ export default {
 .tab-content {
   @apply flex flex-col gap-4;
   margin-top: 15px;
+}
+
+@media (min-width: 768px) {
+  .tab-item {
+    flex: 1 1 0%;
+    justify-content: center;
+  }
 }
 </style>

@@ -551,4 +551,97 @@ export default {
 .recruitment-modal::-webkit-scrollbar-thumb:hover {
   background: rgba(35, 124, 72, 0.8);
 }
+
+@media (max-width: 768px) {
+  .recruitment-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .recruitment-modal {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 18px 18px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .modal-header {
+    @apply items-start gap-3;
+    padding: 14px 14px 12px;
+  }
+
+  .header-content {
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .unit-icon {
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  .unit-name {
+    font-size: 18px;
+  }
+
+  .unit-description {
+    font-size: 11px;
+  }
+
+  .recruitment-info {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .item-label {
+    min-width: 0;
+  }
+
+  .cost-inline,
+  .quantity-inline,
+  .time-inline {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quantity-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .quantity-input {
+    width: 56px;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .quick-btn,
+  .cost-tag,
+  .time-tag {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+
+  .modal-actions {
+    padding: 12px;
+    flex-direction: column-reverse;
+  }
+
+  .cancel-btn,
+  .recruit-btn {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
 </style>

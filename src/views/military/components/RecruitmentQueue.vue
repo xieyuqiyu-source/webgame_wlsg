@@ -170,7 +170,7 @@ export default {
 
 /* 征兵任务列表样式 */
 .queue-tasks {
-  @apply flex gap-2;
+  @apply flex gap-2 flex-wrap;
 }
 
 .task-item {
@@ -207,5 +207,38 @@ export default {
 
 .time-remaining {
   @apply text-xs text-green-600 font-medium flex-shrink-0;
+}
+
+@media (max-width: 1024px) {
+  .task-item {
+    width: calc(50% - 0.25rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .recruitment-queue {
+    @apply p-0;
+  }
+
+  .description-box {
+    @apply p-3;
+  }
+
+  .queue-tasks {
+    @apply flex-col gap-3;
+  }
+
+  .task-item {
+    width: 100%;
+    @apply items-start gap-3;
+  }
+
+  .task-info {
+    @apply flex-wrap gap-x-2 gap-y-1;
+  }
+
+  .task-actions {
+    @apply ml-0 self-end;
+  }
 }
 </style>

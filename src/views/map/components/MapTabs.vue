@@ -72,18 +72,17 @@ export default {
 }
 
 .tab-nav {
-  @apply flex bg-green-700 bg-opacity-80 rounded-t-md;
+  @apply flex bg-green-700 bg-opacity-80 rounded-t-md overflow-x-auto;
   backdrop-filter: blur(15px);
   border: 1px solid rgba(35, 124, 72, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .tab-button {
-  @apply px-6 py-3 cursor-pointer text-white text-sm font-bold transition-all duration-200 flex items-center gap-2;
+  @apply px-4 py-3 cursor-pointer text-white text-sm font-bold transition-all duration-200 flex items-center gap-2 whitespace-nowrap flex-none;
   @apply hover:text-yellow-500;
   background: transparent;
   border: none;
-  flex: 1;
   justify-content: center;
 }
 
@@ -133,5 +132,11 @@ export default {
 .tab-content {
   @apply flex flex-col gap-4;
   margin-top: 15px;
+}
+
+@media (min-width: 768px) {
+  .tab-button {
+    flex: 1 1 0%;
+  }
 }
 </style>

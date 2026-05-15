@@ -532,4 +532,93 @@ export default {
   transform: translateY(0) scale(1.02);
   transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+@media (max-width: 1024px) {
+  .units-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .unit-detail-tabs {
+    margin: 12px 0;
+    border-radius: 12px;
+  }
+
+  .current-faction-display {
+    padding: 14px;
+  }
+
+  .faction-info {
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .faction-name {
+    margin-right: 0;
+    font-size: 18px;
+  }
+
+  .faction-desc {
+    font-size: 13px;
+    max-width: none;
+  }
+
+  .unit-help {
+    top: 12px;
+    right: 12px;
+  }
+
+  .tab-header {
+    overflow-x: auto;
+  }
+
+  .tab-item {
+    flex: none;
+    min-width: 120px;
+    padding: 12px 14px;
+  }
+
+  .tab-icon {
+    margin-right: 6px;
+  }
+
+  .tab-text {
+    font-size: 13px;
+  }
+
+  .tab-content {
+    padding: 10px;
+  }
+
+  .units-grid,
+  .units-grid:has(.unit-card:nth-child(1):nth-last-child(1)),
+  .units-grid:has(.unit-card:nth-child(2):nth-last-child(1)),
+  .units-grid:has(.unit-card:nth-child(3):nth-last-child(1)) {
+    grid-template-columns: 1fr;
+    padding: 6px;
+  }
+
+  .unit-card {
+    min-height: 0;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .unit-title-bar {
+    padding: 8px 10px;
+  }
+
+  .unit-count {
+    padding: 8px 10px;
+  }
+
+  .recruit-button {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
 </style>

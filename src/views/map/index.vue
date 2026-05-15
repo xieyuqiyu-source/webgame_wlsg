@@ -120,4 +120,18 @@ export default {
   @apply text-white border-green-500;
   background: rgba(35, 124, 72, 0.25);
 }
+
+@media (max-width: 768px) {
+  .map-header {
+    @apply flex-col items-stretch;
+  }
+
+  .map-title {
+    @apply text-xl;
+  }
+
+  .debug-entry {
+    @apply w-full;
+  }
+}
 </style>
