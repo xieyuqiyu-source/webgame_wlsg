@@ -9,7 +9,19 @@
         <span class="empty-text">暂无军队</span>
       </div>
       <div v-else v-for="(count, unitId) in army" :key="unitId" class="army-item">
-        <div class="army-icon">{{ getUnitIcon(unitId) }}</div>
+        <HoverCard
+          density="compact"
+          placement="right"
+          :show="hoveredUnitId === unitId"
+          @mouseenter="hoveredUnitId = unitId"
+          @mouseleave="hoveredUnitId = null"
+        >
+          <template #trigger>
+            <div class="army-icon">{{ getUnitIcon(unitId) }}</div>
+          </template>
+
+          <UnitHoverContent v-if="getUnit(unitId)" :unit="getUnit(unitId)" />
+        </HoverCard>
         <div class="army-info">
           <span class="army-name">{{ getUnitName(unitId) }}</span>
           <span class="army-count-text">×{{ count }}</span>
@@ -20,8 +32,16 @@
 </template>
 
 <script>
+import HoverCard from '@/components/hover/HoverCard.vue'
+import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
+import { getUnitById } from '@/config/factionConfig.js'
+
 export default {
   name: 'SidebarArmy',
+  components: {
+    HoverCard,
+    UnitHoverContent
+  },
   props: {
     army: {
       type: Object,
@@ -38,6 +58,16 @@ export default {
     totalArmyCount: {
       type: Number,
       required: true
+    }
+  },
+  data() {
+    return {
+      hoveredUnitId: null
+    }
+  },
+  methods: {
+    getUnit(unitId) {
+      return getUnitById(unitId)
     }
   }
 }

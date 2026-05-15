@@ -2,6 +2,33 @@
   <div class="resource-building-grid">
     <!-- 说明文字 -->
     <div class="description-box">
+      <HoverCard
+        class="bulk-upgrade-hover"
+        density="compact"
+        :show="showBulkUpgradeHint"
+        @mouseenter="showBulkUpgradeHint = true"
+        @mouseleave="showBulkUpgradeHint = false"
+      >
+        <template #trigger>
+          <button
+            class="bulk-upgrade-button"
+            :class="{ disabled: !gameStore.hasUpgradeableResourceBuilding }"
+            :disabled="!gameStore.hasUpgradeableResourceBuilding"
+            type="button"
+            @click="handleBulkUpgrade"
+          >
+            一键升级
+          </button>
+        </template>
+
+        <ReminderHoverContent
+          v-if="!gameStore.hasUpgradeableResourceBuilding"
+          tone="warning"
+          title="暂无可升级建筑"
+          body="当前资源不足，或所有资源建筑都在升级中。"
+          action="补足资源后可继续使用一键升级。"
+        />
+      </HoverCard>
       <p class="description-text">
         资源分为木材、泥土、铁矿和粮食四种，资源建筑物会持续生产四种资源。不断提升资源建筑的等级，可增加资源产量，这对城池的长期发展至关重要。(资源为城池根基所在)
       </p>
@@ -50,11 +77,16 @@
 
 <script>
 import BuildingColumn from './BuildingColumn.vue'
+import { useGameStore } from '@/store/modules/gameStore.js'
+import HoverCard from '@/components/hover/HoverCard.vue'
+import ReminderHoverContent from '@/components/hover/ReminderHoverContent.vue'
 
 export default {
   name: 'ResourceBuildingGrid',
   components: {
-    BuildingColumn
+    BuildingColumn,
+    HoverCard,
+    ReminderHoverContent
   },
   props: {
     //=== resourceBuildings 资源建筑数据
@@ -64,8 +96,16 @@ export default {
     }
   },
   emits: ['building-click'],
+  setup() {
+    const gameStore = useGameStore()
+
+    return {
+      gameStore
+    }
+  },
   data() {
     return {
+      showBulkUpgradeHint: false,
       //=== iconMap 资源类型图标映射
       iconMap: {
         wood: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="36" height="36" viewBox="0 0 36 36">
@@ -119,6 +159,9 @@ export default {
     //=== handleBuildingClick 处理建筑点击事件
     handleBuildingClick(building, resourceType) {
       this.$emit('building-click', building, resourceType)
+    },
+    handleBulkUpgrade() {
+      this.gameStore.upgradeResourceBuildingsBalanced()
     }
   }
 }
@@ -128,10 +171,27 @@ export default {
 /* 说明文字样式 */
 .description-box {
   @apply bg-gray-700 bg-opacity-50 border border-green-700 border-opacity-30 rounded p-4 mt-4;
+  @apply relative;
 }
 
 .description-text {
   @apply text-white text-sm leading-5 m-0;
+  padding-right: 84px;
+}
+
+.bulk-upgrade-button {
+  @apply px-3 py-2 rounded-md text-xs font-medium transition-all duration-200;
+  @apply bg-blue-500 text-white hover:bg-blue-600 border border-blue-300;
+}
+
+.bulk-upgrade-hover {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.bulk-upgrade-button.disabled {
+  @apply bg-gray-600 text-gray-300 cursor-not-allowed border-gray-500;
 }
 
 /* 建筑网格样式 */

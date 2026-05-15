@@ -191,6 +191,19 @@ export const useGameStore = defineStore('game', {
         return state.resources[resource] >= cost[resource]
       })
     },
+
+    hasUpgradeableResourceBuilding() {
+      return [
+        BUILDING_TYPES.WOOD_MILL,
+        BUILDING_TYPES.SOIL_MINE,
+        BUILDING_TYPES.IRON_MINE,
+        BUILDING_TYPES.FARM
+      ].some(buildingType => (
+        this.buildings[buildingType].some((_, buildingIndex) => (
+          this.canUpgradeBuilding(buildingType, buildingIndex)
+        ))
+      ))
+    },
     
     /**
      * 检查仓库是否正在升级
@@ -444,6 +457,87 @@ export const useGameStore = defineStore('game', {
       }, upgradeTime * 1000)
       
       return true
+    },
+
+    /**
+     * 按短板优先策略批量升级资源建筑
+     */
+    upgradeResourceBuildingsBalanced() {
+      const notificationStore = useNotificationStore()
+      const resourceOrder = [
+        RESOURCE_TYPES.WOOD,
+        RESOURCE_TYPES.SOIL,
+        RESOURCE_TYPES.IRON,
+        RESOURCE_TYPES.FOOD
+      ]
+      const resourceBuildingTypes = [
+        BUILDING_TYPES.WOOD_MILL,
+        BUILDING_TYPES.SOIL_MINE,
+        BUILDING_TYPES.IRON_MINE,
+        BUILDING_TYPES.FARM
+      ]
+      const buildingTypeToResource = {
+        [BUILDING_TYPES.WOOD_MILL]: RESOURCE_TYPES.WOOD,
+        [BUILDING_TYPES.SOIL_MINE]: RESOURCE_TYPES.SOIL,
+        [BUILDING_TYPES.IRON_MINE]: RESOURCE_TYPES.IRON,
+        [BUILDING_TYPES.FARM]: RESOURCE_TYPES.FOOD
+      }
+      const startedUpgrades = []
+
+      while (true) {
+        const capacity = Math.max(this.warehouseCapacity, 1)
+        const candidates = resourceBuildingTypes.flatMap(buildingType => (
+          this.buildings[buildingType]
+            .map((level, buildingIndex) => ({
+              buildingType,
+              buildingIndex,
+              level,
+              resourceType: buildingTypeToResource[buildingType]
+            }))
+            .filter(candidate => this.canUpgradeBuilding(candidate.buildingType, candidate.buildingIndex))
+        ))
+
+        if (candidates.length === 0) {
+          break
+        }
+
+        candidates.sort((left, right) => {
+          const leftStockRatio = this.resources[left.resourceType] / capacity
+          const rightStockRatio = this.resources[right.resourceType] / capacity
+          if (leftStockRatio !== rightStockRatio) return leftStockRatio - rightStockRatio
+
+          const leftProduction = this.hourlyProduction[left.resourceType]
+          const rightProduction = this.hourlyProduction[right.resourceType]
+          if (leftProduction !== rightProduction) return leftProduction - rightProduction
+
+          if (left.level !== right.level) return left.level - right.level
+
+          const leftResourceOrder = resourceOrder.indexOf(left.resourceType)
+          const rightResourceOrder = resourceOrder.indexOf(right.resourceType)
+          if (leftResourceOrder !== rightResourceOrder) return leftResourceOrder - rightResourceOrder
+
+          return left.buildingIndex - right.buildingIndex
+        })
+
+        const nextUpgrade = candidates[0]
+        if (!this.upgradeBuilding(nextUpgrade.buildingType, nextUpgrade.buildingIndex)) {
+          break
+        }
+
+        startedUpgrades.push(nextUpgrade)
+      }
+
+      if (startedUpgrades.length === 0) {
+        notificationStore.addInfoNotification('暂无可升级建筑', '当前资源不足，或所有资源建筑都在升级中', 3000)
+      } else {
+        notificationStore.addSuccessNotification(
+          '一键升级已启动',
+          `已开始升级 ${startedUpgrades.length} 座资源建筑`,
+          3500
+        )
+      }
+
+      return startedUpgrades.length
     },
     
     /**

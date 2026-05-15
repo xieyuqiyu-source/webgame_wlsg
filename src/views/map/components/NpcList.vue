@@ -153,7 +153,17 @@
           </div>
           <div class="army-details">
             <div v-for="unit in npc.scoutData.units" :key="unit.id" class="unit-item">
-              <span class="unit-name">{{ unit.name }}</span>
+              <HoverCard
+                density="compact"
+                :show="hoveredScoutUnitId === unit.id"
+                @mouseenter="hoveredScoutUnitId = unit.id"
+                @mouseleave="hoveredScoutUnitId = null"
+              >
+                <template #trigger>
+                  <span class="unit-name">{{ unit.name }}</span>
+                </template>
+                <UnitHoverContent :unit="unit" />
+              </HoverCard>
               <span class="unit-count">{{ formatNumber(unit.count) }}</span>
             </div>
           </div>
@@ -213,9 +223,15 @@ import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 import { useNotificationStore } from '@/store/modules/notificationStore.js'
 import { useNpcStore } from '@/store/modules/npcStore.js'
 import { getResourceIcon, getResourceName } from '@/config/resources.js'
+import HoverCard from '@/components/hover/HoverCard.vue'
+import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
 
 export default {
   name: 'NpcList',
+  components: {
+    HoverCard,
+    UnitHoverContent
+  },
   setup() {
     const gameStore = useGameStore()
     const militaryStore = useMilitaryStore()
@@ -243,6 +259,7 @@ export default {
       ],
       //=== currentPage 当前页码
       currentPage: 1,
+      hoveredScoutUnitId: null,
       //=== pageSize 每页显示数量
       pageSize: 12,
       //=== refreshTimer 刷新倒计时定时器
