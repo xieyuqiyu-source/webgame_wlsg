@@ -86,6 +86,7 @@
 
 <script>
 import { FACTION_CONFIG } from '@/config/factionConfig.js'
+import { getCombatRule } from '@/domain/combat/combatService.js'
 
 export default {
   name: 'BattleReport',
@@ -143,7 +144,8 @@ export default {
     },
 
     getRuleName(ruleId) {
-      return ruleId === 'CLASSIC_CRUSH' ? '武林式碾压' : (ruleId || '未知规则')
+      if (!ruleId) return '未知规则'
+      return getCombatRule(ruleId)?.name || ruleId
     },
 
     getBattleTierText(tier) {

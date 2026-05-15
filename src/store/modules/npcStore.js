@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { getFactionUnits, UNIT_TYPES } from '@/config/factionConfig.js'
+import { useGameStore } from './gameStore.js'
 
 export const useNpcStore = defineStore('npc', {
   state: () => ({
@@ -50,19 +51,34 @@ export const useNpcStore = defineStore('npc', {
   },
 
   actions: {
+    getNpcSaveData() {
+      return {
+        npcs: this.npcs,
+        lastGeneratedTime: this.lastGeneratedTime,
+        generationInterval: this.generationInterval,
+        manualRefreshCost: this.manualRefreshCost,
+        isInitialized: this.isInitialized
+      }
+    },
+
+    applyNpcSaveData(data = {}) {
+      this.npcs = Array.isArray(data.npcs) ? data.npcs : []
+      this.lastGeneratedTime = data.lastGeneratedTime || 0
+      this.generationInterval = data.generationInterval || 3600000
+      this.manualRefreshCost = data.manualRefreshCost || 50
+      this.isInitialized = Boolean(data.isInitialized)
+    },
+
     //=== initializeNpcs 初始化NPC数据
     async initializeNpcs() {
       if (this.isInitialized) return
 
-      // 尝试从localStorage恢复数据
-      const restored = this.restoreFromStorage()
-      
-      if (!restored || this.needsRegeneration(Date.now())) {
+      if (!this.npcs.length || this.needsRegeneration(Date.now())) {
         // 如果没有恢复到数据或需要重新生成，则生成新数据
         this.generateNpcs()
+      } else {
+        this.isInitialized = true
       }
-
-      this.isInitialized = true
     },
 
     //=== generateNpcs 生成NPC城池数据
@@ -155,8 +171,8 @@ export const useNpcStore = defineStore('npc', {
       this.npcs = newNpcs
       this.lastGeneratedTime = Date.now()
       
-      // 持久化到localStorage
-      this.saveToStorage()
+      this.isInitialized = true
+      useGameStore().saveGame()
       
       console.log(`NPC数据已${isManualRefresh ? '手动' : '自动'}生成，共${newNpcs.length}个城池`)
     },
@@ -270,8 +286,7 @@ export const useNpcStore = defineStore('npc', {
         npc.scoutData.unitTypes = npc.defenseArmy.units.length
       }
 
-      // 持久化更新
-      this.saveToStorage()
+      useGameStore().saveGame()
       return true
     },
 
@@ -318,8 +333,7 @@ export const useNpcStore = defineStore('npc', {
         }
       }
 
-      // 持久化更新
-      this.saveToStorage()
+      useGameStore().saveGame()
       return true
     },
 
@@ -329,51 +343,11 @@ export const useNpcStore = defineStore('npc', {
       return true
     },
 
-    //=== saveToStorage 保存数据到localStorage
-    saveToStorage() {
-      try {
-        const data = {
-          npcs: this.npcs,
-          lastGeneratedTime: this.lastGeneratedTime,
-          version: '1.0.0' // 版本号，用于数据迁移
-        }
-        localStorage.setItem('npc_store_data', JSON.stringify(data))
-      } catch (error) {
-        console.error('保存NPC数据失败:', error)
-      }
-    },
-
-    //=== restoreFromStorage 从localStorage恢复数据
-    restoreFromStorage() {
-      try {
-        const savedData = localStorage.getItem('npc_store_data')
-        if (!savedData) return false
-
-        const data = JSON.parse(savedData)
-        
-        // 检查数据版本和完整性
-        if (!data.npcs || !Array.isArray(data.npcs) || !data.lastGeneratedTime) {
-          console.warn('NPC数据格式不正确，将重新生成')
-          return false
-        }
-
-        // 恢复数据
-        this.npcs = data.npcs
-        this.lastGeneratedTime = data.lastGeneratedTime
-        
-        console.log(`从localStorage恢复了${this.npcs.length}个NPC数据`)
-        return true
-      } catch (error) {
-        console.error('恢复NPC数据失败:', error)
-        return false
-      }
-    },
-
-    //=== clearStorage 清除存储的数据
     clearStorage() {
-      localStorage.removeItem('npc_store_data')
       this.npcs = []
       this.lastGeneratedTime = 0
+      this.generationInterval = 3600000
+      this.manualRefreshCost = 50
       this.isInitialized = false
     },
 

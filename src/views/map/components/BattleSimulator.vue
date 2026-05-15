@@ -219,7 +219,8 @@
 
 <script>
 import { FACTION_CONFIG, FACTION_TYPES, UNIT_CATEGORIES, UNIT_TYPES } from '@/config/factionConfig.js'
-import { getBattleRule, BATTLE_RULES, BATTLE_RULE_IDS } from '@/config/battleRulesConfig.js'
+import { COMBAT_RULE_IDS } from '@/domain/combat/combatConstants.js'
+import { getAllCombatRules, getCombatRule, resolveCombat } from '@/domain/combat/combatService.js'
 import BattleReport from './Test/BattleReport.vue'
 
 export default {
@@ -240,7 +241,7 @@ export default {
       defenderUnits: {},
       
       //=== 战斗配置
-      selectedBattleRule: BATTLE_RULE_IDS.CLASSIC_CRUSH,
+      selectedBattleRule: COMBAT_RULE_IDS.CLASSIC_CRUSH,
       presetApplyMode: 'replace',
       
       //=== 显示控制
@@ -273,7 +274,7 @@ export default {
 
     //=== availableBattleRules 可用战斗规则
     availableBattleRules() {
-      return Object.values(BATTLE_RULES).map(rule => ({
+      return getAllCombatRules().map(rule => ({
         id: rule.id,
         name: rule.name,
         description: rule.description
@@ -640,8 +641,12 @@ export default {
       }
 
       // 根据选择的战斗规则进行计算（与TestList.vue完全一致）
-      const battleRule = getBattleRule(this.selectedBattleRule)
-      const result = battleRule.calculateBattle(attackerArmy, defenderArmy)
+      const battleRule = getCombatRule(this.selectedBattleRule)
+      const result = resolveCombat({
+        ruleId: this.selectedBattleRule,
+        attackerArmy,
+        defenderArmy
+      })
       
       // 输出到控制台（与TestList.vue一致）
       console.log(`${battleRule.name}计算结果:`, result)

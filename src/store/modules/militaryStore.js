@@ -28,6 +28,14 @@ export const useMilitaryStore = defineStore('military', {
   },
 
   actions: {
+    getMilitarySaveData() {
+      return {
+        army: this.army,
+        recruitmentQueue: this.recruitmentQueue,
+        recruitmentConfig: this.recruitmentConfig
+      }
+    },
+
     setArmy(army) {
       this.army = { ...army }
     },
