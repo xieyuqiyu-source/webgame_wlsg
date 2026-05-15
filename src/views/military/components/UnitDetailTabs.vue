@@ -7,6 +7,23 @@
         <span class="faction-name">{{ currentFactionConfig?.name }}</span>
         <span class="faction-desc">{{ currentFactionConfig?.description }}</span>
       </div>
+      <HoverCard
+        class="unit-help"
+        density="compact"
+        :show="showUnitHelp"
+        @mouseenter="showUnitHelp = true"
+        @mouseleave="showUnitHelp = false"
+      >
+        <template #trigger>
+          <button class="unit-help-trigger" type="button">?</button>
+        </template>
+        <TutorialHoverContent
+          v-if="unitDetailsTutorial"
+          :title="unitDetailsTutorial.title"
+          :body="unitDetailsTutorial.body"
+          :items="unitDetailsTutorial.items"
+        />
+      </HoverCard>
     </div>
 
     <!-- Tab 头部 -->
@@ -32,10 +49,22 @@
           class="unit-card"
         >
           <!-- 兵种名称栏 -->
-          <div class="unit-title-bar">
-            <div class="unit-icon">{{ unit.icon }}</div>
-            <h4 class="unit-name">{{ unit.name }}</h4>
-          </div>
+          <HoverCard
+            class="unit-title-hover"
+            density="compact"
+            :show="hoveredUnitId === unit.id"
+            @mouseenter="hoveredUnitId = unit.id"
+            @mouseleave="hoveredUnitId = null"
+          >
+            <template #trigger>
+              <div class="unit-title-bar">
+                <div class="unit-icon">{{ unit.icon }}</div>
+                <h4 class="unit-name">{{ unit.name }}</h4>
+              </div>
+            </template>
+
+            <UnitHoverContent :unit="unit" />
+          </HoverCard>
           
           <!-- 属性信息网格 -->
           <div class="unit-stats-grid">
@@ -96,11 +125,18 @@
 import { UNIT_CATEGORIES, getFactionUnitsByType } from '@/config/factionConfig'
 import { getFactionConfig } from '@/config/factionConfig'
 import { useGameStore } from '@/store/modules/gameStore'
+import HoverCard from '@/components/hover/HoverCard.vue'
+import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
+import TutorialHoverContent from '@/components/hover/TutorialHoverContent.vue'
 import RecruitmentModal from './RecruitmentModal.vue'
+import { getTutorial, TUTORIAL_KEYS } from '@/config/tutorialConfig.js'
 
 export default {
   name: 'UnitDetailTabs',
   components: {
+    HoverCard,
+    UnitHoverContent,
+    TutorialHoverContent,
     RecruitmentModal
   },
   setup() {
@@ -114,7 +150,10 @@ export default {
       activeTab: 'infantry',
       unitCategories: UNIT_CATEGORIES,
       showRecruitmentModal: false,
-      selectedUnit: null
+      selectedUnit: null,
+      hoveredUnitId: null,
+      showUnitHelp: false,
+      unitDetailsTutorial: getTutorial(TUTORIAL_KEYS.UNIT_DETAILS)
     }
   },
   computed: {
@@ -171,6 +210,7 @@ export default {
   padding: 24px;
   border-bottom: 2px solid rgba(35, 124, 72, 0.3);
   backdrop-filter: blur(10px);
+  position: relative;
 }
 
 .faction-info {
@@ -369,6 +409,26 @@ export default {
   justify-content: center;
   gap: 6px;
   box-shadow: 0 2px 8px rgba(255, 185, 0, 0.2);
+}
+
+.unit-help {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+.unit-help-trigger {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 0;
+  color: white;
+  background: #237c48;
+  font-weight: 700;
+}
+
+.unit-title-hover {
+  width: 100%;
 }
 
 .unit-icon {

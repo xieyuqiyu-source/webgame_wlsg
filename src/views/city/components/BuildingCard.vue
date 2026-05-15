@@ -26,7 +26,13 @@
     
     <!-- 升级按钮 -->
     <div class="w-full">
-      <div class="upgrade-button-container" @mouseenter="showTooltip = true" @mouseleave="showTooltip = false">
+      <HoverCard
+        class="upgrade-button-container"
+        :show="showTooltip"
+        @mouseenter="showTooltip = true"
+        @mouseleave="showTooltip = false"
+      >
+        <template #trigger>
         <button
           @click.stop="upgradeBuilding"
           :disabled="!canUpgrade || isUpgrading"
@@ -46,9 +52,22 @@
             {{ getButtonText }}
           </span>
         </button>
+        </template>
         
         <!-- 浮动提醒 -->
-        <div v-if="showTooltip" class="building-tooltip">
+        <BuildingUpgradeHoverContent
+          v-if="showTooltip"
+          :get-resource-name="getResourceName"
+          :is-max-level="currentLevel >= maxLevel"
+          :is-upgrading="isUpgrading"
+          :production-gain="productionGain"
+          :remaining-time-text="remainingTimeText"
+          :resources="gameStore.resources"
+          :title="buildingName"
+          :upgrade-cost="upgradeCost"
+          :upgrade-duration-text="upgradeDurationText"
+        />
+        <div v-if="false" class="building-tooltip">
           <div class="tooltip-arrow"></div>
           <div class="tooltip-header">{{ isUpgrading ? '升级进度' : canUpgrade ? '升级信息' : '升级条件' }}</div>
           <div v-if="isUpgrading" class="tooltip-content">
@@ -61,6 +80,14 @@
             <div class="tooltip-item max-level">建筑已达到最大等级</div>
           </div>
           <div v-else-if="canUpgrade" class="tooltip-content">
+            <div class="resource-requirement sufficient">
+              <span class="resource-name">产量提升:</span>
+              <span class="resource-amount">+{{ productionGain }}/h</span>
+            </div>
+            <div class="resource-requirement sufficient">
+              <span class="resource-name">升级耗时:</span>
+              <span class="resource-amount">{{ upgradeDurationText }}</span>
+            </div>
             <div class="tooltip-item">
               <div class="text-green-400 text-center mb-2">点击升级到 {{ currentLevel + 1 }} 级</div>
               <div class="tooltip-item" v-for="(cost, resourceType) in upgradeCost" :key="resourceType">
@@ -80,7 +107,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </HoverCard>
     </div>
   </div>
 </template>
@@ -89,6 +116,8 @@
 import { computed, ref, onMounted, onUnmounted, watchEffect } from 'vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { getResourceName } from '@/config/resources.js'
+import BuildingUpgradeHoverContent from '@/components/hover/BuildingUpgradeHoverContent.vue'
+import HoverCard from '@/components/hover/HoverCard.vue'
 import { 
   BUILDING_CONFIG, 
   calculateProduction, 
@@ -98,6 +127,10 @@ import {
 
 export default {
   name: 'BuildingCard',
+  components: {
+    BuildingUpgradeHoverContent,
+    HoverCard
+  },
   props: {
     //=== building 建筑数据对象
     building: {
@@ -153,6 +186,15 @@ export default {
     const currentProduction = computed(() => {
       if (currentLevel.value === 0) return 0
       return calculateProduction(props.buildingType, currentLevel.value)
+    })
+
+    const nextProduction = computed(() => {
+      if (currentLevel.value >= maxLevel.value) return currentProduction.value
+      return calculateProduction(props.buildingType, currentLevel.value + 1)
+    })
+
+    const productionGain = computed(() => {
+      return Math.max(0, nextProduction.value - currentProduction.value)
     })
     
     //=== 升级成本
@@ -217,6 +259,16 @@ export default {
       } else {
         return `${seconds}秒`
       }
+    })
+
+    const upgradeDurationText = computed(() => {
+      const seconds = upgradeTime.value
+      const minutes = Math.floor(seconds / 60)
+      const hours = Math.floor(minutes / 60)
+
+      if (hours > 0) return `${hours}小时${minutes % 60}分钟`
+      if (minutes > 0) return `${minutes}分钟${seconds % 60}秒`
+      return `${seconds}秒`
     })
     
     //=== 更新进度
@@ -293,6 +345,7 @@ export default {
       maxLevel,
       buildingName,
       currentProduction,
+      productionGain,
       upgradeCost,
       canUpgrade,
       isUpgrading,
@@ -303,6 +356,7 @@ export default {
       getButtonClass,
       getButtonText,
       remainingTimeText,
+      upgradeDurationText,
       upgradeBuilding,
       getResourceName
     }

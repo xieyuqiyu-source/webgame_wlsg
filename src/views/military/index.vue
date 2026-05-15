@@ -9,6 +9,24 @@
 
         <div v-if="activeTab === 'technology'" class="tab-panel">
           <div class="panel-header">
+            <div class="panel-help">
+              <HoverCard
+                density="compact"
+                :show="showTechnologyHelp"
+                @mouseenter="showTechnologyHelp = true"
+                @mouseleave="showTechnologyHelp = false"
+              >
+                <template #trigger>
+                  <button class="help-trigger" type="button">?</button>
+                </template>
+                <TutorialHoverContent
+                  v-if="technologyTutorial"
+                  :title="technologyTutorial.title"
+                  :body="technologyTutorial.body"
+                  :items="technologyTutorial.items"
+                />
+              </HoverCard>
+            </div>
             <h2 class="panel-title">军事科技</h2>
             <p class="panel-subtitle">研发军事技术提升战斗力</p>
           </div>
@@ -34,6 +52,9 @@ import GamePageLayout from '@/components/GamePageLayout.vue'
 import MilitaryTabs from './components/MilitaryTabs.vue'
 import UnitDetailTabs from './components/UnitDetailTabs.vue'
 import RecruitmentQueue from './components/RecruitmentQueue.vue'
+import HoverCard from '@/components/hover/HoverCard.vue'
+import TutorialHoverContent from '@/components/hover/TutorialHoverContent.vue'
+import { getTutorial, TUTORIAL_KEYS } from '@/config/tutorialConfig.js'
 
 export default {
   name: 'MilitaryView',
@@ -41,12 +62,16 @@ export default {
     GamePageLayout,
     MilitaryTabs,
     UnitDetailTabs,
-    RecruitmentQueue
+    RecruitmentQueue,
+    HoverCard,
+    TutorialHoverContent
   },
   data() {
     return {
       activeTab: 'recruitment',
-      activeUnitDetailTab: 'infantry'
+      activeUnitDetailTab: 'infantry',
+      showTechnologyHelp: false,
+      technologyTutorial: getTutorial(TUTORIAL_KEYS.MILITARY_TECHNOLOGY)
     }
   },
   methods: {
@@ -81,6 +106,15 @@ export default {
 
 .panel-header {
   @apply px-6 py-4 border-b border-gray-200;
+  @apply relative;
+}
+
+.panel-help {
+  @apply absolute right-6 top-4;
+}
+
+.help-trigger {
+  @apply w-5 h-5 rounded-full text-xs font-bold text-white bg-green-600 hover:bg-green-500;
 }
 
 .panel-title {
