@@ -1,0 +1,32 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name wlsg.ccoos.cn;
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name wlsg.ccoos.cn;
+
+    root /var/www/wlsg.ccoos.cn;
+    index index.html;
+
+    ssl_certificate /etc/nginx/ssl/ccoos.cn/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/ccoos.cn/privkey.pem;
+
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header X-Content-Type-Options nosniff;
+    add_header Referrer-Policy strict-origin-when-cross-origin;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

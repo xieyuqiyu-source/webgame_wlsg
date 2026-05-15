@@ -1,0 +1,87 @@
+name: Deploy dev-wlsg
+
+on:
+  push:
+    branches:
+      - dev-wlsg
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev-wlsg
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      APP_DIR: /srv/wlsg-dev
+      DEPLOY_BRANCH: dev-wlsg
+      SITE_ROOT: /var/www/wlsg.ccoos.cn
+      REPO_URL: https://github.com/xieyuqiyu-source/webgame_wlsg.git
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Prepare SSH key
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.WLSG_DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy on server
+        shell: bash
+        run: |
+          ssh -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}" <<'EOF'
+          set -e
+
+          APP_DIR="/srv/wlsg-dev"
+          DEPLOY_BRANCH="dev-wlsg"
+          SITE_ROOT="/var/www/wlsg.ccoos.cn"
+          REPO_URL="https://github.com/xieyuqiyu-source/webgame_wlsg.git"
+
+          if [ ! -d "$APP_DIR/.git" ]; then
+            mkdir -p "$(dirname "$APP_DIR")"
+            git clone "$REPO_URL" "$APP_DIR"
+          fi
+
+          git -C "$APP_DIR" fetch origin
+          git -C "$APP_DIR" checkout "$DEPLOY_BRANCH"
+          git -C "$APP_DIR" reset --hard "origin/$DEPLOY_BRANCH"
+
+          if command -v corepack >/dev/null 2>&1; then
+            corepack enable
+          fi
+
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm
+          fi
+
+          cd "$APP_DIR"
+          pnpm install --frozen-lockfile
+          pnpm build
+
+          sudo mkdir -p "$SITE_ROOT"
+          sudo rsync -a --delete "$APP_DIR/dist/" "$SITE_ROOT/"
+          sudo nginx -t
+          sudo systemctl reload nginx
+          EOF
