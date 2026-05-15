@@ -14,7 +14,7 @@ import {
   calculateWarehouseUpgradeTime
 } from '../../config/gameConfig.js'
 import { calculateCivilization, getCivilizationLevel } from '../../config/civilizationConfig.js'
-import { getUserUUID } from '../../utils/uuid.js'
+import { getUserUUID, setStoredUserUUID } from '../../utils/uuid.js'
 import { useNotificationStore } from './notificationStore.js'
 import { useMilitaryStore } from './militaryStore.js'
 import { useNpcStore } from './npcStore.js'
@@ -341,6 +341,26 @@ export const useGameStore = defineStore('game', {
         this.saveGame()
       }
       return success
+    },
+
+    storeLootedResources(resources = {}) {
+      const capacity = this.warehouseCapacity
+      const stored = {}
+      const overflow = {}
+
+      Object.entries(resources).forEach(([resource, amount]) => {
+        const incoming = Math.max(0, amount || 0)
+        const current = this.resources[resource] || 0
+        const accepted = Math.max(0, Math.min(incoming, capacity - current))
+
+        this.resources[resource] = current + accepted
+        stored[resource] = accepted
+        overflow[resource] = incoming - accepted
+      })
+
+      this.saveGame()
+
+      return { stored, overflow }
     },
     
     /**
@@ -702,6 +722,7 @@ export const useGameStore = defineStore('game', {
 
       if (gameData.userUUID) {
         this.userUUID = gameData.userUUID
+        setStoredUserUUID(gameData.userUUID)
       }
       if (gameData.userNickname) {
         this.userNickname = gameData.userNickname

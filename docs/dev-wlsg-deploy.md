@@ -5,6 +5,7 @@
 - 以 `dev-wlsg` 作为开发与自动部署分支
 - 每次推送到 `dev-wlsg`，服务器自动更新
 - 通过 `wlsg.ccoos.cn` 提供访问
+- 同域提供 `wlsg.ccoos.cn/api` 云存档接口
 
 ## 已落地的仓库侧内容
 
@@ -22,10 +23,10 @@
 
 1. GitHub Actions 本地先执行 `pnpm build`
 2. 通过 SSH 连到服务器
-3. 服务器首次部署时执行 `git clone`
-4. 后续执行 `git fetch + reset --hard origin/dev-wlsg`
-5. 服务器内执行 `pnpm install --frozen-lockfile` 和 `pnpm build`
-6. 将 `dist/` 同步到 `/var/www/wlsg.ccoos.cn`
+3. 同步前端 `dist/` 到 `/var/www/wlsg.ccoos.cn`
+4. 同步 `server/` 到 `/srv/wlsg-dev/server`
+5. 同步 `deploy/systemd/wlsg-save-api.service` 到 `/etc/systemd/system/`
+6. `systemctl daemon-reload && enable --now wlsg-save-api.service`
 7. `nginx -t` 后 reload
 
 ## 需要配置的 GitHub Secrets
@@ -41,28 +42,32 @@
 
 建议服务器具备：
 
-- `git`
 - `node >= 20`
-- `npm`
-- `pnpm`（如没有，工作流会尝试自动安装）
 - `nginx`
 - `rsync`
-- `sudo` 权限（至少对 `rsync`、`nginx -t`、`systemctl reload nginx` 可用）
+- `systemd`
+- root 或等效权限（至少对 `rsync`、`nginx -t`、`systemctl` 可用）
 
 ## 服务器首次手动准备
 
-1. 放置 SSL 证书到：
-   - `/etc/nginx/ssl/ccoos.cn/fullchain.pem`
-   - `/etc/nginx/ssl/ccoos.cn/privkey.pem`
+1. 通过 `certbot` 为 `wlsg.ccoos.cn` 签发证书
 2. 将模板复制为正式站点配置：
-   - `/etc/nginx/sites-available/wlsg.ccoos.cn.conf`
-3. 建立软链接到 `sites-enabled`
+   - `/etc/nginx/conf.d/wlsg.ccoos.cn.conf`
+3. 在 HTTPS server 段加入：
+   - `location /api/ { proxy_pass http://127.0.0.1:18790/api/; ... }`
 4. 创建静态站点目录：
    - `/var/www/wlsg.ccoos.cn`
-5. 执行：
+5. 创建 API 工作目录：
+   - `/srv/wlsg-dev/data/saves`
+6. 执行：
    - `sudo nginx -t`
    - `sudo systemctl reload nginx`
 
-## 当前还缺的一步
+## 云存档说明
 
-仓库侧已经准备好，但要真正打通部署，还需要拿到服务器登录方式并在服务器上放好证书。
+- API 监听：`127.0.0.1:18790`
+- 健康检查：`GET /api/health`
+- 读取存档：`GET /api/saves/:syncId`
+- 写入存档：`PUT /api/saves/:syncId`
+- 当前按同步码读写，不做账号系统
+- 建议直接使用玩家 `UUID` 作为默认同步码

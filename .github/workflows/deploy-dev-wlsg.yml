@@ -17,6 +17,7 @@ jobs:
       APP_DIR: /srv/wlsg-dev
       DEPLOY_BRANCH: dev-wlsg
       SITE_ROOT: /var/www/wlsg.ccoos.cn
+      API_SYSTEMD_PATH: /etc/systemd/system/wlsg-save-api.service
       REPO_URL: https://github.com/xieyuqiyu-source/webgame_wlsg.git
 
     steps:
@@ -51,6 +52,8 @@ jobs:
       - name: Deploy on server
         shell: bash
         run: |
-          ssh -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}" "mkdir -p '${SITE_ROOT}'"
+          ssh -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}" "mkdir -p '${SITE_ROOT}' '${APP_DIR}/server' '${APP_DIR}/data/saves'"
           rsync -az --delete -e "ssh -p ${{ secrets.WLSG_DEV_SSH_PORT }}" dist/ "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}:${SITE_ROOT}/"
-          ssh -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}" "nginx -t && systemctl reload nginx"
+          rsync -az -e "ssh -p ${{ secrets.WLSG_DEV_SSH_PORT }}" server/ "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}:${APP_DIR}/server/"
+          rsync -az -e "ssh -p ${{ secrets.WLSG_DEV_SSH_PORT }}" deploy/systemd/wlsg-save-api.service "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}:${API_SYSTEMD_PATH}"
+          ssh -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}" "systemctl daemon-reload && systemctl enable --now wlsg-save-api.service && systemctl restart wlsg-save-api.service && nginx -t && systemctl reload nginx"

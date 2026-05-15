@@ -169,12 +169,89 @@ const calculateRemainingResources = (resources, plundered) => ({
   food: Math.max(0, (resources.food || 0) - (plundered.food || 0))
 })
 
-const calculatePlunderedResources = (attackStats, defenderResources, battleResult, actionType) => {
+const RESOURCE_KEYS = ['wood', 'soil', 'iron', 'food']
+
+const calculateSurvivingCarryCapacity = (attackerLosses = []) => (
+  attackerLosses.reduce((total, entry) => {
+    const survivors = Math.max(0, (entry.count || 0) - (entry.losses || 0))
+    return total + survivors * (entry.carryCapacity || 0)
+  }, 0)
+)
+
+const distributeEqualResources = (capacity, resources) => {
+  const result = { wood: 0, soil: 0, iron: 0, food: 0 }
+  const perResource = Math.floor(capacity / RESOURCE_KEYS.length)
+  let used = 0
+
+  RESOURCE_KEYS.forEach((key) => {
+    const amount = Math.min(resources[key] || 0, perResource)
+    result[key] = amount
+    used += amount
+  })
+
+  let remaining = Math.max(0, capacity - used)
+  let cursor = 0
+
+  while (remaining > 0) {
+    const key = RESOURCE_KEYS[cursor % RESOURCE_KEYS.length]
+    if ((resources[key] || 0) > result[key]) {
+      result[key] += 1
+      remaining -= 1
+    }
+
+    cursor += 1
+    if (cursor > RESOURCE_KEYS.length * Math.max(capacity, 1)) {
+      break
+    }
+  }
+
+  return result
+}
+
+const distributeProportionalResources = (capacity, resources, totalResources) => {
+  const result = { wood: 0, soil: 0, iron: 0, food: 0 }
+  const remainders = []
+  let assigned = 0
+
+  RESOURCE_KEYS.forEach((key) => {
+    const stock = resources[key] || 0
+    const exact = totalResources > 0 ? (capacity * stock) / totalResources : 0
+    const floorValue = Math.min(stock, Math.floor(exact))
+    result[key] = floorValue
+    assigned += floorValue
+    remainders.push({
+      key,
+      remainder: exact - floorValue
+    })
+  })
+
+  let remaining = Math.max(0, capacity - assigned)
+
+  while (remaining > 0) {
+    const candidate = remainders
+      .filter(({ key }) => (resources[key] || 0) > result[key])
+      .sort((a, b) => {
+        if (b.remainder === a.remainder) {
+          return (resources[b.key] || 0) - (resources[a.key] || 0)
+        }
+        return b.remainder - a.remainder
+      })[0]
+
+    if (!candidate) break
+    result[candidate.key] += 1
+    remaining -= 1
+    candidate.remainder = 0
+  }
+
+  return result
+}
+
+const calculatePlunderedResources = (survivingCarryCapacity, defenderResources, battleResult, actionType) => {
   if (battleResult !== COMBAT_RESULTS.ATTACKER_VICTORY) {
     return { wood: 0, soil: 0, iron: 0, food: 0 }
   }
 
-  const carryCapacity = attackStats.totalCarryCapacity || 0
+  const carryCapacity = survivingCarryCapacity || 0
   if (carryCapacity <= 0) {
     return { wood: 0, soil: 0, iron: 0, food: 0 }
   }
@@ -185,15 +262,29 @@ const calculatePlunderedResources = (attackStats, defenderResources, battleResul
   }
 
   const plunderFactor = actionType === COMBAT_ACTION_TYPES.PLUNDER ? 1 : 0.6
-  const plunderRatio = Math.min(carryCapacity, totalResources) / totalResources
-  const effectiveRatio = clamp(plunderRatio * plunderFactor, 0, 1)
+  const effectiveCapacity = Math.max(0, Math.floor(carryCapacity * plunderFactor))
 
-  return {
-    wood: Math.floor((defenderResources.wood || 0) * effectiveRatio),
-    soil: Math.floor((defenderResources.soil || 0) * effectiveRatio),
-    iron: Math.floor((defenderResources.iron || 0) * effectiveRatio),
-    food: Math.floor((defenderResources.food || 0) * effectiveRatio)
+  if (effectiveCapacity <= 0) {
+    return { wood: 0, soil: 0, iron: 0, food: 0 }
   }
+
+  if (totalResources <= effectiveCapacity) {
+    return {
+      wood: defenderResources.wood || 0,
+      soil: defenderResources.soil || 0,
+      iron: defenderResources.iron || 0,
+      food: defenderResources.food || 0
+    }
+  }
+
+  const equalThreshold = Math.floor(effectiveCapacity / RESOURCE_KEYS.length)
+  const canSplitEvenly = RESOURCE_KEYS.every((key) => (defenderResources[key] || 0) >= equalThreshold)
+
+  if (canSplitEvenly) {
+    return distributeEqualResources(effectiveCapacity, defenderResources)
+  }
+
+  return distributeProportionalResources(effectiveCapacity, defenderResources, totalResources)
 }
 
 const createBattleResult = ({ rule, attackerArmy, defenderArmy, outcome }) => {
@@ -209,7 +300,8 @@ const createBattleResult = ({ rule, attackerArmy, defenderArmy, outcome }) => {
     defenderBreakDefense,
     battleTier,
     plundered,
-    note
+    note,
+    survivingCarryCapacity
   } = outcome
 
   const defenderResources = defenderArmy.resources || { wood: 0, soil: 0, iron: 0, food: 0 }
@@ -252,7 +344,8 @@ const createBattleResult = ({ rule, attackerArmy, defenderArmy, outcome }) => {
       defenderTotalTroops: defenseStats.totalTroops,
       attackerEffectiveDefense: 0,
       defenderEffectiveDefense: defenseStats.totalDefense,
-      carryCapacity: attackStats.totalCarryCapacity,
+      carryCapacity: survivingCarryCapacity,
+      originalCarryCapacity: attackStats.totalCarryCapacity,
       plundered,
       note
     }
@@ -397,8 +490,9 @@ export const executeCombat = ({ rule, attackerArmy, defenderArmy }) => {
 
   const attackerLossRatio = attackStats.totalTroops > 0 ? getLossTotal(attackerLosses) / attackStats.totalTroops : 0
   const defenderLossRatio = defenseStats.totalTroops > 0 ? getLossTotal(defenderLosses) / defenseStats.totalTroops : 0
+  const survivingCarryCapacity = calculateSurvivingCarryCapacity(attackerLosses)
   const plundered = rule.config.plunderOnVictory
-    ? calculatePlunderedResources(attackStats, defenderResources, baseOutcome.battleResult, rule.actionType)
+    ? calculatePlunderedResources(survivingCarryCapacity, defenderResources, baseOutcome.battleResult, rule.actionType)
     : { wood: 0, soil: 0, iron: 0, food: 0 }
 
   return createBattleResult({
@@ -416,6 +510,7 @@ export const executeCombat = ({ rule, attackerArmy, defenderArmy }) => {
       powerRatio,
       defenderBreakDefense: attackerBreakDefense,
       battleTier: baseOutcome.battleTier,
+      survivingCarryCapacity,
       plundered,
       note: baseOutcome.note
     }

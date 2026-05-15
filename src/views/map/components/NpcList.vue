@@ -680,22 +680,27 @@ export default {
       this.npcStore.attackNpc(npc.id, result)
 
       const plundered = result.details?.plundered || {}
-      Object.entries(plundered).forEach(([resource, amount]) => {
-        if (!amount) return
-        if (Object.hasOwn(this.gameStore.resources, resource)) {
-          this.gameStore.resources[resource] += amount
-        }
-      })
-
-      this.gameStore.saveGame()
+      const { stored, overflow } = this.gameStore.storeLootedResources(plundered)
+      result.details = {
+        ...result.details,
+        storedResources: stored,
+        overflowResources: overflow
+      }
       this.battleReportData = result
       this.battleReportVisible = true
 
       const actionLabel = result.actionType === 'PLUNDER' ? '掠夺' : '攻击'
-      const plunderedSummary = Object.values(plundered).reduce((sum, amount) => sum + (amount || 0), 0)
+      const storedSummary = Object.values(stored).reduce((sum, amount) => sum + (amount || 0), 0)
+      const overflowSummary = Object.values(overflow).reduce((sum, amount) => sum + (amount || 0), 0)
 
       if (result.battleResult === 'ATTACKER_VICTORY') {
-        const extra = plunderedSummary > 0 ? `，共带回 ${formatNumber(plunderedSummary)} 资源` : ''
+        let extra = ''
+        if (storedSummary > 0) {
+          extra += `，入仓 ${formatNumber(storedSummary)} 资源`
+        }
+        if (overflowSummary > 0) {
+          extra += `，仓库装不下 ${formatNumber(overflowSummary)} 资源`
+        }
         this.notificationStore.addSuccessNotification(`${actionLabel}成功`, `${npc.name} 战斗获胜${extra}`)
       } else {
         this.notificationStore.addWarningNotification(`${actionLabel}失败`, `${npc.name} 防守成功，我方部队已承受损耗`)

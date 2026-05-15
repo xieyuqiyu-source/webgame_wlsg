@@ -24,6 +24,21 @@
         <span>攻防比 {{ formatNumber(battleReportData?.details?.powerRatio) }}</span>
       </div>
 
+      <section class="resource-section">
+        <div class="resource-row">
+          <span class="resource-title">带回资源</span>
+          <span>{{ formatResourceBundle(battleReportData?.details?.plundered) }}</span>
+        </div>
+        <div class="resource-row">
+          <span class="resource-title">入仓资源</span>
+          <span>{{ formatResourceBundle(battleReportData?.details?.storedResources) }}</span>
+        </div>
+        <div class="resource-row" v-if="hasOverflowResources">
+          <span class="resource-title">未入仓</span>
+          <span>{{ formatResourceBundle(battleReportData?.details?.overflowResources) }}</span>
+        </div>
+      </section>
+
       <section class="army-section">
         <div class="section-header attacker-header">
           <span class="section-title">攻击方</span>
@@ -136,6 +151,11 @@ export default {
 
     defenderUnitColumns() {
       return this.getFactionUnits(this.battleReportData?.defender?.faction)
+    },
+
+    hasOverflowResources() {
+      const overflow = this.battleReportData?.details?.overflowResources || {}
+      return Object.values(overflow).some((value) => (value || 0) > 0)
     }
   },
   methods: {
@@ -198,6 +218,23 @@ export default {
     getLossCount(losses, unitName) {
       const matchedLoss = (losses || []).find((loss) => loss.name === unitName)
       return matchedLoss?.count || 0
+    },
+
+    formatResourceBundle(bundle = {}) {
+      const items = [
+        ['木材', bundle?.wood || 0],
+        ['泥土', bundle?.soil || 0],
+        ['铁矿', bundle?.iron || 0],
+        ['粮食', bundle?.food || 0]
+      ]
+
+      if (items.every(([, value]) => value <= 0)) {
+        return '无'
+      }
+
+      return items
+        .map(([label, value]) => `${label} ${Math.floor(value)}`)
+        .join(' / ')
     }
   }
 }

@@ -2,13 +2,13 @@
 
 一个基于 `Vue 3 + Pinia + Vite + Tailwind CSS` 的三国题材文字放置类网页游戏原型。
 
-当前项目定位是单机前端原型，重点验证以下核心循环：
+当前项目定位是可持续迭代的网页游戏原型，当前重点验证以下核心循环：
 - 城池资源增长
 - 建筑升级与仓库容量
 - 阵营选择与差异化加成
 - 征兵与军队展示
-- 地图 NPC 与战斗相关原型页面
-- 本地存档、通知、GM 调试功能
+- 地图 NPC、攻击、掠夺与战报闭环
+- 本地存档、云存档、通知、GM 调试功能
 
 ## 技术栈
 
@@ -18,6 +18,7 @@
 - `Vite`
 - `Tailwind CSS`
 - `Naive UI`
+- Node.js 原生 `http` 云存档服务
 
 ## 本地开发
 
@@ -53,6 +54,12 @@ pnpm test:e2e
 pnpm preview
 ```
 
+本地启动云存档服务：
+
+```bash
+pnpm save-api
+```
+
 默认开发地址通常是：
 
 ```text
@@ -63,7 +70,8 @@ http://localhost:5173/
 
 - `/city`：正式首页，城池经营主界面
 - `/military`：军事与征兵页面
-- `/map`：地图、NPC、战斗测试页面
+- `/map`：正式地图、NPC、攻击与掠夺
+- `/map-debug`：战斗模拟器与规则调试入口
 - `/settings`：存档、GM、游戏设置
 - `/message`：信函系统
 - `/notification-test`：通知组件测试页
@@ -77,6 +85,8 @@ http://localhost:5173/
 - `src/config/`：阵营、单位、资源、战斗等配置
 - `src/hooks/`：计时器、调度器等组合式逻辑
 - `src/utils/`：格式化、UUID、调度器等基础工具
+- `src/services/`：云存档等接口服务
+- `server/`：云存档后端
 - `docs/`：玩法规则与系统设计文档
 其中包含开发路线文档 [docs/开发路线与待办清单.md](/Users/xieyuqiyu/Documents/Game/webgame_wlsg/docs/开发路线与待办清单.md)
   以及开发分支自动部署说明 [docs/dev-wlsg-deploy.md](/Users/xieyuqiyu/Documents/Game/webgame_wlsg/docs/dev-wlsg-deploy.md)
@@ -89,7 +99,9 @@ http://localhost:5173/
 - 建筑升级基础逻辑
 - 征兵队列与兵种展示
 - NPC 生成、侦查、攻击相关原型
-- 本地存档与读取
+- NPC 攻击、掠夺、选兵出征、资源回写
+- 本地存档与版本迁移
+- 云存档上传与下载
 - 全局通知与部分 GM 功能
 
 开发中或待整理：
@@ -100,7 +112,9 @@ http://localhost:5173/
 
 ## 开发约定
 
-- 当前状态数据主要持久化在浏览器 `localStorage`
+- 当前存档主结构为统一 `version=2` 结构，兼容旧平铺存档
+- 默认仍有浏览器 `localStorage` 本地存档
+- 同域 `wlsg.ccoos.cn/api` 提供最小云存档接口，按同步码读写
 - 默认首页为 `/city`，`/demo` 不再作为正式入口
 - `tests/e2e/` 提供基础 Playwright 冒烟测试，当前覆盖建筑升级、仓库操作、征兵与路由切换
 - Stagewise 开发工具默认关闭，如需启用可在本地设置：
@@ -112,7 +126,7 @@ VITE_ENABLE_STAGEWISE=true
 ## 后续建议
 
 适合继续推进的方向：
-- 统一整理城池、军事、地图三条主玩法的数据流
-- 将调度器和离线收益逻辑进一步模块化
-- 增加基础测试，至少覆盖核心 store 行为
-- 将测试页面与正式功能页面彻底分层
+- 将行军、返回、冷却补成正式地图行为
+- 给云存档补自动同步策略和冲突处理
+- 增加基础测试，至少覆盖核心 store 行为和云存档接口
+- 将侦查从“信息揭示”收成正式玩法规则

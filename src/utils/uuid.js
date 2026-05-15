@@ -42,6 +42,21 @@ export function getUserUUID() {
 }
 
 /**
+ * 将指定UUID写入本地存储
+ * @param {string} uuid - 需要持久化的UUID
+ * @returns {string} 持久化后的UUID
+ */
+export function setStoredUserUUID(uuid) {
+  const STORAGE_KEY = 'wlsg_user_uuid'
+  if (!isValidUUID(uuid)) {
+    throw new Error('无效的UUID，无法写入本地存储')
+  }
+
+  localStorage.setItem(STORAGE_KEY, uuid)
+  return uuid
+}
+
+/**
  * 验证UUID格式是否正确
  * @param {string} uuid - 要验证的UUID字符串
  * @returns {boolean} 是否为有效的UUID格式

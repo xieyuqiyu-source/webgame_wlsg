@@ -1,0 +1,15 @@
+[Unit]
+Description=WLSG Cloud Save API
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/wlsg-dev
+Environment=PORT=18790
+Environment=DATA_DIR=/srv/wlsg-dev/data/saves
+ExecStart=/usr/bin/env node /srv/wlsg-dev/server/save-api.mjs
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
