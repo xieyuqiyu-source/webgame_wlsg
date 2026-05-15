@@ -270,10 +270,9 @@
 <script>
 import GamePageLayout from '@/components/GamePageLayout.vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
-import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 import { getResourceName } from '@/config/resources.js'
 import { getFactionConfig } from '@/config/factionConfig.js'
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 
 export default {
   name: 'SettingsView',
@@ -282,7 +281,6 @@ export default {
   },
   setup() {
     const gameStore = useGameStore()
-    const militaryStore = useMilitaryStore()
     
     // 响应式数据
     const gmEnabled = ref(false)
@@ -298,25 +296,7 @@ export default {
     //=== exportGameData 导出游戏数据
     const exportGameData = () => {
       try {
-        const gameData = {
-          userUUID: gameStore.userUUID,
-          userNickname: gameStore.userNickname,
-          userFaction: gameStore.userFaction,
-          isFirstTime: gameStore.isFirstTime,
-          resources: gameStore.resources,
-          buildings: gameStore.buildings,
-          buildingUpgrades: gameStore.buildingUpgrades,
-          warehouseLevel: gameStore.warehouseLevel,
-          warehouseUpgrade: gameStore.warehouseUpgrade,
-          lastUpdateTime: gameStore.lastUpdateTime,
-          isPaused: gameStore.isPaused,
-          accumulatedProduction: gameStore.accumulatedProduction,
-          army: militaryStore.army,
-          recruitmentQueue: militaryStore.recruitmentQueue,
-          recruitmentConfig: militaryStore.recruitmentConfig,
-          exportTime: new Date().toISOString(),
-          version: '1.0.0'
-        }
+        const gameData = gameStore.exportSaveData()
         
         const dataStr = JSON.stringify(gameData, null, 2)
         const dataBlob = new Blob([dataStr], { type: 'application/json' })
@@ -343,38 +323,10 @@ export default {
       reader.onload = (e) => {
         try {
           const gameData = JSON.parse(e.target.result)
-          
-          // 验证数据格式
-          if (!gameData.resources || !gameData.buildings) {
-            throw new Error('无效的游戏数据格式')
-          }
-          
+
           // 确认导入
           if (confirm('确定要导入这个存档吗？当前进度将被覆盖！')) {
-            // 更新游戏状态
-            gameStore.$patch({
-              userUUID: gameData.userUUID || gameStore.userUUID, // 如果存档中有UUID则使用，否则保持当前UUID
-              userNickname: gameData.userNickname || gameStore.userNickname,
-              userFaction: gameData.userFaction || gameStore.userFaction,
-              isFirstTime: gameData.hasOwnProperty('isFirstTime') ? gameData.isFirstTime : gameStore.isFirstTime,
-              resources: gameData.resources,
-              buildings: gameData.buildings,
-              buildingUpgrades: gameData.buildingUpgrades || {},
-              warehouseLevel: gameData.warehouseLevel || 1,
-              warehouseUpgrade: gameData.warehouseUpgrade || null,
-              lastUpdateTime: gameData.lastUpdateTime || Date.now(),
-              isPaused: gameData.isPaused || false,
-              accumulatedProduction: gameData.accumulatedProduction || {}
-            })
-
-            militaryStore.setMilitaryState({
-              army: gameData.army,
-              recruitmentQueue: gameData.recruitmentQueue,
-              recruitmentConfig: gameData.recruitmentConfig
-            })
-            
-            // 保存到本地存储
-            gameStore.saveGame()
+            gameStore.importSaveData(gameData)
             
             alert('游戏数据导入成功！')
             
@@ -528,7 +480,6 @@ export default {
     
     return {
       gameStore,
-      militaryStore,
       gmEnabled,
       gmPassword,
       gmError,

@@ -28,6 +28,14 @@ export const useMilitaryStore = defineStore('military', {
   },
 
   actions: {
+    getMilitarySaveData() {
+      return {
+        army: this.army,
+        recruitmentQueue: this.recruitmentQueue,
+        recruitmentConfig: this.recruitmentConfig
+      }
+    },
+
     setArmy(army) {
       this.army = { ...army }
     },
@@ -80,6 +88,34 @@ export const useMilitaryStore = defineStore('military', {
         ...this.army,
         [unitId]: (this.army[unitId] || 0) + count
       }
+    },
+
+    applyBattleLosses(lossEntries = []) {
+      if (!Array.isArray(lossEntries) || lossEntries.length === 0) {
+        return
+      }
+
+      const nextArmy = { ...this.army }
+
+      lossEntries.forEach((entry) => {
+        const unitId = entry.id
+        const losses = Math.max(0, entry.count || 0)
+
+        if (!unitId || losses <= 0) {
+          return
+        }
+
+        const currentCount = nextArmy[unitId] || 0
+        const remaining = Math.max(0, currentCount - losses)
+
+        if (remaining <= 0) {
+          delete nextArmy[unitId]
+        } else {
+          nextArmy[unitId] = remaining
+        }
+      })
+
+      this.army = nextArmy
     },
 
     restoreRecruitmentTimers() {

@@ -133,6 +133,12 @@
             </svg>
             攻击
           </button>
+          <button class="action-btn plunder" @click.stop="handlePlunder(npc)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21,6H3V4H21M19,8C20.11,8 21,8.9 21,10V20C21,21.11 20.11,22 19,22H5C3.89,22 3,21.11 3,20V10C3,8.9 3.89,8 5,8H19M12,11A3,3 0 0,0 9,14A3,3 0 0,0 12,17A3,3 0 0,0 15,14A3,3 0 0,0 12,11Z"/>
+            </svg>
+            掠夺
+          </button>
         </div>
         </div>
         <div>
@@ -212,12 +218,69 @@
       <h3 class="empty-title">未找到NPC城池</h3>
       <p class="empty-text">尝试调整搜索条件或筛选器</p>
     </div>
+
+    <BattleReport
+      :visible="battleReportVisible"
+      :battle-report-data="battleReportData"
+      @close="closeBattleReport"
+    />
+
+    <Teleport to="body">
+      <div v-if="dispatchDialogVisible" class="dispatch-overlay" @click.self="closeDispatchDialog">
+        <div class="dispatch-dialog">
+          <div class="dispatch-header">
+            <div>
+              <h2 class="dispatch-title">{{ dispatchActionLabel }}出征</h2>
+              <p class="dispatch-subtitle">{{ dispatchTargetNpc?.name || '目标城池' }} · {{ getFactionName(dispatchTargetNpc?.faction) }}</p>
+            </div>
+            <button class="dispatch-close" @click="closeDispatchDialog">关闭</button>
+          </div>
+
+          <div class="dispatch-summary">
+            <span>可选兵种 {{ availableDispatchUnits.length }} 种</span>
+            <span>已选总兵力 {{ selectedDispatchTotal }}</span>
+          </div>
+
+          <div class="dispatch-list">
+            <div v-for="unit in availableDispatchUnits" :key="unit.id" class="dispatch-row">
+              <div class="dispatch-unit-meta">
+                <div class="dispatch-unit-name">{{ unit.name }}</div>
+                <div class="dispatch-unit-stock">现有 {{ formatNumber(unit.available) }}</div>
+              </div>
+              <div class="dispatch-input-group">
+                <button class="dispatch-step" @click="adjustDispatchUnit(unit.id, -1)">-</button>
+                <input
+                  :value="dispatchSelections[unit.id] || 0"
+                  type="number"
+                  min="0"
+                  :max="unit.available"
+                  class="dispatch-input"
+                  @input="updateDispatchSelection(unit.id, $event.target.value)"
+                />
+                <button class="dispatch-step" @click="adjustDispatchUnit(unit.id, 1)">+</button>
+                <button class="dispatch-max" @click="setDispatchUnitMax(unit.id, unit.available)">全选</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="dispatch-actions">
+            <button class="dispatch-secondary" @click="fillAllDispatchUnits">全军出征</button>
+            <button class="dispatch-secondary" @click="clearDispatchSelections">清空</button>
+            <button class="dispatch-primary" :disabled="selectedDispatchTotal <= 0" @click="confirmDispatch">
+              确认{{ dispatchActionLabel }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script>
 import { formatNumber } from '@/utils/formatters.js'
 import { getFactionUnits, UNIT_TYPES, getUnitById } from '@/config/factionConfig.js'
+import { COMBAT_RULE_IDS } from '@/domain/combat/combatConstants.js'
+import { resolveCombat } from '@/domain/combat/combatService.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 import { useNotificationStore } from '@/store/modules/notificationStore.js'
@@ -225,12 +288,14 @@ import { useNpcStore } from '@/store/modules/npcStore.js'
 import { getResourceIcon, getResourceName } from '@/config/resources.js'
 import HoverCard from '@/components/hover/HoverCard.vue'
 import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
+import BattleReport from './Test/BattleReport.vue'
 
 export default {
   name: 'NpcList',
   components: {
     HoverCard,
-    UnitHoverContent
+    UnitHoverContent,
+    BattleReport
   },
   setup() {
     const gameStore = useGameStore()
@@ -265,7 +330,19 @@ export default {
       //=== refreshTimer 刷新倒计时定时器
       refreshTimer: null,
       //=== currentTime 用于触发响应式更新
-      currentTime: Date.now()
+      currentTime: Date.now(),
+      //=== battleReportData 地图战斗战报
+      battleReportData: null,
+      //=== battleReportVisible 战报弹层状态
+      battleReportVisible: false,
+      //=== dispatchDialogVisible 选兵出征弹层
+      dispatchDialogVisible: false,
+      //=== dispatchRuleId 当前出征规则
+      dispatchRuleId: null,
+      //=== dispatchTargetNpc 当前出征目标
+      dispatchTargetNpc: null,
+      //=== dispatchSelections 出征兵力选择
+      dispatchSelections: {}
     }
   },
   computed: {
@@ -328,6 +405,27 @@ export default {
     //=== 检查是否可以手动刷新
     canManualRefresh() {
       return this.gameStore.coins >= this.npcStore.manualRefreshCost
+    },
+
+    dispatchActionLabel() {
+      return this.dispatchRuleId === COMBAT_RULE_IDS.PLUNDER_STRIKE ? '掠夺' : '攻击'
+    },
+
+    availableDispatchUnits() {
+      return Object.entries(this.militaryStore.army || {}).reduce((result, [unitId, count]) => {
+        if (!count || count <= 0) return result
+        const unit = getUnitById(unitId)
+        if (!unit) return result
+        result.push({
+          ...unit,
+          available: count
+        })
+        return result
+      }, [])
+    },
+
+    selectedDispatchTotal() {
+      return Object.values(this.dispatchSelections).reduce((sum, count) => sum + (Number(count) || 0), 0)
     }
   },
   async mounted() {
@@ -431,8 +529,182 @@ export default {
     
     //=== handleAttack 处理攻击事件
     handleAttack(npc) {
-      console.log('攻击NPC:', npc)
-      // TODO: 实现攻击功能
+      this.openDispatchDialog(npc, COMBAT_RULE_IDS.CLASSIC_CRUSH)
+    },
+
+    handlePlunder(npc) {
+      this.openDispatchDialog(npc, COMBAT_RULE_IDS.PLUNDER_STRIKE)
+    },
+
+    executeNpcCombat(npc, ruleId) {
+      const attackerArmy = this.buildPlayerArmyData(ruleId, this.dispatchSelections)
+      if (!attackerArmy) {
+        return
+      }
+
+      const defenderArmy = this.buildNpcArmyData(npc)
+      const result = resolveCombat({
+        ruleId,
+        attackerArmy,
+        defenderArmy
+      })
+
+      this.applyCombatResult(npc, result)
+      this.closeDispatchDialog()
+    },
+
+    openDispatchDialog(npc, ruleId) {
+      if (this.availableDispatchUnits.length === 0) {
+        this.notificationStore.addWarningNotification('出兵失败', '当前没有可出征的军队')
+        return
+      }
+
+      this.dispatchTargetNpc = npc
+      this.dispatchRuleId = ruleId
+      this.dispatchSelections = {}
+      this.dispatchDialogVisible = true
+    },
+
+    closeDispatchDialog() {
+      this.dispatchDialogVisible = false
+      this.dispatchRuleId = null
+      this.dispatchTargetNpc = null
+      this.dispatchSelections = {}
+    },
+
+    normalizeDispatchCount(unitId, rawValue) {
+      const max = this.militaryStore.army[unitId] || 0
+      const nextValue = Number.parseInt(rawValue, 10)
+      if (Number.isNaN(nextValue) || nextValue <= 0) return 0
+      return Math.min(max, nextValue)
+    },
+
+    updateDispatchSelection(unitId, rawValue) {
+      const nextValue = this.normalizeDispatchCount(unitId, rawValue)
+      this.dispatchSelections = {
+        ...this.dispatchSelections,
+        [unitId]: nextValue
+      }
+    },
+
+    adjustDispatchUnit(unitId, delta) {
+      const current = this.dispatchSelections[unitId] || 0
+      this.updateDispatchSelection(unitId, current + delta)
+    },
+
+    setDispatchUnitMax(unitId, max) {
+      this.dispatchSelections = {
+        ...this.dispatchSelections,
+        [unitId]: max
+      }
+    },
+
+    clearDispatchSelections() {
+      this.dispatchSelections = {}
+    },
+
+    fillAllDispatchUnits() {
+      const nextSelections = {}
+      this.availableDispatchUnits.forEach((unit) => {
+        nextSelections[unit.id] = unit.available
+      })
+      this.dispatchSelections = nextSelections
+    },
+
+    confirmDispatch() {
+      if (!this.dispatchTargetNpc || !this.dispatchRuleId) {
+        return
+      }
+
+      if (this.selectedDispatchTotal <= 0) {
+        this.notificationStore.addWarningNotification('出兵失败', '请至少选择一支部队')
+        return
+      }
+
+      this.executeNpcCombat(this.dispatchTargetNpc, this.dispatchRuleId)
+    },
+
+    buildPlayerArmyData(ruleId, selections = {}) {
+      const playerFaction = this.gameStore.userFaction
+      if (!playerFaction) {
+        this.notificationStore.addErrorNotification('出兵失败', '请先完成阵营初始化')
+        return null
+      }
+
+      const armyUnits = []
+      Object.entries(selections).forEach(([unitId, selectedCount]) => {
+        const count = this.normalizeDispatchCount(unitId, selectedCount)
+        if (!count) return
+        const unit = getUnitById(unitId)
+        if (!unit) return
+        armyUnits.push({
+          ...unit,
+          count
+        })
+      })
+
+      if (armyUnits.length === 0) {
+        this.notificationStore.addWarningNotification('出兵失败', '当前没有可出征的军队')
+        return null
+      }
+
+      const actionLabel = ruleId === COMBAT_RULE_IDS.PLUNDER_STRIKE ? '掠夺' : '攻击'
+
+      return {
+        faction: playerFaction,
+        units: armyUnits,
+        playerInfo: {
+          userUUID: this.gameStore.userUUID,
+          nickname: this.gameStore.userNickname || '玩家'
+        },
+        title: `${actionLabel}部队`
+      }
+    },
+
+    buildNpcArmyData(npc) {
+      return {
+        faction: npc.faction,
+        units: npc.defenseArmy?.units || [],
+        npcInfo: {
+          id: npc.id,
+          name: npc.name
+        },
+        resources: { ...(npc.resources || {}) },
+        defenderResources: { ...(npc.resources || {}) },
+        title: `${npc.name}守军`
+      }
+    },
+
+    applyCombatResult(npc, result) {
+      this.militaryStore.applyBattleLosses(result.attacker?.losses || [])
+      this.npcStore.attackNpc(npc.id, result)
+
+      const plundered = result.details?.plundered || {}
+      Object.entries(plundered).forEach(([resource, amount]) => {
+        if (!amount) return
+        if (Object.hasOwn(this.gameStore.resources, resource)) {
+          this.gameStore.resources[resource] += amount
+        }
+      })
+
+      this.gameStore.saveGame()
+      this.battleReportData = result
+      this.battleReportVisible = true
+
+      const actionLabel = result.actionType === 'PLUNDER' ? '掠夺' : '攻击'
+      const plunderedSummary = Object.values(plundered).reduce((sum, amount) => sum + (amount || 0), 0)
+
+      if (result.battleResult === 'ATTACKER_VICTORY') {
+        const extra = plunderedSummary > 0 ? `，共带回 ${formatNumber(plunderedSummary)} 资源` : ''
+        this.notificationStore.addSuccessNotification(`${actionLabel}成功`, `${npc.name} 战斗获胜${extra}`)
+      } else {
+        this.notificationStore.addWarningNotification(`${actionLabel}失败`, `${npc.name} 防守成功，我方部队已承受损耗`)
+      }
+    },
+
+    closeBattleReport() {
+      this.battleReportVisible = false
+      this.battleReportData = null
     },
     
     //=== changePage 切换页码
@@ -1005,6 +1277,183 @@ export default {
   box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
 }
 
+.action-btn.plunder {
+  background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+  border-color: #F59E0B;
+  color: white;
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.2);
+}
+
+.action-btn.plunder:hover {
+  opacity: 0.9;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+}
+
+.dispatch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(7, 12, 10, 0.68);
+  backdrop-filter: blur(6px);
+}
+
+.dispatch-dialog {
+  width: min(760px, 100%);
+  max-height: 80vh;
+  overflow: auto;
+  background: #f5f6f8;
+  border: 1px solid #d8dde6;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+  padding: 20px;
+  color: #1f2937;
+}
+
+.dispatch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dispatch-title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dispatch-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.dispatch-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.dispatch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dispatch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.dispatch-unit-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dispatch-unit-stock {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.dispatch-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dispatch-close,
+.dispatch-secondary,
+.dispatch-primary,
+.dispatch-step,
+.dispatch-max {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.dispatch-close,
+.dispatch-secondary,
+.dispatch-primary {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dispatch-close:hover,
+.dispatch-secondary:hover,
+.dispatch-step:hover,
+.dispatch-max:hover {
+  background: #f3f4f6;
+}
+
+.dispatch-step {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dispatch-input {
+  width: 100px;
+  height: 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  color: #111827;
+  text-align: center;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.dispatch-max {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dispatch-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dispatch-primary {
+  background: #237c48;
+  border-color: #237c48;
+  color: #fff;
+}
+
+.dispatch-primary:hover:not(:disabled) {
+  background: #1d663b;
+  border-color: #1d663b;
+}
+
+.dispatch-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* 分页组件样式 */
 .pagination {
   @apply flex items-center justify-center gap-2 mt-6;
@@ -1084,5 +1533,21 @@ export default {
 
 .empty-text {
   color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+  .dispatch-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dispatch-input-group {
+    justify-content: space-between;
+  }
+
+  .dispatch-input {
+    flex: 1;
+    width: auto;
+  }
 }
 </style>

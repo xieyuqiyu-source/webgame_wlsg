@@ -64,7 +64,8 @@
 <script>
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { getUnitById, getFactionConfig, getFactionUnits } from '@/config/factionConfig.js'
-import { getBattleRule, BATTLE_RULES, BATTLE_RULE_IDS } from '@/config/battleRulesConfig.js'
+import { COMBAT_RULE_IDS } from '@/domain/combat/combatConstants.js'
+import { getAllCombatRules, getCombatRule, resolveCombat } from '@/domain/combat/combatService.js'
 import PlayerButtons from './Test/PlayerButtons.vue'
 import NpcButtons from './Test/NpcButtons.vue'
 import NpcList from './NpcList.vue'
@@ -96,7 +97,7 @@ export default {
       //=== battleReportData 战报数据
       battleReportData: null,
       //=== selectedBattleRule 选中的战斗规则ID
-      selectedBattleRule: BATTLE_RULE_IDS.CLASSIC_CRUSH // 默认选择新版规则
+      selectedBattleRule: COMBAT_RULE_IDS.CLASSIC_CRUSH
     }
   },
   computed: {
@@ -117,7 +118,7 @@ export default {
     
     //=== availableBattleRules 可用的战斗规则列表
     availableBattleRules() {
-      return Object.values(BATTLE_RULES).map(rule => ({
+      return getAllCombatRules().map(rule => ({
         id: rule.id,
         name: rule.name,
         description: rule.description
@@ -196,8 +197,12 @@ export default {
       }
       
       // 根据选择的战斗规则进行计算
-      const battleRule = getBattleRule(this.selectedBattleRule)
-      const result = battleRule.calculateBattle(attackerArmy, defenderArmy)
+      const battleRule = getCombatRule(this.selectedBattleRule)
+      const result = resolveCombat({
+        ruleId: this.selectedBattleRule,
+        attackerArmy,
+        defenderArmy
+      })
       
       // 输出到控制台
       console.log(`${battleRule.name}计算结果:`, result)
@@ -223,7 +228,7 @@ export default {
         return '请选择战斗规则'
       }
       
-      const rule = BATTLE_RULES[this.selectedBattleRule]
+      const rule = getCombatRule(this.selectedBattleRule)
       return `测试${rule?.name || '战斗'}计算`
     },
     
@@ -236,13 +241,13 @@ export default {
         return '请先选择一个战斗规则'
       }
       
-      const rule = BATTLE_RULES[this.selectedBattleRule]
+      const rule = getCombatRule(this.selectedBattleRule)
       return `开始${rule?.name || '战斗'}计算`
     },
 
     //=== testPlunderBattle 测试掠夺战斗计算（保留兼容性）
     testPlunderBattle() {
-      this.selectedBattleRule = BATTLE_RULE_IDS.CLASSIC_CRUSH
+      this.selectedBattleRule = COMBAT_RULE_IDS.PLUNDER_STRIKE
       this.testBattleCalculation()
     },
     

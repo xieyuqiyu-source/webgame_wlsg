@@ -17,6 +17,8 @@ import { calculateCivilization, getCivilizationLevel } from '../../config/civili
 import { getUserUUID } from '../../utils/uuid.js'
 import { useNotificationStore } from './notificationStore.js'
 import { useMilitaryStore } from './militaryStore.js'
+import { useNpcStore } from './npcStore.js'
+import { clearUnifiedGameData, createUnifiedSavePayload, loadUnifiedGameData, normalizeSavePayload, saveUnifiedGameData } from '../../utils/saveSystem.js'
 
 export const useGameStore = defineStore('game', {
   state: () => ({
@@ -652,19 +654,15 @@ export const useGameStore = defineStore('game', {
       this.isFirstTime = false
       this.saveGame() // 立即保存用户信息
     },
-    
-    /**
-     * 手动保存游戏数据到本地存储
-     */
-    saveGame() {
-      const militaryStore = useMilitaryStore()
-      const gameData = {
+
+    getGameSaveData() {
+      return {
         userUUID: this.userUUID,
         userNickname: this.userNickname,
         userFaction: this.userFaction,
         isFirstTime: this.isFirstTime,
         resources: this.resources,
-        coins: this.coins, // 保存金币数据
+        coins: this.coins,
         buildings: this.buildings,
         buildingUpgrades: this.buildingUpgrades,
         warehouseLevel: this.warehouseLevel,
@@ -672,101 +670,121 @@ export const useGameStore = defineStore('game', {
         lastUpdateTime: this.lastUpdateTime,
         isPaused: this.isPaused,
         accumulatedProduction: this.accumulatedProduction,
-        army: militaryStore.army,
-        recruitmentQueue: militaryStore.recruitmentQueue,
-        recruitmentConfig: militaryStore.recruitmentConfig,
-        productionBoost: this.productionBoost, // 保存生产力加速状态
-        warehouseBoost: this.warehouseBoost // 保存仓库容量加成状态
+        productionBoost: this.productionBoost,
+        warehouseBoost: this.warehouseBoost
       }
+    },
+
+    applyGameSaveData(gameData = {}) {
+      this.resources = { ...this.resources, ...(gameData.resources || {}) }
       
-      localStorage.setItem('wlsg_game_data', JSON.stringify(gameData))
+      if (gameData.buildings) {
+        Object.keys(gameData.buildings).forEach(buildingType => {
+          const buildingData = gameData.buildings[buildingType]
+          if (Array.isArray(buildingData)) {
+            this.buildings[buildingType] = buildingData
+          } else {
+            this.buildings[buildingType] = [buildingData || 0, 0, 0, 0, 0]
+          }
+        })
+      }
+
+      if (gameData.buildingUpgrades) {
+        Object.keys(gameData.buildingUpgrades).forEach(buildingType => {
+          const upgradeData = gameData.buildingUpgrades[buildingType]
+          if (Array.isArray(upgradeData)) {
+            this.buildingUpgrades[buildingType] = upgradeData
+          } else {
+            this.buildingUpgrades[buildingType] = [upgradeData, null, null, null, null]
+          }
+        })
+      }
+
+      if (gameData.userUUID) {
+        this.userUUID = gameData.userUUID
+      }
+      if (gameData.userNickname) {
+        this.userNickname = gameData.userNickname
+      }
+      if (gameData.userFaction) {
+        this.userFaction = gameData.userFaction
+      }
+      if (gameData.hasOwnProperty('isFirstTime')) {
+        this.isFirstTime = gameData.isFirstTime
+      }
+      if (gameData.hasOwnProperty('coins')) {
+        this.coins = gameData.coins
+      }
+
+      this.warehouseLevel = gameData.warehouseLevel || 1
+      this.warehouseUpgrade = gameData.warehouseUpgrade || null
+      this.lastUpdateTime = gameData.lastUpdateTime || Date.now()
+      this.isPaused = gameData.isPaused || false
+      this.accumulatedProduction = { ...this.accumulatedProduction, ...(gameData.accumulatedProduction || {}) }
+
+      if (gameData.productionBoost) {
+        this.productionBoost = { ...this.productionBoost, ...gameData.productionBoost }
+      }
+
+      if (gameData.warehouseBoost) {
+        this.warehouseBoost = { ...this.warehouseBoost, ...gameData.warehouseBoost }
+      }
+    },
+
+    buildSavePayload() {
+      return createUnifiedSavePayload({
+        game: this.getGameSaveData(),
+        military: useMilitaryStore().getMilitarySaveData(),
+        npc: useNpcStore().getNpcSaveData()
+      })
+    },
+
+    applySavePayload(savePayload) {
+      const militaryStore = useMilitaryStore()
+      const npcStore = useNpcStore()
+
+      this.applyGameSaveData(savePayload.game)
+      militaryStore.setMilitaryState(savePayload.military)
+      npcStore.applyNpcSaveData(savePayload.npc)
+    },
+
+    exportSaveData() {
+      return this.buildSavePayload()
+    },
+
+    importSaveData(rawSaveData) {
+      const normalizedSave = normalizeSavePayload(rawSaveData)
+      this.applySavePayload(normalizedSave)
+      this.restoreUpgradeTimers()
+      useMilitaryStore().restoreRecruitmentTimers()
+      this.restoreProductionBoostTimer()
+      this.restoreWarehouseBoostTimer()
+      this.saveGame()
+      return normalizedSave
+    },
+    
+    /**
+     * 手动保存游戏数据到本地存储
+     */
+    saveGame() {
+      saveUnifiedGameData(this.buildSavePayload())
     },
     
     /**
      * 从本地存储加载游戏数据
      */
     loadGame() {
-      const savedData = localStorage.getItem('wlsg_game_data')
-      if (savedData) {
+      const savePayload = loadUnifiedGameData()
+      if (savePayload) {
         try {
-          const militaryStore = useMilitaryStore()
-          const gameData = JSON.parse(savedData)
-          this.resources = { ...this.resources, ...gameData.resources }
-          
-          // 处理建筑数据兼容性（旧版本可能是单一值，新版本是数组）
-          if (gameData.buildings) {
-            Object.keys(gameData.buildings).forEach(buildingType => {
-              const buildingData = gameData.buildings[buildingType]
-              if (Array.isArray(buildingData)) {
-                // 新版本数据结构（数组）
-                this.buildings[buildingType] = buildingData
-              } else {
-                // 旧版本数据结构（单一值），转换为数组
-                this.buildings[buildingType] = [buildingData || 0, 0, 0, 0, 0]
-              }
-            })
-          }
-          
-          // 处理建筑升级数据兼容性
-          if (gameData.buildingUpgrades) {
-            Object.keys(gameData.buildingUpgrades).forEach(buildingType => {
-              const upgradeData = gameData.buildingUpgrades[buildingType]
-              if (Array.isArray(upgradeData)) {
-                // 新版本数据结构（数组）
-                this.buildingUpgrades[buildingType] = upgradeData
-              } else {
-                // 旧版本数据结构（单一值），转换为数组
-                this.buildingUpgrades[buildingType] = [upgradeData, null, null, null, null]
-              }
-            })
-          }
-          
-          // 处理用户信息
-          if (gameData.userUUID) {
-            this.userUUID = gameData.userUUID
-          }
-          if (gameData.userNickname) {
-            this.userNickname = gameData.userNickname
-          }
-          if (gameData.userFaction) {
-            this.userFaction = gameData.userFaction
-          }
-          if (gameData.hasOwnProperty('isFirstTime')) {
-            this.isFirstTime = gameData.isFirstTime
-          }
-          
-          // 加载金币数据
-          if (gameData.hasOwnProperty('coins')) {
-            this.coins = gameData.coins
-          }
-          
-          this.warehouseLevel = gameData.warehouseLevel || 1
-          this.warehouseUpgrade = gameData.warehouseUpgrade || null
-          this.lastUpdateTime = gameData.lastUpdateTime || Date.now()
-          this.isPaused = gameData.isPaused || false
-          this.accumulatedProduction = { ...this.accumulatedProduction, ...gameData.accumulatedProduction }
-
-          militaryStore.setMilitaryState({
-            army: gameData.army,
-            recruitmentQueue: gameData.recruitmentQueue,
-            recruitmentConfig: gameData.recruitmentConfig
-          })
-          
-          // 加载生产力加速状态
-          if (gameData.productionBoost) {
-            this.productionBoost = { ...this.productionBoost, ...gameData.productionBoost }
-          }
-          
-          // 加载仓库容量加成状态
-          if (gameData.warehouseBoost) {
-            this.warehouseBoost = { ...this.warehouseBoost, ...gameData.warehouseBoost }
-          }
+          this.applySavePayload(savePayload)
+          this.saveGame()
           
           // 恢复升级定时器
           this.restoreUpgradeTimers()
           
           // 恢复征兵定时器
-          militaryStore.restoreRecruitmentTimers()
+          useMilitaryStore().restoreRecruitmentTimers()
           
           // 恢复生产力加速定时器
           this.restoreProductionBoostTimer()
@@ -1166,8 +1184,8 @@ export const useGameStore = defineStore('game', {
         endTime: null
       }
       
-      // 清除本地存储的游戏数据
-      localStorage.removeItem('wlsg_game_data')
+      useNpcStore().clearStorage()
+      clearUnifiedGameData()
     }
   }
 })
