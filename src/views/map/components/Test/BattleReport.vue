@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="battle-report-overlay" @click.self="$emit('close')">
+    <div v-if="visible" class="battle-report-overlay" @click.self="$emit('close')">
       <div class="battle-report-dialog">
       <div class="dialog-header">
         <div>
@@ -91,6 +91,10 @@ import { getCombatRule } from '@/domain/combat/combatService.js'
 export default {
   name: 'BattleReport',
   props: {
+    visible: {
+      type: Boolean,
+      default: false
+    },
     battleReportData: {
       type: Object,
       default: () => ({
