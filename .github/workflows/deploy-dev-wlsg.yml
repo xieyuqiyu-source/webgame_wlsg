@@ -1,0 +1,56 @@
+name: Deploy dev-wlsg
+
+on:
+  push:
+    branches:
+      - dev-wlsg
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev-wlsg
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      APP_DIR: /srv/wlsg-dev
+      DEPLOY_BRANCH: dev-wlsg
+      SITE_ROOT: /var/www/wlsg.ccoos.cn
+      REPO_URL: https://github.com/xieyuqiyu-source/webgame_wlsg.git
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Prepare SSH key
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.WLSG_DEV_SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy on server
+        shell: bash
+        run: |
+          ssh -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}" "mkdir -p '${SITE_ROOT}'"
+          rsync -az --delete -e "ssh -p ${{ secrets.WLSG_DEV_SSH_PORT }}" dist/ "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}:${SITE_ROOT}/"
+          ssh -p "${{ secrets.WLSG_DEV_SSH_PORT }}" "${{ secrets.WLSG_DEV_SSH_USER }}@${{ secrets.WLSG_DEV_SSH_HOST }}" "nginx -t && systemctl reload nginx"

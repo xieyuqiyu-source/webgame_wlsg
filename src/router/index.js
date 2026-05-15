@@ -23,6 +23,11 @@ const router = createRouter({
       component: () => import('@/views/map/index.vue')
     },
     {
+      path: '/map-debug',
+      name: 'MapDebug',
+      component: () => import('@/views/map-debug/index.vue')
+    },
+    {
       path: '/settings',
       name: 'Settings',
       component: () => import('@/views/settings/index.vue')

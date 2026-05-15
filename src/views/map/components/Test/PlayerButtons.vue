@@ -10,6 +10,7 @@
 
 <script>
 import { useGameStore } from '@/store/modules/gameStore.js'
+import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 import { getUnitById } from '@/config/unitsConfig.js'
 
 export default {
@@ -24,13 +25,17 @@ export default {
     gameStore() {
       return useGameStore()
     },
+
+    militaryStore() {
+      return useMilitaryStore()
+    },
     
     //=== playerArmyData 玩家军队数据
     playerArmyData() {
       const armyData = []
       
-      Object.keys(this.gameStore.army).forEach(unitId => {
-        const count = this.gameStore.army[unitId]
+      Object.keys(this.militaryStore.army).forEach(unitId => {
+        const count = this.militaryStore.army[unitId]
         if (count > 0) {
           const unitConfig = getUnitById(unitId)
           if (unitConfig) {
@@ -71,10 +76,10 @@ export default {
     //=== handleShowData 处理显示数据按钮点击
     handleShowData() {
       // 检查是否有军队数据，如果没有则添加测试数据
-      if (Object.keys(this.gameStore.army).length === 0) {
+      if (Object.keys(this.militaryStore.army).length === 0) {
         console.log('没有军队数据，添加测试数据...')
         this.gameStore.userFaction = 'wei'
-        this.gameStore.army = {
+        this.militaryStore.setArmy({
           'qingZhouArmy': 100,      // 青州军
           'jinWeiSoldier': 80,      // 禁卫甲士
           'huWei': 60,              // 虎卫
@@ -83,8 +88,9 @@ export default {
           'huBaoQi': 2,             // 虎豹骑
           'chongZhuangChe': 1,      // 冲撞车
           'luLeiChe': 1             // 露雷车
-        }
-        console.log('已添加测试军队数据:', this.gameStore.army)
+        })
+        this.gameStore.saveGame()
+        console.log('已添加测试军队数据:', this.militaryStore.army)
       }
       
       this.$emit('show-data', {

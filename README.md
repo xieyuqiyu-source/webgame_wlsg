@@ -78,7 +78,8 @@ http://localhost:5173/
 - `src/hooks/`：计时器、调度器等组合式逻辑
 - `src/utils/`：格式化、UUID、调度器等基础工具
 - `docs/`：玩法规则与系统设计文档
-  其中包含开发路线文档 [docs/开发路线与待办清单.md](/Users/xieyuqiyu/Documents/Game/webgame_wlsg/docs/开发路线与待办清单.md)
+其中包含开发路线文档 [docs/开发路线与待办清单.md](/Users/xieyuqiyu/Documents/Game/webgame_wlsg/docs/开发路线与待办清单.md)
+  以及开发分支自动部署说明 [docs/dev-wlsg-deploy.md](/Users/xieyuqiyu/Documents/Game/webgame_wlsg/docs/dev-wlsg-deploy.md)
 
 ## 当前实现情况
 

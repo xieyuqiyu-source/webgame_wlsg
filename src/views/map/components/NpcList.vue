@@ -209,6 +209,7 @@
 import { formatNumber } from '@/utils/formatters.js'
 import { getFactionUnits, UNIT_TYPES, getUnitById } from '@/config/factionConfig.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
+import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 import { useNotificationStore } from '@/store/modules/notificationStore.js'
 import { useNpcStore } from '@/store/modules/npcStore.js'
 import { getResourceIcon, getResourceName } from '@/config/resources.js'
@@ -217,10 +218,12 @@ export default {
   name: 'NpcList',
   setup() {
     const gameStore = useGameStore()
+    const militaryStore = useMilitaryStore()
     const notificationStore = useNotificationStore()
     const npcStore = useNpcStore()
     return {
       gameStore,
+      militaryStore,
       notificationStore,
       npcStore
     }
@@ -380,7 +383,7 @@ export default {
       const requiredScouts = this.calculateRequiredScouts(playerFaction, npc.level)
       
       // 检查是否有足够的侦查兵
-      const currentScouts = this.gameStore.army[scoutUnitId] || 0
+      const currentScouts = this.militaryStore.army[scoutUnitId] || 0
       if (currentScouts < requiredScouts) {
         this.notificationStore.addNotification({
           type: 'error',
@@ -391,7 +394,7 @@ export default {
       }
       
       // 消耗侦查兵
-      this.gameStore.army[scoutUnitId] -= requiredScouts
+      this.militaryStore.consumeUnits(scoutUnitId, requiredScouts)
       
       // 执行侦查
       this.npcStore.scoutNpc(npc.id, {

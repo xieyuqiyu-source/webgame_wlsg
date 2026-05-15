@@ -33,13 +33,10 @@ export default {
     activeTab: {
       type: String,
       required: true
-    }
-  },
-  emits: ['tab-change'],
-  data() {
-    return {
-      //=== tabs tab配置
-      tabs: [
+    },
+    tabs: {
+      type: Array,
+      default: () => ([
         {
           key: 'npc',
           label: 'NPC城池',
@@ -57,21 +54,13 @@ export default {
           label: '副本',
           count: 0,
           iconPath: 'M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 12V14H15V16H13V14H11V12H13V10H15V12H17Z'
-        },
-        {
-          key: 'battle',
-          label: '战斗模拟器',
-          count: 0,
-          iconPath: 'M6.92 5H5L6.5 6.5L5 8H6.92L8.42 6.5L6.92 5M13 2.05V5.08C16.39 5.57 19 8.47 19 12C19 12.9 18.82 13.75 18.5 14.54L21.12 16.07C21.68 14.83 22 13.45 22 12C22 6.82 18.05 2.55 13 2.05M12 19C8.13 19 5 15.87 5 12C5 8.47 7.61 5.57 11 5.08V2.05C5.94 2.55 2 6.81 2 12C2 17.52 6.48 22 12 22C14.8 22 17.32 20.75 19 18.72L16.37 17.19C15.17 18.43 13.67 19 12 19Z'
-        },
-        {
-          key: 'test',
-          label: 'Test',
-          count: 0,
-          iconPath: 'M7 2V4H8V18C8 19.1 8.9 20 10 20H14C15.1 20 16 19.1 16 18V4H17V2H7M10 4H14V18H10V4M11 6V16H13V6H11Z'
         }
-      ]
+      ])
     }
+  },
+  emits: ['tab-change'],
+  data() {
+    return {}
   }
 }
 </script>
