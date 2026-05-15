@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { getUnitById } from '@/config/factionConfig.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
+import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 
 const RESOURCE_ICONS = {
   wood: '🪵',
@@ -11,8 +12,9 @@ const RESOURCE_ICONS = {
 
 export function useMilitaryHelpers() {
   const gameStore = useGameStore()
+  const militaryStore = useMilitaryStore()
 
-  const recruitmentQueue = computed(() => gameStore.recruitmentQueue)
+  const recruitmentQueue = computed(() => militaryStore.recruitmentQueue)
 
   const getUnitIcon = (unitId) => {
     const unit = getUnitById(unitId)
@@ -28,6 +30,7 @@ export function useMilitaryHelpers() {
 
   return {
     gameStore,
+    militaryStore,
     getResourceIcon,
     getUnitIcon,
     recruitmentQueue,

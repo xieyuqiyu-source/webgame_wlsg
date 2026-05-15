@@ -15,8 +15,8 @@ import {
 } from '../../config/gameConfig.js'
 import { calculateCivilization, getCivilizationLevel } from '../../config/civilizationConfig.js'
 import { getUserUUID } from '../../utils/uuid.js'
-import { FACTION_TYPES, getFactionConfig, getUnitById } from '../../config/factionConfig.js'
 import { useNotificationStore } from './notificationStore.js'
+import { useMilitaryStore } from './militaryStore.js'
 
 export const useGameStore = defineStore('game', {
   state: () => ({
@@ -71,18 +71,6 @@ export const useGameStore = defineStore('game', {
       [RESOURCE_TYPES.SOIL]: 0,
       [RESOURCE_TYPES.IRON]: 0,
       [RESOURCE_TYPES.FOOD]: 0
-    },
-    
-    //=== 军队数据
-    army: {}, // 格式: { unitId: count }
-    
-    //=== 征兵队列
-    recruitmentQueue: [], // 格式: [{ unitId, count, startTime, duration, totalCost }]
-    
-    //=== 征兵配置
-    recruitmentConfig: {
-      baseTrainTime: 5 * 60 * 1000, // 基础训练时间：5分钟（毫秒）
-      speedMultiplier: 1.0 // 训练速度倍数（后期可通过建筑加速）
     },
     
     //=== 文明度计算缓存（性能优化）
@@ -262,26 +250,17 @@ export const useGameStore = defineStore('game', {
       return getCivilizationLevel(civilization)
     },
     
-    /**
-     * 获取当前军队总数
-     */
-    totalArmyCount: (state) => {
-      return Object.values(state.army).reduce((total, count) => total + count, 0)
-    },
-    
-    /**
-     * 检查是否正在征兵
-     */
-    isRecruiting: (state) => {
-      return state.recruitmentQueue.length > 0
-    },
-    
-    /**
-     * 获取实际训练时间（考虑加速效果）
-     */
-    getActualTrainTime: (state) => {
-      return Math.floor(state.recruitmentConfig.baseTrainTime / state.recruitmentConfig.speedMultiplier)
-    },
+    army: () => useMilitaryStore().army,
+
+    recruitmentQueue: () => useMilitaryStore().recruitmentQueue,
+
+    recruitmentConfig: () => useMilitaryStore().recruitmentConfig,
+
+    totalArmyCount: () => useMilitaryStore().totalArmyCount,
+
+    isRecruiting: () => useMilitaryStore().isRecruiting,
+
+    getActualTrainTime: () => useMilitaryStore().getActualTrainTime,
     
     /**
      * 检查生产力加速是否激活
@@ -334,6 +313,19 @@ export const useGameStore = defineStore('game', {
     _clearCivilizationCache() {
       this._civilizationCache.value = null
       this._civilizationCache.lastCalculatedAt = 0
+    },
+
+    setArmy(army) {
+      useMilitaryStore().setArmy(army)
+      this.saveGame()
+    },
+
+    consumeArmyUnits(unitId, count) {
+      const success = useMilitaryStore().consumeUnits(unitId, count)
+      if (success) {
+        this.saveGame()
+      }
+      return success
     },
     
     /**
@@ -571,6 +563,7 @@ export const useGameStore = defineStore('game', {
      * 手动保存游戏数据到本地存储
      */
     saveGame() {
+      const militaryStore = useMilitaryStore()
       const gameData = {
         userUUID: this.userUUID,
         userNickname: this.userNickname,
@@ -585,9 +578,9 @@ export const useGameStore = defineStore('game', {
         lastUpdateTime: this.lastUpdateTime,
         isPaused: this.isPaused,
         accumulatedProduction: this.accumulatedProduction,
-        army: this.army,
-        recruitmentQueue: this.recruitmentQueue,
-        recruitmentConfig: this.recruitmentConfig,
+        army: militaryStore.army,
+        recruitmentQueue: militaryStore.recruitmentQueue,
+        recruitmentConfig: militaryStore.recruitmentConfig,
         productionBoost: this.productionBoost, // 保存生产力加速状态
         warehouseBoost: this.warehouseBoost // 保存仓库容量加成状态
       }
@@ -602,6 +595,7 @@ export const useGameStore = defineStore('game', {
       const savedData = localStorage.getItem('wlsg_game_data')
       if (savedData) {
         try {
+          const militaryStore = useMilitaryStore()
           const gameData = JSON.parse(savedData)
           this.resources = { ...this.resources, ...gameData.resources }
           
@@ -657,11 +651,12 @@ export const useGameStore = defineStore('game', {
           this.lastUpdateTime = gameData.lastUpdateTime || Date.now()
           this.isPaused = gameData.isPaused || false
           this.accumulatedProduction = { ...this.accumulatedProduction, ...gameData.accumulatedProduction }
-          
-          // 加载军队数据
-          this.army = gameData.army || {}
-          this.recruitmentQueue = gameData.recruitmentQueue || []
-          this.recruitmentConfig = { ...this.recruitmentConfig, ...gameData.recruitmentConfig }
+
+          militaryStore.setMilitaryState({
+            army: gameData.army,
+            recruitmentQueue: gameData.recruitmentQueue,
+            recruitmentConfig: gameData.recruitmentConfig
+          })
           
           // 加载生产力加速状态
           if (gameData.productionBoost) {
@@ -677,7 +672,7 @@ export const useGameStore = defineStore('game', {
           this.restoreUpgradeTimers()
           
           // 恢复征兵定时器
-          this.restoreRecruitmentTimers()
+          militaryStore.restoreRecruitmentTimers()
           
           // 恢复生产力加速定时器
           this.restoreProductionBoostTimer()
@@ -735,29 +730,6 @@ export const useGameStore = defineStore('game', {
     },
     
     /**
-     * 恢复征兵定时器
-     */
-    restoreRecruitmentTimers() {
-      const now = Date.now()
-      
-      // 遍历征兵队列，恢复定时器
-      this.recruitmentQueue.forEach(task => {
-        const elapsed = now - task.startTime
-        const remaining = task.duration - elapsed
-        
-        if (remaining <= 0) {
-          // 征兵已完成
-          this.completeRecruitment(task.id)
-        } else {
-          // 设置剩余时间的定时器
-          setTimeout(() => {
-            this.completeRecruitment(task.id)
-          }, remaining)
-        }
-      })
-    },
-    
-    /**
      * 恢复生产力加速定时器
      */
     restoreProductionBoostTimer() {
@@ -797,167 +769,16 @@ export const useGameStore = defineStore('game', {
       }
     },
     
-    /**
-     * 征兵功能
-     */
     recruitUnits(unitId, count) {
-      const unit = getUnitById(unitId)
-      
-      if (!unit) {
-        const notificationStore = useNotificationStore()
-        notificationStore.addErrorNotification('征兵失败', '未找到指定兵种')
-        return false
-      }
-      
-      // 计算总消耗
-      const totalCost = {}
-      Object.keys(unit.cost).forEach(resource => {
-        totalCost[resource] = unit.cost[resource] * count
-      })
-      
-      // 检查资源是否足够
-      const hasEnoughResources = Object.keys(totalCost).every(resource => {
-        return this.resources[resource] >= totalCost[resource]
-      })
-      
-      if (!hasEnoughResources) {
-        const notificationStore = useNotificationStore()
-        notificationStore.addResourceInsufficientNotification(`征募${unit.name}`)
-        return false
-      }
-      
-      // 扣除资源
-      Object.keys(totalCost).forEach(resource => {
-        this.resources[resource] -= totalCost[resource]
-      })
-      
-      // 计算训练时间（根据数量累加）
-      const baseTrainTime = this.getActualTrainTime
-      const trainTime = baseTrainTime * count // 每个兵种需要单独的训练时间
-      const startTime = Date.now()
-      
-      // 添加到征兵队列
-      const recruitmentTask = {
-        id: Date.now() + Math.random(), // 简单的唯一ID
-        unitId,
-        unitName: unit.name,
-        count,
-        startTime,
-        duration: trainTime,
-        totalCost
-      }
-      
-      this.recruitmentQueue.push(recruitmentTask)
-      
-      // 设置定时器完成征兵
-      setTimeout(() => {
-        this.completeRecruitment(recruitmentTask.id)
-      }, trainTime)
-      
-      const notificationStore = useNotificationStore()
-      const totalMinutes = Math.ceil(trainTime / 60000)
-      const hours = Math.floor(totalMinutes / 60)
-      const minutes = totalMinutes % 60
-      
-      let timeText = ''
-      if (hours > 0) {
-        timeText = `${hours}小时${minutes}分钟`
-      } else {
-        timeText = `${minutes}分钟`
-      }
-      
-      notificationStore.addSuccessNotification(
-        '征兵开始',
-        `开始征募 ${count} 个 ${unit.name}，预计 ${timeText} 完成`
-      )
-      
-      return true
+      return useMilitaryStore().recruitUnits(unitId, count)
     },
-    
-    /**
-     * 完成征兵
-     */
+
     completeRecruitment(taskId) {
-      const taskIndex = this.recruitmentQueue.findIndex(task => task.id === taskId)
-      if (taskIndex === -1) return
-      
-      const task = this.recruitmentQueue[taskIndex]
-      
-      // 添加到军队
-      if (!this.army[task.unitId]) {
-        this.army[task.unitId] = 0
-      }
-      this.army[task.unitId] += task.count
-      
-      // 从队列中移除
-      this.recruitmentQueue.splice(taskIndex, 1)
-      
-      // 发送完成通知
-      const notificationStore = useNotificationStore()
-      notificationStore.addSuccessNotification(
-        '征兵完成',
-        `成功征募 ${task.count} 个 ${task.unitName}`
-      )
+      return useMilitaryStore().completeRecruitment(taskId)
     },
-    
-    /**
-     * 加速征兵 - 消耗金币缩短50%时间
-     */
+
     accelerateRecruitment(taskId) {
-      const taskIndex = this.recruitmentQueue.findIndex(task => task.id === taskId)
-      if (taskIndex === -1) {
-        const notificationStore = useNotificationStore()
-        notificationStore.addErrorNotification('加速失败', '未找到指定的征兵任务')
-        return false
-      }
-      
-      const task = this.recruitmentQueue[taskIndex]
-      const now = Date.now()
-      const elapsed = now - task.startTime
-      const remaining = task.duration - elapsed
-      
-      if (remaining <= 0) {
-        const notificationStore = useNotificationStore()
-        notificationStore.addInfoNotification('无需加速', '征兵即将完成，无需加速')
-        return false
-      }
-      
-      // 计算加速所需金币（基于剩余时间，每分钟10金币）
-      const remainingMinutes = Math.ceil(remaining / 60000)
-      const accelerationCost = Math.max(10, remainingMinutes * 10)
-      
-      if (this.coins < accelerationCost) {
-        const notificationStore = useNotificationStore()
-        notificationStore.addErrorNotification('金币不足', `加速需要 ${accelerationCost} 金币，当前仅有 ${this.coins} 金币`)
-        return false
-      }
-      
-      // 扣除金币
-      this.coins -= accelerationCost
-      
-      // 保存游戏数据（金币变化）
-      this.saveGame()
-      
-      // 计算新的完成时间（缩短50%剩余时间）
-      const acceleratedRemaining = Math.floor(remaining * 0.5)
-      const newEndTime = now + acceleratedRemaining
-      
-      // 更新任务的持续时间
-      task.duration = elapsed + acceleratedRemaining
-      
-      // 清除原有定时器并设置新的定时器
-      setTimeout(() => {
-        this.completeRecruitment(taskId)
-      }, acceleratedRemaining)
-      
-      const notificationStore = useNotificationStore()
-      const savedMinutes = Math.ceil((remaining - acceleratedRemaining) / 60000)
-      notificationStore.addSuccessNotification(
-        '征兵加速成功',
-        `消耗 ${accelerationCost} 金币，节省 ${savedMinutes} 分钟训练时间`
-      )
-      
-      return true
+      return useMilitaryStore().accelerateRecruitment(taskId)
     },
     
     /**
@@ -984,61 +805,12 @@ export const useGameStore = defineStore('game', {
       return true
     },
     
-    /**
-     * 检查是否可以征兵
-     */
     canRecruit(unitId, count) {
-      try {
-        const unit = getUnitById(unitId)
-        
-        if (!unit) {
-          console.error('未找到兵种:', unitId)
-          return false
-        }
-        
-        // 计算总消耗
-        const totalCost = {}
-        Object.keys(unit.cost).forEach(resource => {
-          totalCost[resource] = unit.cost[resource] * count
-        })
-        
-        // 检查资源是否足够
-        return Object.keys(totalCost).every(resource => {
-          return this.resources[resource] >= totalCost[resource]
-        })
-      } catch (error) {
-        console.error('canRecruit 方法执行错误:', error)
-        return false
-      }
+      return useMilitaryStore().canRecruit(unitId, count)
     },
-    
-    /**
-     * 计算最大可征募数量
-     */
+
     getMaxRecruitableCount(unitId) {
-      try {
-        const unit = getUnitById(unitId)
-        
-        if (!unit) {
-          console.error('未找到兵种:', unitId)
-          return 0
-        }
-        
-        let maxCount = Infinity
-        
-        Object.keys(unit.cost).forEach(resource => {
-          const resourceCost = unit.cost[resource]
-          if (resourceCost > 0) {
-            const possibleCount = Math.floor(this.resources[resource] / resourceCost)
-            maxCount = Math.min(maxCount, possibleCount)
-          }
-        })
-        
-        return maxCount === Infinity ? 0 : maxCount
-      } catch (error) {
-        console.error('getMaxRecruitableCount 方法执行错误:', error)
-        return 0
-      }
+      return useMilitaryStore().getMaxRecruitableCount(unitId)
     },
     
     /**
@@ -1280,13 +1052,7 @@ export const useGameStore = defineStore('game', {
         [RESOURCE_TYPES.FOOD]: 0
       }
       
-      // 重置军队数据
-      this.army = {}
-      this.recruitmentQueue = []
-      this.recruitmentConfig = {
-        baseTrainTime: 5 * 60 * 1000, // 基础训练时间：5分钟（毫秒）
-        speedMultiplier: 1.0 // 训练速度倍数（后期可通过建筑加速）
-      }
+      useMilitaryStore().resetMilitaryState()
       
       // 重置生产力加速状态
       this.productionBoost = {

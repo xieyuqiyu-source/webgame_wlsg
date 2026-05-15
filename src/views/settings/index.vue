@@ -270,6 +270,7 @@
 <script>
 import GamePageLayout from '@/components/GamePageLayout.vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
+import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 import { getResourceName } from '@/config/resources.js'
 import { getFactionConfig } from '@/config/factionConfig.js'
 import { ref, reactive } from 'vue'
@@ -281,6 +282,7 @@ export default {
   },
   setup() {
     const gameStore = useGameStore()
+    const militaryStore = useMilitaryStore()
     
     // 响应式数据
     const gmEnabled = ref(false)
@@ -309,6 +311,9 @@ export default {
           lastUpdateTime: gameStore.lastUpdateTime,
           isPaused: gameStore.isPaused,
           accumulatedProduction: gameStore.accumulatedProduction,
+          army: militaryStore.army,
+          recruitmentQueue: militaryStore.recruitmentQueue,
+          recruitmentConfig: militaryStore.recruitmentConfig,
           exportTime: new Date().toISOString(),
           version: '1.0.0'
         }
@@ -360,6 +365,12 @@ export default {
               lastUpdateTime: gameData.lastUpdateTime || Date.now(),
               isPaused: gameData.isPaused || false,
               accumulatedProduction: gameData.accumulatedProduction || {}
+            })
+
+            militaryStore.setMilitaryState({
+              army: gameData.army,
+              recruitmentQueue: gameData.recruitmentQueue,
+              recruitmentConfig: gameData.recruitmentConfig
             })
             
             // 保存到本地存储
@@ -517,6 +528,7 @@ export default {
     
     return {
       gameStore,
+      militaryStore,
       gmEnabled,
       gmPassword,
       gmError,
