@@ -9,15 +9,17 @@
 
     <main class="page-main" :class="[mainClass, { 'sidebar-collapsed': sidebarCollapsed }]">
       <button
-        v-if="isMobile"
+        v-if="isMobile && !mobileSidebarOpen"
         class="mobile-menu-trigger"
         type="button"
         @click="openMobileSidebar"
+        aria-label="打开功能菜单"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3 6H21V8H3V6M3 11H21V13H3V11M3 16H21V18H3V16Z" />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 7H20" stroke-linecap="round" />
+          <path d="M7 12H20" stroke-linecap="round" />
+          <path d="M10 17H20" stroke-linecap="round" />
         </svg>
-        <span>菜单</span>
       </button>
 
       <div class="page-content" :class="contentClass">
@@ -120,12 +122,21 @@ export default {
 }
 
 .mobile-menu-trigger {
-  @apply fixed left-4 top-4 z-40 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold;
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--border-soft);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(16px);
+  @apply fixed z-40 inline-flex items-center justify-center rounded-full;
+  right: 16px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 58px;
+  height: 58px;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.96), rgba(99, 102, 241, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 18px 36px rgba(79, 70, 229, 0.28);
+  backdrop-filter: blur(20px);
+}
+
+.mobile-menu-trigger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 40px rgba(79, 70, 229, 0.32);
 }
 
 @media (max-width: 1024px) {
@@ -135,7 +146,7 @@ export default {
   }
 
   .page-content {
-    @apply px-4 pb-6 pt-20;
+    @apply px-4 pb-24 pt-6;
   }
 }
 </style>

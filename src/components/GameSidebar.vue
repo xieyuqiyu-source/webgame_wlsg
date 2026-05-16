@@ -692,11 +692,12 @@ export default {
 
 @media (max-width: 1024px) {
   .game-sidebar {
-    left: 12px;
+    left: auto;
+    right: 12px;
     top: 12px;
     width: min(320px, calc(100vw - 24px));
     height: calc(100vh - 24px);
-    transform: translateX(-110%);
+    transform: translateX(110%);
   }
 
   .game-sidebar.mobile-open {
