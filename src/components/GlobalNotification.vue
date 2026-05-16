@@ -88,11 +88,10 @@ export default defineComponent({
   width: 100%;
   padding: 14px 14px 14px 12px;
   margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   border-radius: 18px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid #dbe3ef;
   pointer-events: auto;
   transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
   overflow: hidden;
@@ -105,23 +104,23 @@ export default defineComponent({
 }
 
 .notification-success {
-  background: linear-gradient(135deg, rgba(236, 253, 245, 0.96), rgba(255, 255, 255, 0.98));
-  border-color: rgba(4, 120, 87, 0.16);
+  background: #ecfdf5;
+  border-color: #a7f3d0;
 }
 
 .notification-warning {
-  background: linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.98));
-  border-color: rgba(180, 83, 9, 0.16);
+  background: #fff7ed;
+  border-color: #fed7aa;
 }
 
 .notification-info {
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.98));
-  border-color: rgba(29, 78, 216, 0.16);
+  background: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 .notification-error {
-  background: linear-gradient(135deg, rgba(254, 242, 242, 0.96), rgba(255, 255, 255, 0.98));
-  border-color: rgba(185, 28, 28, 0.16);
+  background: #fef2f2;
+  border-color: #fecaca;
 }
 
 .notification-item::before {
@@ -202,7 +201,7 @@ export default defineComponent({
   width: 28px;
   height: 28px;
   border: none;
-  background: rgba(148, 163, 184, 0.12);
+  background: #e2e8f0;
   color: #475569;
   cursor: pointer;
   font-size: 18px;
@@ -215,7 +214,7 @@ export default defineComponent({
 }
 
 .notification-close:hover {
-  background: rgba(148, 163, 184, 0.22);
+  background: #cbd5e1;
   color: #0f172a;
 }
 
