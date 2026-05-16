@@ -20,6 +20,33 @@ export const MESSAGE_STATUS = {
   ARCHIVED: 'archived'    // 已归档
 }
 
+const RESOURCE_KEYS = ['wood', 'soil', 'iron', 'food']
+
+const formatResourceBundle = (bundle = {}) => {
+  const labels = {
+    wood: '木材',
+    soil: '泥土',
+    iron: '铁矿',
+    food: '粮食'
+  }
+
+  const items = RESOURCE_KEYS
+    .map((key) => [labels[key], Math.floor(bundle?.[key] || 0)])
+    .filter(([, amount]) => amount > 0)
+
+  return items.length > 0
+    ? items.map(([label, amount]) => `${label} ${amount}`).join(' / ')
+    : '无'
+}
+
+const getResourceTotal = (bundle = {}) => (
+  RESOURCE_KEYS.reduce((sum, key) => sum + Math.max(0, Math.floor(bundle?.[key] || 0)), 0)
+)
+
+const getLossTotal = (entries = []) => (
+  (entries || []).reduce((sum, entry) => sum + Math.max(0, entry?.count || 0), 0)
+)
+
 export const useMessageStore = defineStore('message', {
   state: () => ({
     //=== 信函列表
@@ -232,6 +259,47 @@ export const useMessageStore = defineStore('message', {
         priority: 'high',
         battleData
       })
+    },
+
+    addBattleReportMessage({ task, report, storedResources = {}, overflowResources = {} }) {
+      const actionLabel = task?.actionLabel || '出征'
+      const targetName = task?.target?.name || '未知目标'
+      const attackerWon = report?.battleResult === 'ATTACKER_VICTORY'
+      const attackerLosses = getLossTotal(report?.attacker?.losses)
+      const defenderLosses = getLossTotal(report?.defender?.losses)
+      const plunderedResources = report?.details?.plundered || {}
+      const totalLoot = getResourceTotal(plunderedResources)
+      const storedTotal = getResourceTotal(storedResources)
+      const overflowTotal = getResourceTotal(overflowResources)
+
+      const contentLines = [
+        `${actionLabel}${attackerWon ? '完成' : '失利'}，目标：${targetName}`,
+        `我军阵亡 ${attackerLosses}，敌军阵亡 ${defenderLosses}`
+      ]
+
+      if (totalLoot > 0) {
+        contentLines.push(`带回资源：${formatResourceBundle(plunderedResources)}`)
+      }
+      if (storedTotal > 0) {
+        contentLines.push(`实际入仓：${formatResourceBundle(storedResources)}`)
+      }
+      if (overflowTotal > 0) {
+        contentLines.push(`仓库不足未入仓：${formatResourceBundle(overflowResources)}`)
+      }
+
+      return this.addMilitaryMessage(
+        `${actionLabel}战报：${targetName}`,
+        contentLines.join('\n'),
+        {
+          enemy: targetName,
+          result: attackerWon ? 'victory' : 'defeat',
+          casualties: `我军 ${attackerLosses} / 敌军 ${defenderLosses}`,
+          loot: formatResourceBundle(plunderedResources),
+          storedLoot: formatResourceBundle(storedResources),
+          overflowLoot: formatResourceBundle(overflowResources),
+          rawBattleReport: report
+        }
+      )
     },
     
     //=== 添加奖励信函

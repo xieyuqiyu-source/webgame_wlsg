@@ -92,6 +92,17 @@
               <label>战利品：</label>
               <span>{{ messageStore.selectedMessage.battleData.loot }}</span>
             </div>
+            <div v-if="messageStore.selectedMessage.battleData.storedLoot" class="info-item">
+              <label>入仓资源：</label>
+              <span>{{ messageStore.selectedMessage.battleData.storedLoot }}</span>
+            </div>
+            <div
+              v-if="messageStore.selectedMessage.battleData.overflowLoot && messageStore.selectedMessage.battleData.overflowLoot !== '无'"
+              class="info-item"
+            >
+              <label>未入仓：</label>
+              <span>{{ messageStore.selectedMessage.battleData.overflowLoot }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -187,22 +198,25 @@ const claimAttachment = (attachment, index) => {
   if (attachment.type === 'resource') {
     // 领取资源奖励
     if (attachment.resources) {
-      Object.entries(attachment.resources).forEach(([resource, amount]) => {
-        gameStore.addResource(resource, amount)
-      })
+      const { stored, overflow } = gameStore.storeLootedResources(attachment.resources)
+      const storedTotal = Object.values(stored).reduce((sum, amount) => sum + (amount || 0), 0)
+      const overflowTotal = Object.values(overflow).reduce((sum, amount) => sum + (amount || 0), 0)
+      const storedText = storedTotal > 0 ? `成功入仓 ${storedTotal}` : '未能入仓'
+      const overflowText = overflowTotal > 0 ? `，超出仓库 ${overflowTotal}` : ''
+      alert(`领取完成：${attachment.name}，${storedText}${overflowText}`)
+    } else {
+      alert(`领取完成：${attachment.name}`)
     }
   } else if (attachment.type === 'item') {
     // 领取物品奖励
     // 这里可以添加物品系统的逻辑
     console.log('领取物品:', attachment)
+    alert(`成功领取：${attachment.name}`)
   }
   
   // 标记附件为已领取
   attachment.claimed = true
   messageStore.saveMessages()
-  
-  // 显示领取成功提示
-  alert(`成功领取：${attachment.name}`)
 }
 
 // 获取类型图标

@@ -3,6 +3,7 @@ import { getUnitById } from '../../config/factionConfig.js'
 import { useNotificationStore } from './notificationStore.js'
 import { useGameStore } from './gameStore.js'
 import { useNpcStore } from './npcStore.js'
+import { useMessageStore } from './messageStore.js'
 import { resolveCombat } from '../../domain/combat/combatService.js'
 import { COMBAT_RULE_IDS } from '../../domain/combat/combatConstants.js'
 
@@ -414,6 +415,7 @@ export const useMilitaryStore = defineStore('military', {
 
       const task = this.sortieTask
       const gameStore = useGameStore()
+      const messageStore = useMessageStore()
       const notificationStore = useNotificationStore()
 
       task.survivors.forEach((unit) => {
@@ -429,6 +431,14 @@ export const useMilitaryStore = defineStore('military', {
           overflowResources: overflow
         }
       }
+
+      messageStore.loadMessages()
+      messageStore.addBattleReportMessage({
+        task,
+        report: finalReport,
+        storedResources: stored,
+        overflowResources: overflow
+      })
 
       this.pendingBattleReport = finalReport
       this.sortieTask = null
