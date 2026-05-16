@@ -156,7 +156,8 @@ export default {
   top: 16px;
   z-index: 50;
   width: 296px;
-  height: calc(100vh - 32px);
+  height: calc(100dvh - 32px);
+  max-height: calc(100dvh - 32px);
   transition: all 0.3s ease;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(14px);
@@ -201,6 +202,7 @@ export default {
 
 .sidebar-content {
   @apply h-full flex flex-col;
+  min-height: 0;
 }
 
 .scrollable-content {
@@ -692,7 +694,8 @@ export default {
     right: auto;
     top: 12px;
     width: min(286px, calc(100vw - 20px));
-    height: calc(100vh - 24px);
+    height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 24px);
     transform: translateX(-110%);
   }
 

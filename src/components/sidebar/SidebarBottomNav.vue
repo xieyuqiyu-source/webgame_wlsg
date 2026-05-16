@@ -38,6 +38,8 @@ export default {
   border-top: 1px solid rgba(226, 232, 240, 0.92);
   background: rgba(248, 250, 252, 0.9);
   backdrop-filter: blur(12px);
+  position: sticky;
+  bottom: 0;
 }
 
 .nav-buttons {
@@ -47,8 +49,8 @@ export default {
 }
 
 .nav-button {
-  min-height: 50px;
-  padding: 7px 4px;
+  min-height: 44px;
+  padding: 6px 4px;
   border-radius: 14px;
   border: 1px solid rgba(226, 232, 240, 0.92);
   background: rgba(255, 255, 255, 0.96);
@@ -73,10 +75,12 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transform: scale(0.9);
 }
 
 .nav-label {
   font-size: 10px;
   font-weight: 700;
+  line-height: 1;
 }
 </style>
