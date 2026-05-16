@@ -116,7 +116,7 @@ http://localhost:5173/
 - 默认仍有浏览器 `localStorage` 本地存档
 - 同域 `wlsg.ccoos.cn/api` 提供最小云存档接口，按同步码读写
 - `dev-wlsg` 自动部署到 `https://wlsg.ccoos.cn`
-- `phonedev` 自动部署到 `https://mobilewlsg.ccoos.cn`
+- `dev-wlsg` 也会自动部署到 `https://mobilewlsg.ccoos.cn`
 - 正式桌面入口为 `wlsg.ccoos.cn`，移动端入口为 `mobilewlsg.ccoos.cn`
 - 默认首页为 `/city`，`/demo` 不再作为正式入口
 - `tests/e2e/` 提供基础 Playwright 冒烟测试，当前覆盖建筑升级、仓库操作、征兵与路由切换

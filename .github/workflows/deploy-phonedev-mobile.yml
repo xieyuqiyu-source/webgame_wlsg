@@ -1,13 +1,13 @@
-name: Deploy phonedev mobile
+name: Deploy dev-wlsg mobile
 
 on:
   push:
     branches:
-      - phonedev
+      - dev-wlsg
   workflow_dispatch:
 
 concurrency:
-  group: deploy-phonedev-mobile
+  group: deploy-dev-wlsg-mobile
   cancel-in-progress: true
 
 jobs:
