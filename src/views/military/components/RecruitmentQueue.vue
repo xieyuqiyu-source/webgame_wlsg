@@ -32,7 +32,7 @@
             class="accelerate-btn"
             @click="handleAccelerate(task)"
             :disabled="getTimeRemaining(task) === '即将完成'"
-            :title="getAccelerateCost(task) + ' 金币加速'"
+            :title="getAccelerateCost(task) + ' 金币立即完成'"
           >
             ⚡
           </button>
@@ -114,10 +114,10 @@ export default {
       return Math.max(10, remainingMinutes * 10)
     }
     
-    //=== 处理加速征兵
+    //=== 处理立即完成征兵
     const handleAccelerate = (task) => {
       const cost = getAccelerateCost(task)
-      if (confirm(`确定要花费 ${cost} 金币加速征兵吗？\n将缩短50%的剩余时间`)) {
+      if (confirm(`确定要花费 ${cost} 金币立即完成征兵吗？`)) {
         gameStore.accelerateRecruitment(task.id)
       }
     }

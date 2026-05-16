@@ -517,7 +517,7 @@ export const useMilitaryStore = defineStore('military', {
       return true
     },
 
-    completeRecruitment(taskId) {
+    completeRecruitment(taskId, options = {}) {
       const taskIndex = this.recruitmentQueue.findIndex((task) => task.id === taskId)
       if (taskIndex === -1) {
         return
@@ -529,8 +529,8 @@ export const useMilitaryStore = defineStore('military', {
 
       const notificationStore = useNotificationStore()
       notificationStore.addSuccessNotification(
-        '征兵完成',
-        `成功征募 ${task.count} 个 ${task.unitName}`
+        options.notificationTitle || '征兵完成',
+        options.notificationMessage || `成功征募 ${task.count} 个 ${task.unitName}`
       )
 
       useGameStore().saveGame()
@@ -568,17 +568,19 @@ export const useMilitaryStore = defineStore('military', {
       }
 
       gameStore.coins -= accelerationCost
-      task.duration = elapsed + Math.floor(remaining * 0.5)
 
-      setTimeout(() => {
-        this.completeRecruitment(taskId)
-      }, Math.floor(remaining * 0.5))
-
-      const savedMinutes = Math.ceil((remaining - remaining * 0.5) / 60000)
-      notificationStore.addSuccessNotification(
-        '征兵加速成功',
-        `消耗 ${accelerationCost} 金币，节省 ${savedMinutes} 分钟训练时间`
-      )
+      // 测试期先改为金币直接完成，保留旧的 50% 加速逻辑便于后续恢复。
+      // task.duration = elapsed + Math.floor(remaining * 0.5)
+      //
+      // setTimeout(() => {
+      //   this.completeRecruitment(taskId)
+      // }, Math.floor(remaining * 0.5))
+      //
+      // const savedMinutes = Math.ceil((remaining - remaining * 0.5) / 60000)
+      this.completeRecruitment(taskId, {
+        notificationTitle: '征兵立即完成',
+        notificationMessage: `消耗 ${accelerationCost} 金币，立即完成 ${task.count} 个 ${task.unitName} 的征募`
+      })
 
       gameStore.saveGame()
       return true
