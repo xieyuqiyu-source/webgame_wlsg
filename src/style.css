@@ -2,34 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 武林三国游戏基础样式 */
 :root {
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --app-bg: #f9fafb;
+  --app-grid: #d1d5db;
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --border-soft: rgba(148, 163, 184, 0.22);
+  --text-main: #111827;
+  --text-subtle: #6b7280;
+  --text-faint: #94a3b8;
+  --brand: #4f46e5;
+  --brand-strong: #4338ca;
+  --brand-soft: rgba(79, 70, 229, 0.1);
+  --shadow-soft: 0 20px 60px -24px rgba(15, 23, 42, 0.22);
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: url('./assets/logo.png') center center / cover no-repeat,
-              linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-attachment: fixed;
-  background-size: cover;
-  background-repeat: no-repeat;
+  background-color: var(--app-bg);
+  background-image: radial-gradient(var(--app-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--text-main);
   font-size: 12px;
 }
 
-/* 确保html和body完全覆盖 */
 html, body {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 #app {
@@ -37,25 +48,91 @@ html, body {
   width: 100%;
 }
 
+button,
+input,
+select,
+textarea,
+a {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
 /* 游戏UI组件基础样式 */
 @layer components {
   .game-card {
-    @apply bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/20;
+    @apply rounded-3xl border;
+    background: var(--surface);
+    backdrop-filter: blur(18px);
+    border-color: var(--border-soft);
+    box-shadow: var(--shadow-card);
   }
 
   .game-button {
-    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 transform hover:scale-105;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl font-semibold transition-all duration-200;
   }
 
   .game-button-primary {
-    @apply bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    box-shadow: 0 12px 28px rgba(79, 70, 229, 0.24);
   }
 
   .game-button-secondary {
-    @apply bg-gradient-to-r from-secondary-500 to-secondary-600 text-white hover:from-secondary-600 hover:to-secondary-700;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text-main);
+    border: 1px solid var(--border-soft);
   }
 
   .game-text-gold {
-    @apply text-gold-500 font-bold;
+    color: var(--brand);
+    font-weight: 700;
+  }
+
+  .app-panel {
+    @apply rounded-[28px] border;
+    background: var(--surface);
+    border-color: var(--border-soft);
+    backdrop-filter: blur(18px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .app-section {
+    @apply rounded-3xl border;
+    background: var(--surface-strong);
+    border-color: rgba(229, 231, 235, 0.9);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .app-page-title {
+    @apply text-[1.75rem] font-bold tracking-[-0.04em];
+    color: var(--text-main);
+  }
+
+  .app-page-subtitle {
+    @apply text-sm leading-6;
+    color: var(--text-subtle);
+  }
+
+  .app-kicker {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em];
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    font-size: 15px;
+  }
+
+  .app-page-title {
+    @apply text-[1.45rem];
   }
 }

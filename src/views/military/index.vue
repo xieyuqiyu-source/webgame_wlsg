@@ -92,7 +92,7 @@ export default {
 }
 
 .content-area {
-  @apply min-h-full;
+  @apply min-h-full space-y-5;
 }
 
 /* Tab内容样式 */
@@ -101,12 +101,16 @@ export default {
 }
 
 .tab-panel {
-  @apply bg-white rounded-lg shadow-sm border border-gray-200;
+  @apply rounded-3xl border;
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(229, 231, 235, 0.9);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
 .panel-header {
-  @apply px-6 py-4 border-b border-gray-200;
+  @apply px-6 py-5;
   @apply relative;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .panel-help {
@@ -114,15 +118,19 @@ export default {
 }
 
 .help-trigger {
-  @apply w-5 h-5 rounded-full text-xs font-bold text-white bg-green-600 hover:bg-green-500;
+  @apply w-8 h-8 rounded-full text-xs font-bold text-white;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.2);
 }
 
 .panel-title {
-  @apply text-xl font-bold text-gray-900 mb-1;
+  @apply text-xl font-bold mb-1;
+  color: var(--text-main);
 }
 
 .panel-subtitle {
-  @apply text-gray-600 text-sm;
+  @apply text-sm;
+  color: var(--text-subtle);
 }
 
 .panel-content {
@@ -131,7 +139,9 @@ export default {
 
 /* 占位内容样式 */
 .placeholder-box {
-  @apply flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300;
+  @apply flex flex-col items-center justify-center h-64 rounded-[24px];
+  background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+  border: 1px dashed rgba(129, 140, 248, 0.48);
 }
 
 .placeholder-icon {

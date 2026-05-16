@@ -100,25 +100,32 @@ export default {
 <style scoped>
 .game-page-layout {
   @apply flex min-h-screen;
+  position: relative;
+  z-index: 1;
 }
 
 .page-main {
-  @apply flex-1 ml-80 transition-all duration-300 ease-in-out;
+  @apply flex-1 transition-all duration-300 ease-in-out;
+  margin-left: 320px;
 }
 
 .page-main.sidebar-collapsed {
-  @apply ml-16;
+  margin-left: 92px;
 }
 
 .page-content {
-  @apply p-6;
+  @apply px-6 py-8;
+  max-width: 1320px;
+  margin: 0 auto;
 }
 
 .mobile-menu-trigger {
-  @apply fixed left-3 top-3 z-40 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white shadow-lg;
-  background: rgba(31, 41, 55, 0.9);
-  border: 1px solid rgba(35, 124, 72, 0.4);
-  backdrop-filter: blur(10px);
+  @apply fixed left-4 top-4 z-40 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(16px);
 }
 
 @media (max-width: 1024px) {
@@ -128,7 +135,7 @@ export default {
   }
 
   .page-content {
-    @apply px-3 pb-4 pt-16;
+    @apply px-4 pb-6 pt-20;
   }
 }
 </style>

@@ -44,24 +44,31 @@ export default {
 }
 
 .tab-header {
-  @apply flex bg-green-700 bg-opacity-80 rounded-t-md overflow-x-auto;
-  /* 自定义修改 */
- /* border-radius: 10px */
+  @apply flex overflow-x-auto rounded-[24px] p-1.5;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .tab-item {
-  @apply px-6 py-3 cursor-pointer text-white text-sm font-bold transition-all duration-200 whitespace-nowrap flex-none;
-  @apply hover:text-yellow-500; 
-  
+  @apply px-5 py-3 cursor-pointer text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-none rounded-[18px];
+  color: #6b7280;
 }
 
 .tab-item.active {
-  @apply bg-green-600;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.18);
 }
 
+.tab-item:hover:not(.active) {
+  color: #111827;
+  background: rgba(99, 102, 241, 0.06);
+}
 
 .tab-content {
   @apply flex flex-col gap-4;
+  margin-top: 18px;
 }
 
 @media (min-width: 768px) {
