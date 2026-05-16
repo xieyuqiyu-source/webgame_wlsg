@@ -157,8 +157,12 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .content-area {
+    @apply space-y-3;
+  }
+
   .recruitment-content {
-    @apply space-y-4;
+    @apply space-y-3;
   }
 
   .panel-header {

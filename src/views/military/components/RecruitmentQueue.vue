@@ -221,24 +221,38 @@ export default {
   }
 
   .description-box {
-    @apply p-3;
+    @apply p-2 mb-2;
+  }
+
+  .description-text {
+    @apply text-xs leading-4;
   }
 
   .queue-tasks {
-    @apply flex-col gap-3;
+    @apply flex-col gap-2;
   }
 
   .task-item {
     width: 100%;
-    @apply items-start gap-3;
+    @apply items-center gap-2 px-2.5 py-2;
   }
 
   .task-info {
-    @apply flex-wrap gap-x-2 gap-y-1;
+    @apply flex-nowrap gap-x-1.5 gap-y-0 overflow-hidden;
   }
 
   .task-actions {
-    @apply ml-0 self-end;
+    @apply ml-0 self-auto;
+  }
+
+  .unit-name,
+  .unit-count,
+  .time-remaining {
+    @apply text-[11px];
+  }
+
+  .accelerate-btn {
+    @apply px-1.5 py-1 text-xs;
   }
 }
 </style>

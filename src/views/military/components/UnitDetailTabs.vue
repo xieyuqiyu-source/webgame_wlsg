@@ -542,33 +542,39 @@ export default {
 
 @media (max-width: 768px) {
   .unit-detail-tabs {
-    margin: 12px 0;
+    margin: 8px 0;
     border-radius: 12px;
   }
 
   .current-faction-display {
-    padding: 14px;
+    padding: 10px;
   }
 
   .faction-info {
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
-    padding: 14px;
+    padding: 10px 12px;
+    justify-content: flex-start;
+    align-items: center;
   }
 
   .faction-name {
     margin-right: 0;
-    font-size: 18px;
+    font-size: 14px;
   }
 
   .faction-desc {
-    font-size: 13px;
+    font-size: 11px;
     max-width: none;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .unit-help {
-    top: 12px;
-    right: 12px;
+    top: 8px;
+    right: 8px;
   }
 
   .tab-header {
@@ -577,20 +583,21 @@ export default {
 
   .tab-item {
     flex: none;
-    min-width: 120px;
-    padding: 12px 14px;
+    min-width: 98px;
+    padding: 9px 10px;
   }
 
   .tab-icon {
-    margin-right: 6px;
+    margin-right: 4px;
+    font-size: 16px;
   }
 
   .tab-text {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .tab-content {
-    padding: 10px;
+    padding: 6px;
   }
 
   .units-grid,
@@ -598,27 +605,57 @@ export default {
   .units-grid:has(.unit-card:nth-child(2):nth-last-child(1)),
   .units-grid:has(.unit-card:nth-child(3):nth-last-child(1)) {
     grid-template-columns: 1fr;
-    padding: 6px;
+    padding: 4px;
+    gap: 8px;
   }
 
   .unit-card {
     min-height: 0;
-    padding: 12px;
-    gap: 8px;
+    padding: 8px;
+    gap: 6px;
   }
 
   .unit-title-bar {
-    padding: 8px 10px;
+    padding: 6px 8px;
+    justify-content: flex-start;
+  }
+
+  .unit-name {
+    font-size: 12px;
+  }
+
+  .unit-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stat-item {
+    padding: 6px 4px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    margin-bottom: 1px;
+  }
+
+  .stat-value {
+    font-size: 12px;
   }
 
   .unit-count {
-    padding: 8px 10px;
+    padding: 5px 8px;
+  }
+
+  .count-label,
+  .count-value {
+    font-size: 11px;
   }
 
   .recruit-button {
     width: 100%;
-    padding: 10px 14px;
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 12px;
+    border-radius: 8px;
   }
 }
 </style>

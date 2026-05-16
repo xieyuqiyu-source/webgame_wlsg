@@ -555,36 +555,36 @@ export default {
 @media (max-width: 768px) {
   .recruitment-modal-overlay {
     align-items: flex-end;
-    padding: 0;
+    padding: 10px 10px 0;
   }
 
   .recruitment-modal {
     max-width: none;
-    max-height: 92vh;
-    border-radius: 18px 18px 0 0;
+    max-height: 78dvh;
+    border-radius: 14px 14px 0 0;
     border-left: none;
     border-right: none;
     border-bottom: none;
   }
 
   .modal-header {
-    @apply items-start gap-3;
-    padding: 14px 14px 12px;
+    @apply items-start gap-2;
+    padding: 12px 12px 10px;
   }
 
   .header-content {
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
   }
 
   .unit-icon {
-    font-size: 30px;
+    font-size: 28px;
     line-height: 1;
   }
 
   .unit-name {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .unit-description {
@@ -593,34 +593,35 @@ export default {
 
   .recruitment-info {
     padding: 12px;
-    gap: 10px;
+    gap: 8px;
   }
 
   .info-item {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: flex-start;
     gap: 8px;
-    padding: 10px;
+    padding: 8px;
   }
 
   .item-label {
-    min-width: 0;
+    min-width: 48px;
+    font-size: 11px;
   }
 
   .cost-inline,
   .quantity-inline,
   .time-inline {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
   }
 
   .quantity-btn {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
   }
 
   .quantity-input {
-    width: 56px;
+    width: 54px;
     padding: 4px 6px;
     font-size: 12px;
   }
@@ -629,19 +630,21 @@ export default {
   .cost-tag,
   .time-tag {
     font-size: 11px;
-    padding: 4px 6px;
+    padding: 3px 5px;
   }
 
   .modal-actions {
     padding: 12px;
-    flex-direction: column-reverse;
+    flex-direction: row;
+    gap: 8px;
   }
 
   .cancel-btn,
   .recruit-btn {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 14px;
+    width: auto;
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 12px;
   }
 }
 </style>
