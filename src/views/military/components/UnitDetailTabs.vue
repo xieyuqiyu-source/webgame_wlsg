@@ -69,27 +69,27 @@
           <!-- 属性信息网格 -->
           <div class="unit-stats-grid">
             <div class="stat-item">
-              <div class="stat-label">攻击</div>
+              <div class="stat-label"><span class="stat-icon">⚔️</span><span class="stat-text">攻击</span></div>
               <div class="stat-value">{{ unit.attack }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">步防</div>
+              <div class="stat-label"><span class="stat-icon">🛡️</span><span class="stat-text">步防</span></div>
               <div class="stat-value">{{ unit.infantryDefense }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">骑防</div>
+              <div class="stat-label"><span class="stat-icon">🐎</span><span class="stat-text">骑防</span></div>
               <div class="stat-value">{{ unit.cavalryDefense }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">速度</div>
+              <div class="stat-label"><span class="stat-icon">💨</span><span class="stat-text">速度</span></div>
               <div class="stat-value">{{ unit.speed }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">运载</div>
+              <div class="stat-label"><span class="stat-icon">🎒</span><span class="stat-text">运载</span></div>
               <div class="stat-value">{{ unit.carryCapacity }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">口粮</div>
+              <div class="stat-label"><span class="stat-icon">🍚</span><span class="stat-text">口粮</span></div>
               <div class="stat-value">{{ unit.unitType === 'special' ? 0 : 2 }}</div>
             </div>
           </div>
@@ -472,7 +472,10 @@ export default {
   margin-bottom: 2px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .stat-value {
@@ -480,6 +483,10 @@ export default {
   font-weight: 800;
   color: #18181B;
   display: block;
+}
+
+.stat-icon {
+  line-height: 1;
 }
 
 /* 当前数量 */
@@ -612,7 +619,7 @@ export default {
   .unit-card {
     min-height: 0;
     padding: 8px;
-    gap: 6px;
+    gap: 5px;
   }
 
   .unit-title-bar {
@@ -626,24 +633,38 @@ export default {
 
   .unit-stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    gap: 5px;
   }
 
   .stat-item {
-    padding: 6px 4px;
+    padding: 5px 4px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
   }
 
   .stat-label {
-    font-size: 9px;
-    margin-bottom: 1px;
+    font-size: 11px;
+    margin-bottom: 0;
+    color: #475569;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .stat-value {
     font-size: 12px;
+    display: inline;
+    line-height: 1;
+  }
+
+  .stat-text {
+    display: none;
   }
 
   .unit-count {
-    padding: 5px 8px;
+    padding: 4px 8px;
   }
 
   .count-label,
@@ -653,7 +674,7 @@ export default {
 
   .recruit-button {
     width: 100%;
-    padding: 8px 10px;
+    padding: 7px 10px;
     font-size: 12px;
     border-radius: 8px;
   }
