@@ -2,6 +2,48 @@ import { defineStore } from 'pinia'
 import { getFactionUnits, UNIT_TYPES } from '@/config/factionConfig.js'
 import { useGameStore } from './gameStore.js'
 
+const NPC_RECOVERY_DURATION = 30 * 60 * 1000
+
+const cloneResources = (resources = {}) => ({
+  wood: Math.max(0, Math.floor(resources.wood || 0)),
+  soil: Math.max(0, Math.floor(resources.soil || 0)),
+  iron: Math.max(0, Math.floor(resources.iron || 0)),
+  food: Math.max(0, Math.floor(resources.food || 0))
+})
+
+const cloneArmy = (army = {}) => ({
+  faction: army.faction || 'unknown',
+  units: Array.isArray(army.units)
+    ? army.units.map((unit) => ({ ...unit, count: Math.max(0, Math.floor(unit.count || 0)) }))
+    : []
+})
+
+const syncScoutData = (npc) => {
+  if (!npc?.scoutData) return
+  npc.scoutData.units = (npc.defenseArmy?.units || []).map((unit) => ({
+    id: unit.id,
+    name: unit.name,
+    count: unit.count
+  }))
+  npc.scoutData.totalUnits = (npc.defenseArmy?.units || []).reduce((total, unit) => total + (unit.count || 0), 0)
+  npc.scoutData.unitTypes = (npc.defenseArmy?.units || []).length
+}
+
+const normalizeNpc = (npc) => {
+  const normalizedResources = cloneResources(npc.resources || {})
+  const normalizedArmy = cloneArmy(npc.defenseArmy || {})
+
+  return {
+    ...npc,
+    resources: normalizedResources,
+    defenderResources: cloneResources(npc.defenderResources || normalizedResources),
+    defenseArmy: normalizedArmy,
+    maxResources: cloneResources(npc.maxResources || normalizedResources),
+    maxDefenseArmy: cloneArmy(npc.maxDefenseArmy || normalizedArmy),
+    recoveryState: npc.recoveryState || null
+  }
+}
+
 export const useNpcStore = defineStore('npc', {
   state: () => ({
     //=== npcs NPC城池列表
@@ -62,7 +104,7 @@ export const useNpcStore = defineStore('npc', {
     },
 
     applyNpcSaveData(data = {}) {
-      this.npcs = Array.isArray(data.npcs) ? data.npcs : []
+      this.npcs = Array.isArray(data.npcs) ? data.npcs.map(normalizeNpc) : []
       this.lastGeneratedTime = data.lastGeneratedTime || 0
       this.generationInterval = data.generationInterval || 3600000
       this.manualRefreshCost = data.manualRefreshCost || 50
@@ -77,6 +119,7 @@ export const useNpcStore = defineStore('npc', {
         // 如果没有恢复到数据或需要重新生成，则生成新数据
         this.generateNpcs()
       } else {
+        this.progressNpcRecovery(Date.now())
         this.isInitialized = true
       }
     },
@@ -147,9 +190,12 @@ export const useNpcStore = defineStore('npc', {
           name,
           faction,
           level,
-          resources,
+          resources: cloneResources(resources),
           defenseArmy,
-          defenderResources: { ...resources }, // 防守资源就是城池的原本资源
+          defenderResources: cloneResources(resources), // 防守资源就是城池的原本资源
+          maxResources: cloneResources(resources),
+          maxDefenseArmy: cloneArmy(defenseArmy),
+          recoveryState: null,
           // 坐标信息
           coordinates: {
             x: Math.floor(Math.random() * 1000),
@@ -168,7 +214,7 @@ export const useNpcStore = defineStore('npc', {
       }
 
       // 更新状态
-      this.npcs = newNpcs
+      this.npcs = newNpcs.map(normalizeNpc)
       this.lastGeneratedTime = Date.now()
       
       this.isInitialized = true
@@ -294,8 +340,11 @@ export const useNpcStore = defineStore('npc', {
     attackNpc(npcId, attackResult) {
       const npc = this.getNpcById(npcId)
       if (!npc) return false
+      const now = Date.now()
 
-      npc.lastAttacked = Date.now()
+      this.progressSingleNpcRecovery(npc, now)
+
+      npc.lastAttacked = now
 
       if (!attackResult) {
         useGameStore().saveGame()
@@ -331,18 +380,69 @@ export const useNpcStore = defineStore('npc', {
           .filter((unit) => unit.count > 0)
       }
 
-      if (npc.scoutData) {
-        npc.scoutData.units = (npc.defenseArmy?.units || []).map((unit) => ({
-          id: unit.id,
-          name: unit.name,
-          count: unit.count
-        }))
-        npc.scoutData.totalUnits = (npc.defenseArmy?.units || []).reduce((total, unit) => total + (unit.count || 0), 0)
-        npc.scoutData.unitTypes = (npc.defenseArmy?.units || []).length
-      }
+      syncScoutData(npc)
+      this.startNpcRecovery(npc, now)
 
       useGameStore().saveGame()
       return true
+    },
+
+    startNpcRecovery(npc, now = Date.now()) {
+      npc.recoveryState = {
+        startedAt: now,
+        duration: NPC_RECOVERY_DURATION,
+        baseResources: cloneResources(npc.resources),
+        baseDefenseArmy: cloneArmy(npc.defenseArmy)
+      }
+    },
+
+    progressSingleNpcRecovery(npc, now = Date.now()) {
+      if (!npc?.recoveryState) return false
+
+      const duration = Math.max(1, npc.recoveryState.duration || NPC_RECOVERY_DURATION)
+      const elapsed = Math.max(0, now - (npc.recoveryState.startedAt || now))
+      const ratio = Math.min(1, elapsed / duration)
+      const baseResources = npc.recoveryState.baseResources || {}
+      const maxResources = npc.maxResources || {}
+
+      Object.keys(maxResources).forEach((key) => {
+        const base = Math.max(0, baseResources[key] || 0)
+        const target = Math.max(base, maxResources[key] || 0)
+        npc.resources[key] = Math.floor(base + (target - base) * ratio)
+      })
+
+      const baseUnitsMap = new Map((npc.recoveryState.baseDefenseArmy?.units || []).map((unit) => [unit.id, unit.count || 0]))
+      const currentUnits = (npc.maxDefenseArmy?.units || []).map((unit) => {
+        const baseCount = Math.max(0, baseUnitsMap.get(unit.id) || 0)
+        const targetCount = Math.max(baseCount, unit.count || 0)
+        return {
+          ...unit,
+          count: Math.floor(baseCount + (targetCount - baseCount) * ratio)
+        }
+      }).filter((unit) => unit.count > 0)
+
+      npc.defenseArmy = {
+        ...(npc.defenseArmy || {}),
+        faction: npc.faction,
+        units: currentUnits
+      }
+
+      syncScoutData(npc)
+
+      if (ratio >= 1) {
+        npc.resources = cloneResources(npc.maxResources)
+        npc.defenseArmy = cloneArmy(npc.maxDefenseArmy)
+        npc.recoveryState = null
+        syncScoutData(npc)
+      }
+
+      return true
+    },
+
+    progressNpcRecovery(now = Date.now()) {
+      this.npcs.forEach((npc) => {
+        this.progressSingleNpcRecovery(npc, now)
+      })
     },
 
     //=== manualRefresh 手动刷新NPC列表

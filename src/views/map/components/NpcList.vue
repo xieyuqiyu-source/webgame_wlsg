@@ -105,6 +105,7 @@
         <div class="npc-basic-info">
           <h3 class="npc-name">{{ npc.name }}</h3>
           <span class="npc-level">Lv.{{ npc.level }}</span>
+          <span v-if="npc.recoveryState" class="npc-recovery-badge">恢复中 · {{ formatRecoveryTime(npc) }}</span>
         </div>
         
         <!-- 资源信息 -->
@@ -757,6 +758,13 @@ export default {
       const hours = Math.floor(minutes / 60)
       return `${hours}小时前`
     },
+
+    formatRecoveryTime(npc) {
+      const recoveryState = npc?.recoveryState
+      if (!recoveryState) return ''
+      const endAt = (recoveryState.startedAt || 0) + (recoveryState.duration || 0)
+      return this.formatDurationFromNow(endAt)
+    },
     
     //=== startCountdownTimer 启动倒计时定时器
     startCountdownTimer() {
@@ -766,6 +774,7 @@ export default {
       this.refreshTimer = setInterval(() => {
         // 更新currentTime以触发响应式更新
         this.currentTime = Date.now()
+        this.npcStore.progressNpcRecovery(this.currentTime)
         
         // 检查是否需要自动刷新，传入currentTime参数
         if (this.npcStore.needsRegeneration(this.currentTime)) {
@@ -1196,6 +1205,19 @@ export default {
 .npc-basic-info {
   @apply flex-shrink-0 min-w-0;
   width: 140px;
+}
+
+.npc-recovery-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .npc-name {
