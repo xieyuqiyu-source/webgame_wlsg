@@ -204,7 +204,7 @@ export default {
 }
 
 .scrollable-content {
-  @apply flex-1 overflow-y-auto px-3 py-2.5;
+  @apply flex-1 overflow-y-auto px-2.5 py-2;
   scrollbar-width: none;
   min-width: 0;
 }
@@ -214,7 +214,7 @@ export default {
 }
 
 .city-info-card {
-  @apply mb-3 rounded-[18px] p-4;
+  @apply mb-2.5 rounded-[16px] p-3;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(255, 255, 255, 0.96) 100%);
   border: 1px solid rgba(226, 232, 240, 0.92);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
@@ -222,7 +222,7 @@ export default {
 
 .city-header,
 .city-details {
-  @apply space-y-2;
+  @apply space-y-1.5;
 }
 
 .city-title-row,
@@ -243,7 +243,7 @@ export default {
 }
 
 .coins-display {
-  @apply flex items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors;
+  @apply flex items-center gap-1 rounded-xl px-2 py-1 transition-colors;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(226, 232, 240, 0.88);
@@ -286,7 +286,7 @@ export default {
 .status-dot.blue { background: #3b82f6; }
 
 .section {
-  @apply mb-3 rounded-[18px] p-3;
+  @apply mb-2.5 rounded-[16px] p-2.5;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(226, 232, 240, 0.92);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
@@ -294,7 +294,7 @@ export default {
 }
 
 .section-header {
-  @apply text-sm font-semibold mb-2 pb-2;
+  @apply text-sm font-semibold mb-1.5 pb-1.5;
   color: #111827;
   border-bottom: 1px solid rgba(226, 232, 240, 0.96);
   line-height: 20px;
@@ -313,12 +313,12 @@ export default {
 .boost-options,
 .gm-section,
 .army-grid {
-  @apply space-y-1.5;
+  @apply space-y-1;
 }
 
 .resource-item,
 .production-item {
-  @apply px-2.5 py-1.5 rounded-2xl;
+  @apply px-2 py-1.5 rounded-xl;
   min-width: 0;
 }
 
@@ -441,7 +441,7 @@ export default {
 }
 
 .boost-btn {
-  @apply flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-all duration-200;
+  @apply flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs transition-all duration-200;
 }
 
 .boost-btn.boost-active {
@@ -453,7 +453,7 @@ export default {
 }
 
 .warehouse-upgrade-btn {
-  @apply w-full px-3 py-2 text-xs rounded-2xl transition-all duration-200;
+  @apply w-full px-2.5 py-1.5 text-xs rounded-xl transition-all duration-200;
 }
 
 .warehouse-upgrade-btn.disabled {
@@ -467,7 +467,7 @@ export default {
 }
 
 .army-item {
-  @apply flex items-center gap-2 p-2.5 rounded-2xl transition-all duration-200;
+  @apply flex items-center gap-2 p-2 rounded-xl transition-all duration-200;
   background: rgba(248, 250, 252, 0.9);
   border: 1px solid rgba(226, 232, 240, 0.92);
   min-width: 0;
@@ -705,7 +705,7 @@ export default {
   }
 
   .city-info-card {
-    padding: 12px;
+    padding: 10px;
   }
 
   .city-details .detail-item:nth-child(n + 2) {
@@ -739,7 +739,7 @@ export default {
 
   .resource-item,
   .production-item {
-    padding: 6px 8px;
+    padding: 5px 7px;
   }
 
   .resource-dots-container {
@@ -754,7 +754,7 @@ export default {
   .army-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 5px;
   }
 
   .army-item {

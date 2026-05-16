@@ -34,7 +34,7 @@ export default {
 
 <style scoped>
 .bottom-nav {
-  padding: 10px 12px 12px;
+  padding: 8px 10px 10px;
   border-top: 1px solid rgba(226, 232, 240, 0.92);
   background: rgba(248, 250, 252, 0.9);
   backdrop-filter: blur(12px);
@@ -43,13 +43,13 @@ export default {
 .nav-buttons {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .nav-button {
-  min-height: 58px;
-  padding: 8px 6px;
-  border-radius: 16px;
+  min-height: 50px;
+  padding: 7px 4px;
+  border-radius: 14px;
   border: 1px solid rgba(226, 232, 240, 0.92);
   background: rgba(255, 255, 255, 0.96);
   display: flex;
@@ -76,7 +76,7 @@ export default {
 }
 
 .nav-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 </style>
