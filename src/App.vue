@@ -1,5 +1,6 @@
 <script>
-import { onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, ref, shallowRef } from 'vue'
+import { useRoute } from 'vue-router'
 import { useGameTimer } from './hooks/useGameTimer'
 import { useGameStore } from './store/modules/gameStore'
 import UserInitDialog from './components/UserInitDialog.vue'
@@ -13,10 +14,12 @@ export default {
   },
   setup() {
     const gameStore = useGameStore()
+    const route = useRoute()
     const showUserInitDialog = ref(false)
     const stagewiseToolbar = shallowRef(null)
     const stagewiseConfig = ref(null)
     const isStagewiseEnabled = import.meta.env.DEV && import.meta.env.VITE_ENABLE_STAGEWISE === 'true'
+    const shouldShowVeil = computed(() => !route.meta?.plainSurface)
 
     useGameTimer()
 
@@ -50,6 +53,7 @@ export default {
     return {
       handleUserInfoSubmit,
       isStagewiseEnabled,
+      shouldShowVeil,
       showUserInitDialog,
       stagewiseConfig,
       stagewiseToolbar
@@ -60,7 +64,7 @@ export default {
 
 <template>
   <div id="app" class="app-shell">
-    <div class="app-shell__veil"></div>
+    <div v-if="shouldShowVeil" class="app-shell__veil"></div>
     <router-view />
     
     <!-- 用户初始化对话框 -->

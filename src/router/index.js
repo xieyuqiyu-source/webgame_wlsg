@@ -35,6 +35,9 @@ const router = createRouter({
     {
       path: '/message',
       name: 'Message',
+      meta: {
+        plainSurface: true
+      },
       component: () => import('@/views/MessageView.vue')
     },
     {
@@ -45,6 +48,9 @@ const router = createRouter({
     {
       path: '/notification-test',
       name: 'NotificationTest',
+      meta: {
+        plainSurface: true
+      },
       component: () => import('@/views/NotificationTest.vue')
     }
   ]
