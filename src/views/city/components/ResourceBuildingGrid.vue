@@ -198,4 +198,35 @@ export default {
 .building-grid {
   @apply flex gap-4 mt-4;
 }
+
+@media (max-width: 1024px) {
+  .building-grid {
+    @apply grid grid-cols-2 gap-3;
+  }
+}
+
+@media (max-width: 768px) {
+  .description-box {
+    @apply mt-3 p-3;
+  }
+
+  .description-text {
+    @apply text-xs leading-5;
+    padding-right: 0;
+    padding-top: 44px;
+  }
+
+  .bulk-upgrade-hover {
+    top: 10px;
+    right: 10px;
+  }
+
+  .bulk-upgrade-button {
+    @apply px-2.5 py-1.5 text-[11px];
+  }
+
+  .building-grid {
+    @apply grid-cols-1 gap-3 mt-3;
+  }
+}
 </style>

@@ -686,4 +686,71 @@ export default {
 .empty-text {
   color: rgba(255, 255, 255, 0.7);
 }
+
+@media (max-width: 768px) {
+  .player-list {
+    @apply space-y-4;
+  }
+
+  .search-bar {
+    padding: 14px;
+    border-radius: 12px;
+    gap: 12px;
+  }
+
+  .filter-buttons {
+    gap: 8px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .filter-btn {
+    @apply px-3 py-2 text-xs whitespace-nowrap flex-none;
+  }
+
+  .online-stats {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .stat-item {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 10px 12px;
+  }
+
+  .player-grid {
+    @apply grid-cols-1 gap-4;
+  }
+
+  .player-card {
+    padding: 14px;
+  }
+
+  .player-header {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .player-info {
+    margin-left: 0;
+  }
+
+  .player-name {
+    @apply text-base;
+  }
+
+  .player-status {
+    align-items: flex-start;
+  }
+
+  .player-actions {
+    @apply flex-col gap-2;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
+}
 </style>

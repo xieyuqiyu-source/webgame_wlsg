@@ -1541,18 +1541,203 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .dispatch-row {
+  .npc-list {
+    @apply space-y-4;
+  }
+
+  .search-bar {
+    padding: 14px;
+    border-radius: 12px;
+    gap: 12px;
+  }
+
+  .filter-buttons {
+    gap: 8px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .filter-btn {
+    @apply px-3 py-2 text-xs whitespace-nowrap flex-none;
+  }
+
+  .refresh-control {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .refresh-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .countdown-display,
+  .refresh-cost {
+    width: 100%;
+  }
+
+  .manual-refresh-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .npc-list-item,
+  .npc-list-items {
+    padding: 12px;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .npc-list-items {
+    display: flex !important;
     flex-direction: column;
     align-items: stretch;
   }
 
+  .npc-basic-info,
+  .npc-scout-info {
+    width: auto;
+  }
+
+  .npc-basic-info {
+    @apply flex items-center justify-between gap-3;
+  }
+
+  .npc-name {
+    @apply text-sm mb-0;
+  }
+
+  .npc-level {
+    @apply text-[11px] whitespace-nowrap;
+  }
+
+  .npc-resources {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    width: 100%;
+  }
+
+  .resource-item {
+    @apply text-[11px];
+  }
+
+  .npc-scout-info {
+    gap: 6px;
+  }
+
+  .npc-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .action-btn {
+    min-width: 0;
+    width: 100%;
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+
+  .scout-result {
+    @apply mt-2 p-3;
+  }
+
+  .scout-result-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .army-summary {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .army-details {
+    gap: 8px;
+  }
+
+  .unit-item {
+    min-width: calc(50% - 4px);
+  }
+
+  .dispatch-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .dispatch-dialog {
+    width: 100%;
+    max-height: 88vh;
+    border-radius: 18px 18px 0 0;
+    padding: 14px;
+  }
+
+  .dispatch-header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dispatch-title {
+    font-size: 20px;
+  }
+
+  .dispatch-subtitle {
+    font-size: 12px;
+  }
+
+  .dispatch-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+  }
+
   .dispatch-input-group {
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 
   .dispatch-input {
     flex: 1;
     width: auto;
+  }
+
+  .dispatch-step {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dispatch-max {
+    flex: 1;
+    min-height: 36px;
+  }
+
+  .dispatch-actions {
+    margin-top: 14px;
+    flex-direction: column-reverse;
+  }
+
+  .dispatch-secondary,
+  .dispatch-primary {
+    width: 100%;
+  }
+
+  .pagination {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pagination-numbers {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 }
 </style>

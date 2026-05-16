@@ -475,14 +475,31 @@ const getContentPreview = (content) => {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .filter-group select {
+    width: 100%;
+  }
   
   .filter-actions {
     margin-left: 0;
-    justify-content: center;
+    justify-content: stretch;
+    flex-direction: column;
+  }
+
+  .filter-actions button {
+    width: 100%;
   }
   
   .message-item {
     padding: 12px;
+    align-items: flex-start;
+    gap: 10px;
   }
   
   .message-header {
@@ -494,6 +511,17 @@ const getContentPreview = (content) => {
   .message-meta {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .message-stats {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .message-actions {
+    margin-left: 0;
+    align-self: stretch;
+    justify-content: flex-end;
   }
 }
 </style>

@@ -497,4 +497,19 @@ export default {
     transform: translateX(-50%) translateY(0);
   }
 }
+
+@media (max-width: 768px) {
+  .building-card {
+    min-height: 104px !important;
+    padding: 0.75rem !important;
+  }
+
+  .building-icon-center {
+    @apply w-9 h-9 mt-1;
+  }
+
+  .resource-icon {
+    @apply w-10 h-10;
+  }
+}
 </style>

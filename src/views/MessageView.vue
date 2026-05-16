@@ -272,11 +272,13 @@ const addTestMessage = () => {
   }
   
   .header-left {
-    justify-content: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
   
   .header-actions {
-    justify-content: center;
+    justify-content: stretch;
+    flex-direction: column;
   }
   
   .message-content {
@@ -287,17 +289,23 @@ const addTestMessage = () => {
     width: 100%;
     max-width: none;
     min-width: 0;
-    height: 50vh;
+    height: 46vh;
     border-right: none;
     border-bottom: 1px solid #e9ecef;
   }
   
   .message-detail-panel {
-    height: 50vh;
+    height: 54vh;
   }
   
   .page-title {
     font-size: 20px;
+  }
+
+  .test-btn,
+  .refresh-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 

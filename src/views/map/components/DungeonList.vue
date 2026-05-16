@@ -748,4 +748,60 @@ export default {
     box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
   }
 }
+
+@media (max-width: 768px) {
+  .dungeon-list {
+    @apply space-y-4;
+  }
+
+  .search-bar {
+    @apply space-y-3;
+  }
+
+  .filter-buttons {
+    gap: 8px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .filter-btn {
+    @apply px-3 py-2 text-xs whitespace-nowrap flex-none;
+  }
+
+  .dungeon-stats {
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .dungeon-grid {
+    @apply grid-cols-1 gap-3;
+  }
+
+  .dungeon-card {
+    padding: 14px;
+  }
+
+  .dungeon-header {
+    align-items: flex-start;
+  }
+
+  .dungeon-name {
+    @apply text-sm;
+  }
+
+  .description-text {
+    @apply text-xs leading-5;
+  }
+
+  .dungeon-actions {
+    @apply flex-col;
+  }
+
+  .action-btn {
+    width: 100%;
+    padding: 10px 12px;
+  }
+}
 </style>

@@ -57,4 +57,10 @@ export default {
 .building-column {
   @apply flex flex-col gap-4 flex-1;
 }
+
+@media (max-width: 768px) {
+  .building-column {
+    @apply gap-3;
+  }
+}
 </style>

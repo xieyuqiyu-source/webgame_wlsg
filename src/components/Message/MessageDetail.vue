@@ -579,10 +579,22 @@ const formatContent = (content) => {
   
   .header-actions {
     align-self: stretch;
+    flex-direction: column;
   }
   
   .message-title {
     font-size: 20px;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
   
   .attachment-item {
@@ -594,6 +606,14 @@ const formatContent = (content) => {
   .attachment-actions {
     margin-left: 0;
     align-self: stretch;
+  }
+
+  .claim-btn {
+    width: 100%;
+  }
+
+  .no-selection {
+    padding: 24px;
   }
 }
 </style>

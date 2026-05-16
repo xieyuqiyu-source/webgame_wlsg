@@ -954,4 +954,89 @@ input:checked + .toggle-slider::before {
 .hidden {
   @apply sr-only;
 }
+
+@media (max-width: 768px) {
+  .page-header {
+    @apply p-4 mb-4;
+  }
+
+  .page-title {
+    @apply text-2xl;
+  }
+
+  .settings-section {
+    @apply p-4;
+  }
+
+  .section-title {
+    @apply text-lg mb-3;
+  }
+
+  .setting-card {
+    @apply p-3;
+  }
+
+  .user-info-item {
+    @apply flex-col items-start gap-2;
+  }
+
+  .uuid-display {
+    @apply flex-col items-stretch gap-2;
+  }
+
+  .auth-form {
+    @apply flex-col space-x-0 space-y-2 max-w-none;
+  }
+
+  .gm-header {
+    @apply flex-col items-start gap-3;
+  }
+
+  .resource-item,
+  .coins-item {
+    @apply flex-col items-start gap-3;
+  }
+
+  .resource-actions,
+  .coins-actions {
+    @apply flex flex-wrap space-x-0 gap-2 w-full;
+  }
+
+  .resource-btn,
+  .quick-btn,
+  .gm-disable-btn,
+  .auth-btn {
+    min-height: 40px;
+  }
+
+  .resource-actions .resource-btn,
+  .coins-actions .resource-btn {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    @apply p-3;
+  }
+
+  .page-title {
+    @apply text-xl;
+  }
+
+  .settings-section {
+    @apply p-3;
+  }
+
+  .setting-btn {
+    @apply w-full justify-center;
+  }
+
+  .resource-actions .resource-btn,
+  .coins-actions .resource-btn,
+  .quick-btn {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}
 </style>
