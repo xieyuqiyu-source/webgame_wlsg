@@ -599,6 +599,7 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: none;
   }
 
   .unit-help {
@@ -610,19 +611,26 @@ export default {
     overflow-x: auto;
   }
 
+  .tab-header {
+    overflow: hidden;
+  }
+
   .tab-item {
-    flex: none;
-    min-width: 98px;
-    padding: 9px 10px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 4px;
   }
 
   .tab-icon {
-    margin-right: 4px;
-    font-size: 16px;
+    margin-right: 2px;
+    font-size: 14px;
   }
 
   .tab-text {
-    font-size: 12px;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .tab-content {
