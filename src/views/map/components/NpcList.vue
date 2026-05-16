@@ -76,6 +76,12 @@
         {{ activeSortieTask ? sortieTimeText : cooldownTimeText }}
       </div>
     </div>
+
+    <div v-if="activeSortieTask || isSortieCoolingDown" class="sortie-status-sticky">
+      <span class="sticky-label">{{ activeSortieTask ? sortieStatusTitle : '冷却中' }}</span>
+      <span class="sticky-target">{{ activeSortieTask ? activeSortieTask.target.name : '部队整备' }}</span>
+      <span class="sticky-time">{{ activeSortieTask ? sortieTimeText : cooldownTimeText }}</span>
+    </div>
     
    
     
@@ -150,13 +156,13 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M6.92,5H5L6.5,6.5L5,8H6.92L8.42,6.5L6.92,5M13,19H11V17.5L2.5,9H4.42L11,15.58V14H13V19M20.5,2.5L19,4L15.5,0.5L17,2L15.5,3.5L19,7L20.5,5.5L22,7L20.5,8.5L17,5L20.5,2.5Z"/>
             </svg>
-            攻击
+            {{ activeSortieTask ? '行军中' : (isSortieCoolingDown ? '冷却中' : '攻击') }}
           </button>
           <button class="action-btn plunder" :disabled="Boolean(activeSortieTask) || isSortieCoolingDown" @click.stop="handlePlunder(npc)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M21,6H3V4H21M19,8C20.11,8 21,8.9 21,10V20C21,21.11 20.11,22 19,22H5C3.89,22 3,21.11 3,20V10C3,8.9 3.89,8 5,8H19M12,11A3,3 0 0,0 9,14A3,3 0 0,0 12,17A3,3 0 0,0 15,14A3,3 0 0,0 12,11Z"/>
             </svg>
-            掠夺
+            {{ activeSortieTask ? '行军中' : (isSortieCoolingDown ? '冷却中' : '掠夺') }}
           </button>
         </div>
         </div>
@@ -883,6 +889,43 @@ export default {
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
+.sortie-status-sticky {
+  position: sticky;
+  top: 8px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(79, 70, 229, 0.96);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(79, 70, 229, 0.22);
+}
+
+.sticky-label {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sticky-target {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sticky-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.95;
+}
+
 .sortie-status-main {
   min-width: 0;
 }
@@ -1597,6 +1640,21 @@ export default {
     align-items: flex-start;
     gap: 10px;
     padding: 14px;
+  }
+
+  .sortie-status-sticky {
+    top: 6px;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .sticky-target {
+    font-size: 11px;
+  }
+
+  .sticky-time,
+  .sticky-label {
+    font-size: 11px;
   }
 
   .sortie-status-time {

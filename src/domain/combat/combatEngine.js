@@ -178,36 +178,6 @@ const calculateSurvivingCarryCapacity = (attackerLosses = []) => (
   }, 0)
 )
 
-const distributeEqualResources = (capacity, resources) => {
-  const result = { wood: 0, soil: 0, iron: 0, food: 0 }
-  const perResource = Math.floor(capacity / RESOURCE_KEYS.length)
-  let used = 0
-
-  RESOURCE_KEYS.forEach((key) => {
-    const amount = Math.min(resources[key] || 0, perResource)
-    result[key] = amount
-    used += amount
-  })
-
-  let remaining = Math.max(0, capacity - used)
-  let cursor = 0
-
-  while (remaining > 0) {
-    const key = RESOURCE_KEYS[cursor % RESOURCE_KEYS.length]
-    if ((resources[key] || 0) > result[key]) {
-      result[key] += 1
-      remaining -= 1
-    }
-
-    cursor += 1
-    if (cursor > RESOURCE_KEYS.length * Math.max(capacity, 1)) {
-      break
-    }
-  }
-
-  return result
-}
-
 const distributeProportionalResources = (capacity, resources, totalResources) => {
   const result = { wood: 0, soil: 0, iron: 0, food: 0 }
   const remainders = []
@@ -275,13 +245,6 @@ const calculatePlunderedResources = (survivingCarryCapacity, defenderResources, 
       iron: defenderResources.iron || 0,
       food: defenderResources.food || 0
     }
-  }
-
-  const equalThreshold = Math.floor(effectiveCapacity / RESOURCE_KEYS.length)
-  const canSplitEvenly = RESOURCE_KEYS.every((key) => (defenderResources[key] || 0) >= equalThreshold)
-
-  if (canSplitEvenly) {
-    return distributeEqualResources(effectiveCapacity, defenderResources)
   }
 
   return distributeProportionalResources(effectiveCapacity, defenderResources, totalResources)

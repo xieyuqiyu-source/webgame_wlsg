@@ -146,21 +146,24 @@ const addTestMessage = () => {
 
 <style scoped>
 .message-view {
-  height: 100vh;
+  height: 100%;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #f8f9fa;
+  background: #f5f7fb;
 }
 
 /* 页面头部 */
 .page-header {
-  background: white;
-  padding: 16px 24px;
-  border-bottom: 1px solid #e9ecef;
+  background: #ffffff;
+  padding: 18px 22px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  margin-bottom: 16px;
 }
 
 .header-left {
@@ -236,23 +239,29 @@ const addTestMessage = () => {
   flex: 1;
   display: flex;
   min-height: 0;
+  gap: 16px;
 }
 
 .message-list-panel {
   width: 400px;
   min-width: 350px;
   max-width: 500px;
-  border-right: 1px solid #e9ecef;
-  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .message-detail-panel {
   flex: 1;
-  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* 响应式设计 */
@@ -269,6 +278,7 @@ const addTestMessage = () => {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
+    border-radius: 18px;
   }
   
   .header-left {
@@ -283,6 +293,7 @@ const addTestMessage = () => {
   
   .message-content {
     flex-direction: column;
+    gap: 12px;
   }
   
   .message-list-panel {
@@ -290,8 +301,7 @@ const addTestMessage = () => {
     max-width: none;
     min-width: 0;
     height: 46vh;
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
+    border-right: 1px solid #e5e7eb;
   }
   
   .message-detail-panel {
