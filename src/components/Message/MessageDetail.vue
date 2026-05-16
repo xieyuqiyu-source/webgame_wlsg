@@ -280,7 +280,7 @@ const formatContent = (content) => {
 <style scoped>
 .message-detail {
   height: 100%;
-  background: white;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
 }
@@ -290,6 +290,7 @@ const formatContent = (content) => {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  background: #ffffff;
 }
 
 /* 信函头部 */
@@ -415,10 +416,11 @@ const formatContent = (content) => {
 /* 任务数据样式 */
 .task-data,
 .battle-data {
-  background: #f8f9fa;
+  background: #f8fafc;
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
 }
 
 .task-data h4,
@@ -464,10 +466,11 @@ const formatContent = (content) => {
 
 /* 附件样式 */
 .message-attachments {
-  background: #f8f9fa;
+  background: #f8fafc;
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 24px;
+  border: 1px solid #e5e7eb;
 }
 
 .message-attachments h4 {

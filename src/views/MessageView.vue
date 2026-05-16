@@ -151,6 +151,8 @@ const addTestMessage = () => {
   display: flex;
   flex-direction: column;
   background: #f5f7fb;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 /* 页面头部 */
@@ -240,6 +242,7 @@ const addTestMessage = () => {
   display: flex;
   min-height: 0;
   gap: 16px;
+  background: transparent;
 }
 
 .message-list-panel {

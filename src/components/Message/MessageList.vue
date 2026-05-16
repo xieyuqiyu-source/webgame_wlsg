@@ -220,13 +220,13 @@ const getContentPreview = (content) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f8f9fa;
+  background: #ffffff;
 }
 
 /* 筛选器样式 */
 .message-filters {
   padding: 16px;
-  background: white;
+  background: #ffffff;
   border-bottom: 1px solid #e9ecef;
   display: flex;
   gap: 16px;
@@ -291,7 +291,7 @@ const getContentPreview = (content) => {
 /* 统计信息样式 */
 .message-stats {
   padding: 12px 16px;
-  background: white;
+  background: #ffffff;
   border-bottom: 1px solid #e9ecef;
   display: flex;
   gap: 16px;
@@ -314,7 +314,7 @@ const getContentPreview = (content) => {
   display: flex;
   align-items: center;
   padding: 16px;
-  background: white;
+  background: #ffffff;
   border-bottom: 1px solid #e9ecef;
   cursor: pointer;
   transition: all 0.2s;
@@ -435,7 +435,7 @@ const getContentPreview = (content) => {
   width: 32px;
   height: 32px;
   border: none;
-  background: transparent;
+  background: #ffffff;
   cursor: pointer;
   border-radius: 4px;
   display: flex;
