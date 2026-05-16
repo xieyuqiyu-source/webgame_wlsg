@@ -898,20 +898,20 @@ export default {
 }
 
 .countdown-label {
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .countdown-time {
-  color: #FFB900;
+  color: #4f46e5;
   font-size: 16px;
   font-weight: bold;
   font-family: 'Courier New', monospace;
-  background: rgba(255, 185, 0, 0.1);
+  background: rgba(99, 102, 241, 0.08);
   padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 185, 0, 0.3);
+  border: 1px solid rgba(165, 180, 252, 0.7);
 }
 
 .refresh-cost {
@@ -921,16 +921,17 @@ export default {
 }
 
 .coin-icon {
-  color: #FFB900;
+  color: #f59e0b;
 }
 
 .cost-text {
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
   font-size: 13px;
+  font-weight: 600;
 }
 
 .manual-refresh-btn {
-  background: linear-gradient(135deg, #FFB900, #FF8C00);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   border: none;
   border-radius: 8px;
@@ -942,18 +943,18 @@ export default {
   gap: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.3);
+  box-shadow: 0 10px 18px rgba(79, 70, 229, 0.18);
 }
 
 .manual-refresh-btn:hover:not(.disabled) {
-  background: linear-gradient(135deg, #FF8C00, #FFB900);
+  background: linear-gradient(135deg, #5b5df0, #4338ca);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.4);
+  box-shadow: 0 14px 24px rgba(79, 70, 229, 0.24);
 }
 
 .manual-refresh-btn.disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.4);
+  background: #e5e7eb;
+  color: #94a3b8;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -979,26 +980,25 @@ export default {
 
 .search-icon {
   @apply absolute left-3 top-1/2 transform -translate-y-1/2;
-  color: rgba(255, 255, 255, 0.6);
+  color: #94a3b8;
 }
 
 .search-input {
   @apply w-full pl-10 pr-4 py-3 rounded-lg transition-all duration-200;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  color: white;
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  color: #111827;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: #94a3b8;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #FFB900;
-  box-shadow: 0 0 0 2px rgba(255, 185, 0, 0.2);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  background: #ffffff;
 }
 
 .filter-buttons {
@@ -1007,59 +1007,56 @@ export default {
 
 .filter-btn {
   @apply px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.96);
+  color: #64748b;
+  border: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .filter-btn:hover {
-  background: rgba(255, 185, 0, 0.2);
-  border-color: #FFB900;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #111827;
   transform: translateY(-1px);
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
-  color: #18181B;
-  border-color: #FFB900;
-  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.3);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 22px rgba(79, 70, 229, 0.18);
 }
 
-/* 在线统计样式 */
 .online-stats {
-  background: rgba(35, 124, 72, 0.1);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 20px;
   padding: 20px;
   display: flex;
   gap: 24px;
   flex-wrap: wrap;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .stat-item {
   @apply flex items-center gap-3;
-  background: rgba(255, 255, 255, 0.1);
+  background: #f8fafc;
   padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(35, 124, 72, 0.2);
+  border-radius: 14px;
+  border: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .stat-icon {
-  color: #FFB900;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  color: #6366f1;
 }
 
 .stat-label {
   @apply text-sm font-medium;
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
 }
 
 .stat-value {
   @apply text-sm font-bold;
-  color: #FFB900;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  color: #111827;
 }
 
 /* NPC列表容器样式 */
@@ -1068,38 +1065,35 @@ export default {
 }
 
 .npc-list-item {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
   padding: 16px;
   /* cursor: pointer; */
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  color: white;
+  color: #111827;
   /* display: flex; */
   align-items: center;
   gap: 16px;
   min-height: 60px;
 }
 .npc-list-items {
-  /* background: rgba(255, 255, 255, 0.05); */
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
   padding: 16px;
   /* cursor: pointer; */
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  color: white;
+  color: #111827;
   /* display: flex; */
   align-items: center;
   gap: 16px;
   min-height: 60px;
 }
 .npc-list-item:hover {
-  border-color: rgba(255, 185, 0, 0.4);
-  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.1);
+  border-color: rgba(165, 180, 252, 0.9);
+  box-shadow: 0 14px 28px rgba(99, 102, 241, 0.08);
 }
 
 /* 阵营标识样式 */
@@ -1133,13 +1127,12 @@ export default {
 
 .npc-name {
   @apply text-base font-bold mb-1 truncate;
-  color: #FFB900;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  color: #111827;
 }
 
 .npc-level {
   @apply text-xs;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
 }
 
 /* 资源信息样式 */
@@ -1149,8 +1142,8 @@ export default {
 
 .resource-item {
   @apply flex items-center gap-1 text-xs;
-  color: white;
-  font-weight: 500;
+  color: #111827;
+  font-weight: 700;
 }
 
 .resource-icon {
@@ -1159,8 +1152,7 @@ export default {
 }
 
 .resource-value {
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  color: #111827;
 }
 
 /* 侦查状态信息样式 */
@@ -1171,8 +1163,8 @@ export default {
  
  .scout-status {
    @apply flex items-center gap-1 text-xs;
-   color: white;
-   font-weight: 500;
+   color: #111827;
+   font-weight: 600;
  }
  
  .scout-icon {
@@ -1181,27 +1173,25 @@ export default {
  }
  
  .scout-label {
-   color: rgba(255, 255, 255, 0.7);
+   color: #64748b;
  }
  
  .scout-time {
-   color: #FFB900;
+   color: #4f46e5;
    font-weight: bold;
-   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
    font-size: 10px;
  }
  
  /* 侦查结果样式 - 横向布局 */
  .scout-result {
    @apply mt-3 p-3 rounded-lg w-full;
-   background: rgba(255, 185, 0, 0.1);
-   border: 1px solid rgba(255, 185, 0, 0.3);
-   backdrop-filter: blur(10px);
+   background: #f8fafc;
+   border: 1px solid rgba(229, 231, 235, 0.92);
  }
  
  .scout-result-header {
    @apply flex items-center justify-between mb-2 text-sm font-bold;
-   color: #FFB900;
+   color: #111827;
  }
  
  .scout-result-header > div:first-child {
@@ -1210,16 +1200,16 @@ export default {
  
  .army-summary {
    @apply flex items-center gap-4 text-xs;
-   color: rgba(255, 255, 255, 0.8);
+   color: #64748b;
  }
  
  .army-total {
-   color: #FFB900;
+   color: #4f46e5;
    font-weight: bold;
  }
  
  .army-types {
-   color: rgba(255, 255, 255, 0.6);
+   color: #94a3b8;
  }
  
  .army-details {
@@ -1228,18 +1218,18 @@ export default {
  
  .unit-item {
    @apply flex items-center gap-2 text-xs px-2 py-1 rounded;
-   background: rgba(255, 255, 255, 0.05);
-   border: 1px solid rgba(255, 185, 0, 0.2);
+   background: #ffffff;
+   border: 1px solid rgba(229, 231, 235, 0.92);
    min-width: 80px;
  }
  
  .unit-name {
-   color: rgba(255, 255, 255, 0.8);
+   color: #475569;
    font-size: 10px;
  }
  
  .unit-count {
-   color: #FFB900;
+   color: #111827;
    font-weight: bold;
    font-size: 10px;
  }
@@ -1517,27 +1507,24 @@ export default {
 /* 空状态样式 */
 .empty-state {
   @apply flex flex-col items-center justify-center py-16 text-center;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 20px;
   margin: 20px 0;
 }
 
 .empty-icon {
-  color: rgba(255, 255, 255, 0.4);
+  color: #94a3b8;
   margin-bottom: 16px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 .empty-title {
   @apply text-xl font-bold mb-2;
-  color: #FFB900;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #111827;
 }
 
 .empty-text {
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
 }
 
 @media (max-width: 768px) {
