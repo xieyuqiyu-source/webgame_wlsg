@@ -2,6 +2,42 @@ import { defineStore } from 'pinia'
 import { getUnitById } from '../../config/factionConfig.js'
 import { useNotificationStore } from './notificationStore.js'
 import { useGameStore } from './gameStore.js'
+import { useNpcStore } from './npcStore.js'
+import { resolveCombat } from '../../domain/combat/combatService.js'
+import { COMBAT_RULE_IDS } from '../../domain/combat/combatConstants.js'
+
+const SORTIE_STATUS = {
+  OUTBOUND: 'outbound',
+  RETURNING: 'returning'
+}
+
+const SORTIE_COOLDOWN_MS = 10 * 1000
+
+let sortieTimer = null
+
+const clearSortieTimer = () => {
+  if (sortieTimer) {
+    clearTimeout(sortieTimer)
+    sortieTimer = null
+  }
+}
+
+const clampDuration = (duration, min, max) => Math.min(max, Math.max(min, duration))
+
+const calculateSortieDurations = (units = [], npcLevel = 1) => {
+  const totalUnits = units.reduce((sum, unit) => sum + (unit.count || 0), 0)
+  const weightedSpeed = units.reduce((sum, unit) => sum + ((unit.speed || 1) * (unit.count || 0)), 0)
+  const averageSpeed = totalUnits > 0 ? (weightedSpeed / totalUnits) : 1
+  const speedFactor = 12 / Math.max(4, averageSpeed)
+  const levelFactor = 1 + Math.max(0, (npcLevel || 1) - 1) * 0.03
+  const outboundDuration = clampDuration(Math.round(18000 * speedFactor * levelFactor), 8000, 45000)
+  const returnDuration = clampDuration(Math.round(outboundDuration * 0.8), 6000, 36000)
+
+  return {
+    outboundDuration,
+    returnDuration
+  }
+}
 
 export const createDefaultRecruitmentConfig = () => ({
   baseTrainTime: 5 * 60 * 1000,
@@ -11,7 +47,10 @@ export const createDefaultRecruitmentConfig = () => ({
 export const createDefaultMilitaryState = () => ({
   army: {},
   recruitmentQueue: [],
-  recruitmentConfig: createDefaultRecruitmentConfig()
+  recruitmentConfig: createDefaultRecruitmentConfig(),
+  sortieTask: null,
+  sortieCooldownUntil: 0,
+  pendingBattleReport: null
 })
 
 export const useMilitaryStore = defineStore('military', {
@@ -24,7 +63,11 @@ export const useMilitaryStore = defineStore('military', {
 
     getActualTrainTime: (state) => {
       return Math.floor(state.recruitmentConfig.baseTrainTime / state.recruitmentConfig.speedMultiplier)
-    }
+    },
+
+    isSortieBusy: (state) => Boolean(state.sortieTask),
+
+    isSortieCoolingDown: (state) => state.sortieCooldownUntil > Date.now()
   },
 
   actions: {
@@ -32,7 +75,10 @@ export const useMilitaryStore = defineStore('military', {
       return {
         army: this.army,
         recruitmentQueue: this.recruitmentQueue,
-        recruitmentConfig: this.recruitmentConfig
+        recruitmentConfig: this.recruitmentConfig,
+        sortieTask: this.sortieTask,
+        sortieCooldownUntil: this.sortieCooldownUntil,
+        pendingBattleReport: this.pendingBattleReport
       }
     },
 
@@ -49,6 +95,9 @@ export const useMilitaryStore = defineStore('military', {
         ...createDefaultRecruitmentConfig(),
         ...(militaryState.recruitmentConfig || {})
       }
+      this.sortieTask = militaryState.sortieTask || null
+      this.sortieCooldownUntil = militaryState.sortieCooldownUntil || 0
+      this.pendingBattleReport = militaryState.pendingBattleReport || null
     },
 
     resetMilitaryState() {
@@ -133,6 +182,277 @@ export const useMilitaryStore = defineStore('military', {
           }, remaining)
         }
       })
+
+      this.restoreSortieState(now)
+    },
+
+    restoreSortieState(now = Date.now()) {
+      clearSortieTimer()
+
+      if (this.sortieTask) {
+        this.progressSortieTask(now)
+        return
+      }
+
+      if (this.sortieCooldownUntil > now) {
+        sortieTimer = setTimeout(() => {
+          this.restoreSortieState()
+        }, this.sortieCooldownUntil - now)
+        return
+      }
+
+      if (this.sortieCooldownUntil) {
+        this.sortieCooldownUntil = 0
+      }
+    },
+
+    queueSortieTimer() {
+      clearSortieTimer()
+
+      const now = Date.now()
+      if (this.sortieTask) {
+        const wait = Math.max(0, this.sortieTask.phaseEndsAt - now)
+        sortieTimer = setTimeout(() => {
+          this.progressSortieTask()
+        }, wait)
+        return
+      }
+
+      if (this.sortieCooldownUntil > now) {
+        sortieTimer = setTimeout(() => {
+          this.restoreSortieState()
+          useGameStore().saveGame()
+        }, this.sortieCooldownUntil - now)
+      }
+    },
+
+    createSortieTask({ npc, ruleId, selections = {} }) {
+      const notificationStore = useNotificationStore()
+      const gameStore = useGameStore()
+
+      if (!npc || !ruleId) {
+        return { ok: false, reason: 'invalid-target' }
+      }
+
+      if (this.sortieTask) {
+        notificationStore.addInfoNotification('无法出征', '当前已有部队在外行军')
+        return { ok: false, reason: 'busy' }
+      }
+
+      if (this.sortieCooldownUntil > Date.now()) {
+        notificationStore.addInfoNotification('部队整备中', '部队刚刚归来，请稍后再出征')
+        return { ok: false, reason: 'cooldown' }
+      }
+
+      const playerFaction = gameStore.userFaction
+      if (!playerFaction) {
+        notificationStore.addErrorNotification('出兵失败', '请先完成阵营初始化')
+        return { ok: false, reason: 'missing-faction' }
+      }
+
+      const dispatchedUnits = Object.entries(selections).reduce((result, [unitId, rawCount]) => {
+        const count = Number.parseInt(rawCount, 10)
+        if (!count || count <= 0) return result
+        const available = this.army[unitId] || 0
+        if (available < count) return result
+        const unit = getUnitById(unitId)
+        if (!unit) return result
+        result.push({
+          ...unit,
+          count
+        })
+        return result
+      }, [])
+
+      if (dispatchedUnits.length === 0) {
+        notificationStore.addWarningNotification('出兵失败', '请至少选择一支部队')
+        return { ok: false, reason: 'empty' }
+      }
+
+      const requiredUnits = dispatchedUnits.every((unit) => (this.army[unit.id] || 0) >= unit.count)
+      if (!requiredUnits) {
+        notificationStore.addErrorNotification('出兵失败', '当前军队数量不足，无法完成出征')
+        return { ok: false, reason: 'insufficient-units' }
+      }
+
+      dispatchedUnits.forEach((unit) => {
+        this.consumeUnits(unit.id, unit.count)
+      })
+
+      const now = Date.now()
+      const { outboundDuration, returnDuration } = calculateSortieDurations(dispatchedUnits, npc.level)
+      const actionLabel = ruleId === COMBAT_RULE_IDS.PLUNDER_STRIKE ? '掠夺' : '攻击'
+
+      this.sortieTask = {
+        id: `${now}-${Math.random().toString(16).slice(2, 8)}`,
+        ruleId,
+        actionLabel,
+        status: SORTIE_STATUS.OUTBOUND,
+        startedAt: now,
+        phaseEndsAt: now + outboundDuration,
+        outboundDuration,
+        returnDuration,
+        target: {
+          id: npc.id,
+          name: npc.name,
+          faction: npc.faction,
+          level: npc.level
+        },
+        attacker: {
+          faction: playerFaction,
+          nickname: gameStore.userNickname || '玩家',
+          userUUID: gameStore.userUUID
+        },
+        dispatchedUnits,
+        battleResult: null,
+        survivors: [],
+        loot: { wood: 0, soil: 0, iron: 0, food: 0 }
+      }
+
+      this.pendingBattleReport = null
+      this.queueSortieTimer()
+      gameStore.saveGame()
+
+      notificationStore.addInfoNotification(
+        `${actionLabel}出征`,
+        `部队已出发前往 ${npc.name}，预计 ${Math.ceil(outboundDuration / 1000)} 秒后接敌`
+      )
+
+      return { ok: true, task: this.sortieTask }
+    },
+
+    progressSortieTask(now = Date.now()) {
+      if (!this.sortieTask) {
+        this.restoreSortieState(now)
+        return
+      }
+
+      if (this.sortieTask.phaseEndsAt > now) {
+        this.queueSortieTimer()
+        return
+      }
+
+      if (this.sortieTask.status === SORTIE_STATUS.OUTBOUND) {
+        this.resolveSortieBattle(now)
+        return
+      }
+
+      if (this.sortieTask.status === SORTIE_STATUS.RETURNING) {
+        this.completeSortieReturn(now)
+      }
+    },
+
+    resolveSortieBattle(now = Date.now()) {
+      if (!this.sortieTask) return
+
+      const task = this.sortieTask
+      const notificationStore = useNotificationStore()
+      const npcStore = useNpcStore()
+      const gameStore = useGameStore()
+      const liveNpc = npcStore.getNpcById(task.target.id)
+      const defenderNpc = liveNpc || task.target
+
+      const result = resolveCombat({
+        ruleId: task.ruleId,
+        attackerArmy: {
+          faction: task.attacker.faction,
+          units: task.dispatchedUnits.map((unit) => ({ ...unit })),
+          playerInfo: {
+            userUUID: task.attacker.userUUID,
+            nickname: task.attacker.nickname
+          },
+          title: `${task.actionLabel}部队`
+        },
+        defenderArmy: {
+          faction: defenderNpc.faction,
+          units: liveNpc?.defenseArmy?.units || [],
+          npcInfo: {
+            id: defenderNpc.id,
+            name: defenderNpc.name
+          },
+          resources: { ...(liveNpc?.resources || {}) },
+          defenderResources: { ...(liveNpc?.resources || {}) },
+          title: `${defenderNpc.name}守军`
+        }
+      })
+
+      npcStore.attackNpc(defenderNpc.id, result)
+
+      const lossesMap = (result.attacker?.losses || []).reduce((map, entry) => {
+        map[entry.id] = entry.count || 0
+        return map
+      }, {})
+
+      const survivors = task.dispatchedUnits
+        .map((unit) => ({
+          ...unit,
+          count: Math.max(0, unit.count - (lossesMap[unit.id] || 0))
+        }))
+        .filter((unit) => unit.count > 0)
+
+      this.sortieTask = {
+        ...task,
+        status: SORTIE_STATUS.RETURNING,
+        phaseEndsAt: now + task.returnDuration,
+        battleResult: result,
+        survivors,
+        loot: result.details?.plundered || { wood: 0, soil: 0, iron: 0, food: 0 }
+      }
+
+      const statusText = result.battleResult === 'ATTACKER_VICTORY' ? '获胜' : '失利'
+      notificationStore.addInfoNotification(
+        `${task.actionLabel}${statusText}`,
+        `${defenderNpc.name} 战斗已结算，部队正在返程`
+      )
+
+      gameStore.saveGame()
+      this.queueSortieTimer()
+    },
+
+    completeSortieReturn(now = Date.now()) {
+      if (!this.sortieTask) return
+
+      const task = this.sortieTask
+      const gameStore = useGameStore()
+      const notificationStore = useNotificationStore()
+
+      task.survivors.forEach((unit) => {
+        this.addUnits(unit.id, unit.count)
+      })
+
+      const { stored, overflow } = gameStore.storeLootedResources(task.loot || {})
+      const finalReport = {
+        ...task.battleResult,
+        details: {
+          ...(task.battleResult?.details || {}),
+          storedResources: stored,
+          overflowResources: overflow
+        }
+      }
+
+      this.pendingBattleReport = finalReport
+      this.sortieTask = null
+      this.sortieCooldownUntil = now + SORTIE_COOLDOWN_MS
+
+      const storedSummary = Object.values(stored).reduce((sum, amount) => sum + (amount || 0), 0)
+      const overflowSummary = Object.values(overflow).reduce((sum, amount) => sum + (amount || 0), 0)
+      let message = `${task.target.name} 的出征部队已归来`
+      if (storedSummary > 0) {
+        message += `，入仓 ${storedSummary} 资源`
+      }
+      if (overflowSummary > 0) {
+        message += `，溢出 ${overflowSummary} 资源`
+      }
+
+      notificationStore.addSuccessNotification('部队归来', message)
+
+      gameStore.saveGame()
+      this.queueSortieTimer()
+    },
+
+    clearPendingBattleReport() {
+      this.pendingBattleReport = null
+      useGameStore().saveGame()
     },
 
     recruitUnits(unitId, count) {

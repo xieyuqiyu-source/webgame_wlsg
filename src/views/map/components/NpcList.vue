@@ -57,6 +57,25 @@
         立即刷新
       </button>
     </div>
+
+    <div v-if="activeSortieTask || isSortieCoolingDown" class="sortie-status-panel">
+      <div class="sortie-status-main">
+        <div class="sortie-status-title">
+          {{ activeSortieTask ? sortieStatusTitle : '部队整备中' }}
+        </div>
+        <div class="sortie-status-subtitle">
+          <template v-if="activeSortieTask">
+            {{ activeSortieTask.actionLabel }} {{ activeSortieTask.target.name }} · {{ sortiePhaseText }}
+          </template>
+          <template v-else>
+            部队正在冷却，暂时无法再次出征
+          </template>
+        </div>
+      </div>
+      <div class="sortie-status-time">
+        {{ activeSortieTask ? sortieTimeText : cooldownTimeText }}
+      </div>
+    </div>
     
    
     
@@ -127,13 +146,13 @@
             </svg>
             侦查
           </button>
-          <button class="action-btn attack" @click.stop="handleAttack(npc)">
+          <button class="action-btn attack" :disabled="Boolean(activeSortieTask) || isSortieCoolingDown" @click.stop="handleAttack(npc)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M6.92,5H5L6.5,6.5L5,8H6.92L8.42,6.5L6.92,5M13,19H11V17.5L2.5,9H4.42L11,15.58V14H13V19M20.5,2.5L19,4L15.5,0.5L17,2L15.5,3.5L19,7L20.5,5.5L22,7L20.5,8.5L17,5L20.5,2.5Z"/>
             </svg>
             攻击
           </button>
-          <button class="action-btn plunder" @click.stop="handlePlunder(npc)">
+          <button class="action-btn plunder" :disabled="Boolean(activeSortieTask) || isSortieCoolingDown" @click.stop="handlePlunder(npc)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M21,6H3V4H21M19,8C20.11,8 21,8.9 21,10V20C21,21.11 20.11,22 19,22H5C3.89,22 3,21.11 3,20V10C3,8.9 3.89,8 5,8H19M12,11A3,3 0 0,0 9,14A3,3 0 0,0 12,17A3,3 0 0,0 15,14A3,3 0 0,0 12,11Z"/>
             </svg>
@@ -278,9 +297,8 @@
 
 <script>
 import { formatNumber } from '@/utils/formatters.js'
-import { getFactionUnits, UNIT_TYPES, getUnitById } from '@/config/factionConfig.js'
+import { getUnitById } from '@/config/factionConfig.js'
 import { COMBAT_RULE_IDS } from '@/domain/combat/combatConstants.js'
-import { resolveCombat } from '@/domain/combat/combatService.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { useMilitaryStore } from '@/store/modules/militaryStore.js'
 import { useNotificationStore } from '@/store/modules/notificationStore.js'
@@ -426,6 +444,37 @@ export default {
 
     selectedDispatchTotal() {
       return Object.values(this.dispatchSelections).reduce((sum, count) => sum + (Number(count) || 0), 0)
+    },
+
+    activeSortieTask() {
+      return this.militaryStore.sortieTask
+    },
+
+    pendingBattleReport() {
+      return this.militaryStore.pendingBattleReport
+    },
+
+    isSortieCoolingDown() {
+      return (this.militaryStore.sortieCooldownUntil || 0) > this.currentTime
+    },
+
+    sortieStatusTitle() {
+      if (!this.activeSortieTask) return ''
+      return this.activeSortieTask.status === 'outbound' ? '部队出征中' : '部队返程中'
+    },
+
+    sortiePhaseText() {
+      if (!this.activeSortieTask) return ''
+      return this.activeSortieTask.status === 'outbound' ? '前往目标' : '返回城池'
+    },
+
+    sortieTimeText() {
+      if (!this.activeSortieTask) return ''
+      return this.formatDurationFromNow(this.activeSortieTask.phaseEndsAt)
+    },
+
+    cooldownTimeText() {
+      return this.formatDurationFromNow(this.militaryStore.sortieCooldownUntil)
     }
   },
   async mounted() {
@@ -451,6 +500,15 @@ export default {
     //=== 监听筛选条件变化，重置分页
     selectedFaction() {
       this.resetPagination()
+    },
+    pendingBattleReport: {
+      immediate: true,
+      handler(report) {
+        if (!report) return
+        this.battleReportData = report
+        this.battleReportVisible = true
+        this.militaryStore.clearPendingBattleReport()
+      }
     }
   },
   methods: {
@@ -529,31 +587,27 @@ export default {
     
     //=== handleAttack 处理攻击事件
     handleAttack(npc) {
+      if (this.activeSortieTask || this.isSortieCoolingDown) {
+        this.notificationStore.addInfoNotification('无法出征', this.activeSortieTask ? '当前已有部队在外行军' : '部队冷却中，请稍后再试')
+        return
+      }
       this.openDispatchDialog(npc, COMBAT_RULE_IDS.CLASSIC_CRUSH)
     },
 
     handlePlunder(npc) {
+      if (this.activeSortieTask || this.isSortieCoolingDown) {
+        this.notificationStore.addInfoNotification('无法出征', this.activeSortieTask ? '当前已有部队在外行军' : '部队冷却中，请稍后再试')
+        return
+      }
       this.openDispatchDialog(npc, COMBAT_RULE_IDS.PLUNDER_STRIKE)
     },
 
-    executeNpcCombat(npc, ruleId) {
-      const attackerArmy = this.buildPlayerArmyData(ruleId, this.dispatchSelections)
-      if (!attackerArmy) {
+    openDispatchDialog(npc, ruleId) {
+      if (this.activeSortieTask || this.isSortieCoolingDown) {
+        this.notificationStore.addInfoNotification('无法出征', this.activeSortieTask ? '当前已有部队在外行军' : '部队冷却中，请稍后再试')
         return
       }
 
-      const defenderArmy = this.buildNpcArmyData(npc)
-      const result = resolveCombat({
-        ruleId,
-        attackerArmy,
-        defenderArmy
-      })
-
-      this.applyCombatResult(npc, result)
-      this.closeDispatchDialog()
-    },
-
-    openDispatchDialog(npc, ruleId) {
       if (this.availableDispatchUnits.length === 0) {
         this.notificationStore.addWarningNotification('出兵失败', '当前没有可出征的军队')
         return
@@ -621,95 +675,31 @@ export default {
         return
       }
 
-      this.executeNpcCombat(this.dispatchTargetNpc, this.dispatchRuleId)
-    },
-
-    buildPlayerArmyData(ruleId, selections = {}) {
-      const playerFaction = this.gameStore.userFaction
-      if (!playerFaction) {
-        this.notificationStore.addErrorNotification('出兵失败', '请先完成阵营初始化')
-        return null
-      }
-
-      const armyUnits = []
-      Object.entries(selections).forEach(([unitId, selectedCount]) => {
-        const count = this.normalizeDispatchCount(unitId, selectedCount)
-        if (!count) return
-        const unit = getUnitById(unitId)
-        if (!unit) return
-        armyUnits.push({
-          ...unit,
-          count
-        })
+      const dispatchResult = this.militaryStore.createSortieTask({
+        npc: this.dispatchTargetNpc,
+        ruleId: this.dispatchRuleId,
+        selections: this.dispatchSelections
       })
 
-      if (armyUnits.length === 0) {
-        this.notificationStore.addWarningNotification('出兵失败', '当前没有可出征的军队')
-        return null
-      }
-
-      const actionLabel = ruleId === COMBAT_RULE_IDS.PLUNDER_STRIKE ? '掠夺' : '攻击'
-
-      return {
-        faction: playerFaction,
-        units: armyUnits,
-        playerInfo: {
-          userUUID: this.gameStore.userUUID,
-          nickname: this.gameStore.userNickname || '玩家'
-        },
-        title: `${actionLabel}部队`
-      }
-    },
-
-    buildNpcArmyData(npc) {
-      return {
-        faction: npc.faction,
-        units: npc.defenseArmy?.units || [],
-        npcInfo: {
-          id: npc.id,
-          name: npc.name
-        },
-        resources: { ...(npc.resources || {}) },
-        defenderResources: { ...(npc.resources || {}) },
-        title: `${npc.name}守军`
-      }
-    },
-
-    applyCombatResult(npc, result) {
-      this.militaryStore.applyBattleLosses(result.attacker?.losses || [])
-      this.npcStore.attackNpc(npc.id, result)
-
-      const plundered = result.details?.plundered || {}
-      const { stored, overflow } = this.gameStore.storeLootedResources(plundered)
-      result.details = {
-        ...result.details,
-        storedResources: stored,
-        overflowResources: overflow
-      }
-      this.battleReportData = result
-      this.battleReportVisible = true
-
-      const actionLabel = result.actionType === 'PLUNDER' ? '掠夺' : '攻击'
-      const storedSummary = Object.values(stored).reduce((sum, amount) => sum + (amount || 0), 0)
-      const overflowSummary = Object.values(overflow).reduce((sum, amount) => sum + (amount || 0), 0)
-
-      if (result.battleResult === 'ATTACKER_VICTORY') {
-        let extra = ''
-        if (storedSummary > 0) {
-          extra += `，入仓 ${formatNumber(storedSummary)} 资源`
-        }
-        if (overflowSummary > 0) {
-          extra += `，仓库装不下 ${formatNumber(overflowSummary)} 资源`
-        }
-        this.notificationStore.addSuccessNotification(`${actionLabel}成功`, `${npc.name} 战斗获胜${extra}`)
-      } else {
-        this.notificationStore.addWarningNotification(`${actionLabel}失败`, `${npc.name} 防守成功，我方部队已承受损耗`)
+      if (dispatchResult?.ok) {
+        this.closeDispatchDialog()
       }
     },
 
     closeBattleReport() {
       this.battleReportVisible = false
       this.battleReportData = null
+    },
+
+    formatDurationFromNow(targetTime) {
+      const remainingMs = Math.max(0, (targetTime || 0) - this.currentTime)
+      const totalSeconds = Math.ceil(remainingMs / 1000)
+      const minutes = Math.floor(totalSeconds / 60)
+      const seconds = totalSeconds % 60
+      if (minutes > 0) {
+        return `${minutes}分${seconds.toString().padStart(2, '0')}秒`
+      }
+      return `${seconds}秒`
     },
     
     //=== changePage 切换页码
@@ -878,6 +868,46 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+}
+
+.sortie-status-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
+  border: 1px solid rgba(199, 210, 254, 0.95);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.sortie-status-main {
+  min-width: 0;
+}
+
+.sortie-status-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.sortie-status-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.sortie-status-time {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(165, 180, 252, 0.7);
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .refresh-info {
@@ -1248,6 +1278,12 @@ export default {
   min-width: 60px;
 }
 
+.action-btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
 .action-btn.scout {
   background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
   border-color: #3B82F6;
@@ -1554,6 +1590,18 @@ export default {
     align-items: stretch;
     gap: 12px;
     padding: 14px;
+  }
+
+  .sortie-status-panel {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .sortie-status-time {
+    align-self: stretch;
+    text-align: center;
   }
 
   .refresh-info {
