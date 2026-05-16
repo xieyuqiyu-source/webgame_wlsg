@@ -48,49 +48,52 @@
           :key="unit.id"
           class="unit-card"
         >
-          <!-- 兵种名称栏 -->
-          <HoverCard
-            class="unit-title-hover"
-            density="compact"
-            :show="hoveredUnitId === unit.id"
-            @mouseenter="hoveredUnitId = unit.id"
-            @mouseleave="hoveredUnitId = null"
-          >
-            <template #trigger>
-              <div class="unit-title-bar">
-                <div class="unit-icon">{{ unit.icon }}</div>
-                <h4 class="unit-name">{{ unit.name }}</h4>
-              </div>
-            </template>
+          <div class="unit-card-main">
+            <!-- 兵种名称栏 -->
+            <HoverCard
+              class="unit-title-hover"
+              density="compact"
+              :show="hoveredUnitId === unit.id"
+              @mouseenter="hoveredUnitId = unit.id"
+              @mouseleave="hoveredUnitId = null"
+            >
+              <template #trigger>
+                <div class="unit-title-bar">
+                  <div class="unit-icon">{{ unit.icon }}</div>
+                  <h4 class="unit-name">{{ unit.name }}</h4>
+                  <div class="unit-owned-mobile">现有 {{ getUnitCount(unit.id) }}</div>
+                </div>
+              </template>
 
-            <UnitHoverContent :unit="unit" />
-          </HoverCard>
-          
-          <!-- 属性信息网格 -->
-          <div class="unit-stats-grid">
-            <div class="stat-item">
-              <div class="stat-label"><span class="stat-icon">⚔️</span><span class="stat-text">攻击</span></div>
-              <div class="stat-value">{{ unit.attack }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label"><span class="stat-icon">🛡️</span><span class="stat-text">步防</span></div>
-              <div class="stat-value">{{ unit.infantryDefense }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label"><span class="stat-icon">🐎</span><span class="stat-text">骑防</span></div>
-              <div class="stat-value">{{ unit.cavalryDefense }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label"><span class="stat-icon">💨</span><span class="stat-text">速度</span></div>
-              <div class="stat-value">{{ unit.speed }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label"><span class="stat-icon">🎒</span><span class="stat-text">运载</span></div>
-              <div class="stat-value">{{ unit.carryCapacity }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label"><span class="stat-icon">🍚</span><span class="stat-text">口粮</span></div>
-              <div class="stat-value">{{ unit.unitType === 'special' ? 0 : 2 }}</div>
+              <UnitHoverContent :unit="unit" />
+            </HoverCard>
+            
+            <!-- 属性信息网格 -->
+            <div class="unit-stats-grid">
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">⚔️</span><span class="stat-text">攻击</span></div>
+                <div class="stat-value">{{ unit.attack }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🛡️</span><span class="stat-text">步防</span></div>
+                <div class="stat-value">{{ unit.infantryDefense }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🐎</span><span class="stat-text">骑防</span></div>
+                <div class="stat-value">{{ unit.cavalryDefense }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">💨</span><span class="stat-text">速度</span></div>
+                <div class="stat-value">{{ unit.speed }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🎒</span><span class="stat-text">运载</span></div>
+                <div class="stat-value">{{ unit.carryCapacity }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🍚</span><span class="stat-text">口粮</span></div>
+                <div class="stat-value">{{ unit.unitType === 'special' ? 0 : 2 }}</div>
+              </div>
             </div>
           </div>
           
@@ -411,6 +414,10 @@ export default {
   box-shadow: 0 2px 8px rgba(255, 185, 0, 0.2);
 }
 
+.unit-owned-mobile {
+  display: none;
+}
+
 .unit-help {
   position: absolute;
   top: 18px;
@@ -622,13 +629,39 @@ export default {
     gap: 5px;
   }
 
+  .unit-card-main {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 8px;
+    align-items: stretch;
+  }
+
   .unit-title-bar {
-    padding: 6px 8px;
-    justify-content: flex-start;
+    height: 100%;
+    min-height: 84px;
+    padding: 8px 6px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    border-radius: 10px;
   }
 
   .unit-name {
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .unit-icon {
+    font-size: 18px;
+  }
+
+  .unit-owned-mobile {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(24, 24, 27, 0.72);
   }
 
   .unit-stats-grid {
@@ -664,12 +697,7 @@ export default {
   }
 
   .unit-count {
-    padding: 4px 8px;
-  }
-
-  .count-label,
-  .count-value {
-    font-size: 11px;
+    display: none;
   }
 
   .recruit-button {
