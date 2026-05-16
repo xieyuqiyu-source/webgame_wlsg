@@ -155,8 +155,8 @@ export default {
 <style>
 .sidebar-backdrop {
   @apply fixed inset-0 z-40;
-  background: rgba(15, 23, 42, 0.16);
-  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(8px);
 }
 
 .game-sidebar {
@@ -164,16 +164,18 @@ export default {
   left: 16px;
   top: 16px;
   z-index: 50;
-  width: 304px;
+  width: 296px;
   height: calc(100vh - 32px);
   transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(22px);
-  border: 1px solid rgba(229, 231, 235, 0.96);
-  border-radius: 30px;
-  box-shadow: 0 24px 60px -22px rgba(15, 23, 42, 0.25);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 24px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
   color: #111827;
   font-family: 'Inter', 'PingFang SC', sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .game-sidebar.collapsed {
@@ -189,11 +191,11 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(229, 231, 235, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.96);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
@@ -211,25 +213,27 @@ export default {
 }
 
 .mobile-sidebar-header {
-  @apply flex items-center justify-between px-5 py-4;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.92);
+  @apply flex items-center justify-between px-4 py-3;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+  background: rgba(248, 250, 252, 0.88);
 }
 
 .mobile-sidebar-title {
-  @apply text-sm font-semibold tracking-wide;
-  color: #111827;
+  @apply text-sm font-semibold;
+  color: #0f172a;
 }
 
 .mobile-sidebar-close {
-  @apply inline-flex h-10 w-10 items-center justify-center rounded-full;
-  color: #111827;
-  background: rgba(248, 250, 252, 0.96);
-  border: 1px solid rgba(229, 231, 235, 0.92);
+  @apply inline-flex h-9 w-9 items-center justify-center rounded-xl;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.92);
 }
 
 .scrollable-content {
-  @apply flex-1 overflow-y-auto px-4 py-5;
+  @apply flex-1 overflow-y-auto px-3 py-3;
   scrollbar-width: none;
+  min-width: 0;
 }
 
 .scrollable-content::-webkit-scrollbar {
@@ -237,10 +241,10 @@ export default {
 }
 
 .city-info-card {
-  @apply mb-4 rounded-[24px] p-5;
-  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 55%, rgba(255, 255, 255, 0.96) 100%);
-  border: 1px solid rgba(199, 210, 254, 0.88);
-  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.08);
+  @apply mb-3 rounded-[18px] p-4;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(255, 255, 255, 0.96) 100%);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
 .city-header,
@@ -266,10 +270,10 @@ export default {
 }
 
 .coins-display {
-  @apply flex items-center gap-1 rounded-full px-3 py-1.5 transition-colors;
+  @apply flex items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(229, 231, 235, 0.88);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.88);
 }
 
 .coins-icon {
@@ -296,6 +300,7 @@ export default {
 .production-info,
 .production-details {
   @apply flex items-center gap-2;
+  min-width: 0;
 }
 
 .status-dot {
@@ -308,17 +313,19 @@ export default {
 .status-dot.blue { background: #3b82f6; }
 
 .section {
-  @apply mb-4 rounded-[24px] p-4;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(229, 231, 235, 0.92);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  @apply mb-3 rounded-[18px] p-3;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  min-width: 0;
 }
 
 .section-header {
   @apply text-sm font-semibold mb-3 pb-2;
   color: #111827;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.96);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.96);
   line-height: 24px;
+  min-width: 0;
 }
 
 .army-count {
@@ -339,12 +346,14 @@ export default {
 .resource-item,
 .production-item {
   @apply px-3 py-2 rounded-2xl;
+  min-width: 0;
 }
 
 .production-item {
   position: relative;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  justify-content: space-between;
 }
 
 .production-item:hover {
@@ -366,42 +375,55 @@ export default {
 .warehouse-label {
   @apply text-sm;
   color: #6b7280;
+  min-width: 0;
 }
 
 .resource-name,
 .production-name {
-  width: 32px;
+  width: auto;
+  flex: 0 1 auto;
 }
 
 .resource-value,
 .warehouse-value {
   @apply text-sm font-semibold;
   color: #111827;
+  min-width: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .production-rate {
   @apply text-sm font-semibold;
   color: #4f46e5;
-  width: 92px;
+  width: auto;
+  max-width: 100%;
   text-align: right;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
 .resource-dots-container {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .resource-dot {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid rgba(229, 231, 235, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.96);
 }
 
 .resource-dot:hover {
@@ -446,7 +468,7 @@ export default {
 }
 
 .boost-btn {
-  @apply flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all duration-200;
+  @apply flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-all duration-200;
 }
 
 .boost-btn.boost-active {
@@ -474,7 +496,8 @@ export default {
 .army-item {
   @apply flex items-center gap-3 p-3 rounded-2xl transition-all duration-200;
   background: rgba(248, 250, 252, 0.9);
-  border: 1px solid rgba(229, 231, 235, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  min-width: 0;
 }
 
 .army-icon {
@@ -504,7 +527,7 @@ export default {
 .production-tooltip,
 .upgrade-tooltip {
   min-width: 200px;
-  max-width: 280px;
+  max-width: 240px;
   z-index: 9999;
   color: white;
   background: rgba(15, 23, 42, 0.92);
@@ -695,13 +718,38 @@ export default {
     left: auto;
     right: 12px;
     top: 12px;
-    width: min(320px, calc(100vw - 24px));
+    width: min(286px, calc(100vw - 20px));
     height: calc(100vh - 24px);
     transform: translateX(110%);
   }
 
   .game-sidebar.mobile-open {
     transform: translateX(0);
+  }
+
+  .section {
+    border-radius: 16px;
+  }
+
+  .production-item,
+  .resource-item,
+  .warehouse-level,
+  .warehouse-info,
+  .resource-info,
+  .production-info,
+  .production-details,
+  .army-item {
+    min-width: 0;
+  }
+
+  .resource-name,
+  .production-name,
+  .warehouse-label,
+  .resource-value,
+  .warehouse-value,
+  .production-rate,
+  .army-count-text {
+    font-size: 12px;
   }
 }
 </style>

@@ -34,10 +34,10 @@ export default {
 
 <style scoped>
 .bottom-nav {
-  padding: 12px 16px 16px;
-  border-top: 1px solid rgba(229, 231, 235, 0.92);
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(226, 232, 240, 0.92);
+  background: rgba(248, 250, 252, 0.9);
+  backdrop-filter: blur(12px);
 }
 
 .nav-buttons {
@@ -47,11 +47,11 @@ export default {
 }
 
 .nav-button {
-  min-height: 64px;
-  padding: 10px 8px;
-  border-radius: 20px;
-  border: 1px solid rgba(229, 231, 235, 0.92);
-  background: rgba(248, 250, 252, 0.92);
+  min-height: 58px;
+  padding: 8px 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,9 +64,9 @@ export default {
 
 .nav-button:hover {
   transform: translateY(-1px);
-  border-color: rgba(129, 140, 248, 0.55);
-  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.12);
-  color: #4f46e5;
+  border-color: rgba(148, 163, 184, 0.55);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  color: #334155;
 }
 
 .nav-icon {
@@ -76,7 +76,7 @@ export default {
 }
 
 .nav-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 </style>
