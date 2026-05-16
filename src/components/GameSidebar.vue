@@ -18,15 +18,6 @@
     </div>
 
     <div class="sidebar-content" v-show="isMobile || !isCollapsed">
-      <div v-if="isMobile" class="mobile-sidebar-header">
-        <div class="mobile-sidebar-title">功能菜单</div>
-        <button class="mobile-sidebar-close" type="button" @click="$emit('close-mobile')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.3 5.71L12 12L5.71 5.71L4.29 7.12L10.59 13.41L4.29 19.71L5.71 21.12L12 14.83L18.3 21.12L19.71 19.71L13.41 13.41L19.71 7.12L18.3 5.71Z" />
-          </svg>
-        </button>
-      </div>
-
       <div class="scrollable-content">
         <SidebarCityInfo
           :citycivilization="gameStore.citycivilization"
@@ -210,24 +201,6 @@ export default {
 
 .sidebar-content {
   @apply h-full flex flex-col;
-}
-
-.mobile-sidebar-header {
-  @apply flex items-center justify-between px-4 py-3;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
-  background: rgba(248, 250, 252, 0.88);
-}
-
-.mobile-sidebar-title {
-  @apply text-sm font-semibold;
-  color: #0f172a;
-}
-
-.mobile-sidebar-close {
-  @apply inline-flex h-9 w-9 items-center justify-center rounded-xl;
-  color: #334155;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.92);
 }
 
 .scrollable-content {
@@ -715,12 +688,12 @@ export default {
 
 @media (max-width: 1024px) {
   .game-sidebar {
-    left: auto;
-    right: 12px;
+    left: 12px;
+    right: auto;
     top: 12px;
     width: min(286px, calc(100vw - 20px));
     height: calc(100vh - 24px);
-    transform: translateX(110%);
+    transform: translateX(-110%);
   }
 
   .game-sidebar.mobile-open {
