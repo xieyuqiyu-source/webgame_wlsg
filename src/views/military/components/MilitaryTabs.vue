@@ -57,6 +57,9 @@ export default {
 /* Tab 样式 */
 .tab-container {
   @apply flex flex-col;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .tab-header {
@@ -64,6 +67,9 @@ export default {
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(229, 231, 235, 0.92);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .tab-item {
@@ -89,6 +95,20 @@ export default {
 .tab-content {
   @apply flex flex-col gap-4;
   margin-top: 18px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .tab-header {
+    padding: 4px;
+    border-radius: 16px;
+  }
+
+  .tab-content {
+    margin-top: 10px;
+  }
 }
 
 @media (min-width: 768px) {

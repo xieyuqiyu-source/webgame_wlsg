@@ -205,6 +205,9 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   margin: 20px 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* 当前阵营显示样式 */
@@ -214,6 +217,9 @@ export default {
   border-bottom: 2px solid rgba(35, 124, 72, 0.3);
   backdrop-filter: blur(10px);
   position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .faction-info {
@@ -347,6 +353,9 @@ export default {
 .tab-content {
   padding: 20px;
   background: transparent;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* 兵种网格布局 */
@@ -357,6 +366,9 @@ export default {
   padding: 16px;
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* 当只有1-3个卡片时不拉长，靠左展示 */
@@ -391,6 +403,9 @@ export default {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   min-height: 190px;
   will-change: transform, box-shadow;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .unit-card:hover {
@@ -611,7 +626,7 @@ export default {
   }
 
   .tab-content {
-    padding: 6px;
+    padding: 4px;
   }
 
   .units-grid,
@@ -619,14 +634,17 @@ export default {
   .units-grid:has(.unit-card:nth-child(2):nth-last-child(1)),
   .units-grid:has(.unit-card:nth-child(3):nth-last-child(1)) {
     grid-template-columns: 1fr;
-    padding: 4px;
+    padding: 0;
     gap: 8px;
+    margin: 0;
+    max-width: none;
   }
 
   .unit-card {
     min-height: 0;
     padding: 8px;
     gap: 5px;
+    border-radius: 10px;
   }
 
   .unit-card-main {
@@ -634,6 +652,7 @@ export default {
     grid-template-columns: 92px minmax(0, 1fr);
     gap: 8px;
     align-items: stretch;
+    min-width: 0;
   }
 
   .unit-title-bar {
