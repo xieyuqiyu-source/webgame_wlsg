@@ -1,21 +1,19 @@
 //=== 游戏资源配置 - 定义游戏中各种资源的图标URL
 
+import woodIcon from '@/assets/resources/wood.gif'
+import soilIcon from '@/assets/resources/soil.gif'
+import ironIcon from '@/assets/resources/iron.gif'
+import foodIcon from '@/assets/resources/food.gif'
+
 /**
  * 游戏资源图标配置
  * 包含木材、泥土、铁矿、粮食等基础资源的图标URL
  */
 export const RESOURCE_ICONS = {
-  // 木材图标
-  wood: 'http://static.sg.9wee.com/newsg/pic_mc.gif',
-  
-  // 泥土图标
-  soil: 'http://static.sg.9wee.com/newsg/pic_nt.gif',
-  
-  // 铁矿图标
-  iron: 'http://static.sg.9wee.com/newsg/pic_tk.gif',
-  
-  // 粮食图标
-  food: 'http://static.sg.9wee.com/newsg/pic_ls.gif'
+  wood: woodIcon,
+  soil: soilIcon,
+  iron: ironIcon,
+  food: foodIcon
 }
 
 /**
