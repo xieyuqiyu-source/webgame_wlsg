@@ -73,64 +73,87 @@ export default defineComponent({
 <style scoped>
 .notification-container {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 18px;
+  right: 18px;
   z-index: 9999;
   pointer-events: none;
+  width: min(100vw - 32px, 392px);
 }
 
 .notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 320px;
-  max-width: 400px;
-  padding: 16px;
-  margin-bottom: 12px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(10px);
-  border-left: 5px solid;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 28px;
+  align-items: start;
+  column-gap: 12px;
+  width: 100%;
+  padding: 14px 14px 14px 12px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(148, 163, 184, 0.22);
   pointer-events: auto;
-  transition: all 0.3s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+  overflow: hidden;
+  position: relative;
 }
 
 .notification-item:hover {
-  transform: translateX(4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
 }
 
-/* 不同类型的通知样式 */
 .notification-success {
-  border-left-color: #047857;
-  background: linear-gradient(135deg, rgba(4, 120, 87, 0.05), #ffffff);
-  border-color: rgba(4, 120, 87, 0.2);
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.96), rgba(255, 255, 255, 0.98));
+  border-color: rgba(4, 120, 87, 0.16);
 }
 
 .notification-warning {
-  border-left-color: #b45309;
-  background: linear-gradient(135deg, rgba(180, 83, 9, 0.05), #ffffff);
-  border-color: rgba(180, 83, 9, 0.2);
+  background: linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.98));
+  border-color: rgba(180, 83, 9, 0.16);
 }
 
 .notification-info {
-  border-left-color: #1d4ed8;
-  background: linear-gradient(135deg, rgba(29, 78, 216, 0.05), #ffffff);
-  border-color: rgba(29, 78, 216, 0.2);
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.98));
+  border-color: rgba(29, 78, 216, 0.16);
 }
 
 .notification-error {
-  border-left-color: #b91c1c;
-  background: linear-gradient(135deg, rgba(185, 28, 28, 0.05), #ffffff);
-  border-color: rgba(185, 28, 28, 0.2);
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.96), rgba(255, 255, 255, 0.98));
+  border-color: rgba(185, 28, 28, 0.16);
+}
+
+.notification-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 999px;
+}
+
+.notification-success::before {
+  background: #059669;
+}
+
+.notification-warning::before {
+  background: #d97706;
+}
+
+.notification-info::before {
+  background: #2563eb;
+}
+
+.notification-error::before {
+  background: #dc2626;
 }
 
 .notification-icon {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   margin-top: 2px;
 }
 
@@ -157,76 +180,121 @@ export default defineComponent({
 
 .notification-title {
   font-weight: 700;
-  font-size: 14px;
-  color: #000000;
-  margin-bottom: 4px;
-  line-height: 1.4;
+  font-size: 13px;
+  color: #0f172a;
+  margin-bottom: 3px;
+  line-height: 1.35;
 }
 
 .notification-message {
-  font-size: 13px;
-  color: #1f2937;
-  line-height: 1.4;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.45;
   word-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .notification-close {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   border: none;
-  background: none;
-  color: #4b5563;
+  background: rgba(148, 163, 184, 0.12);
+  color: #475569;
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 999px;
   transition: all 0.2s ease;
 }
 
 .notification-close:hover {
-  background: rgba(0, 0, 0, 0.12);
-  color: #000000;
+  background: rgba(148, 163, 184, 0.22);
+  color: #0f172a;
 }
 
-/* 动画效果 */
 .notification-enter-active {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .notification-leave-active {
-  transition: all 0.3s ease-in;
+  transition: all 0.24s ease-in;
 }
 
 .notification-enter-from {
   opacity: 0;
-  transform: translateX(-100%) scale(0.8);
+  transform: translateX(24px) scale(0.96);
 }
 
 .notification-leave-to {
   opacity: 0;
-  transform: translateX(-100%) scale(0.8);
+  transform: translateX(24px) scale(0.96);
 }
 
 .notification-move {
   transition: transform 0.3s ease;
 }
 
-/* 响应式设计 */
 @media (max-width: 640px) {
   .notification-container {
-    top: 10px;
-    left: 10px;
-    right: 10px;
+    top: auto;
+    right: 12px;
+    left: 12px;
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+    width: auto;
   }
-  
+
   .notification-item {
-    min-width: auto;
-    max-width: none;
     margin-bottom: 8px;
+    grid-template-columns: 16px minmax(0, 1fr) 26px;
+    padding: 12px 12px 12px 10px;
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+  }
+
+  .notification-item:nth-child(n + 3) {
+    display: none;
+  }
+
+  .notification-icon {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+  }
+
+  .notification-title {
+    font-size: 12px;
+  }
+
+  .notification-message {
+    font-size: 11px;
+    -webkit-line-clamp: 2;
+  }
+
+  .notification-close {
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+  }
+
+  .notification-enter-from {
+    transform: translateY(16px) scale(0.96);
+  }
+
+  .notification-leave-to {
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+@media (min-width: 641px) {
+  .notification-item:nth-child(n + 4) {
+    display: none;
   }
 }
 </style>

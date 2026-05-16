@@ -48,49 +48,52 @@
           :key="unit.id"
           class="unit-card"
         >
-          <!-- 兵种名称栏 -->
-          <HoverCard
-            class="unit-title-hover"
-            density="compact"
-            :show="hoveredUnitId === unit.id"
-            @mouseenter="hoveredUnitId = unit.id"
-            @mouseleave="hoveredUnitId = null"
-          >
-            <template #trigger>
-              <div class="unit-title-bar">
-                <div class="unit-icon">{{ unit.icon }}</div>
-                <h4 class="unit-name">{{ unit.name }}</h4>
-              </div>
-            </template>
+          <div class="unit-card-main">
+            <!-- 兵种名称栏 -->
+            <HoverCard
+              class="unit-title-hover"
+              density="compact"
+              :show="hoveredUnitId === unit.id"
+              @mouseenter="hoveredUnitId = unit.id"
+              @mouseleave="hoveredUnitId = null"
+            >
+              <template #trigger>
+                <div class="unit-title-bar">
+                  <div class="unit-icon">{{ unit.icon }}</div>
+                  <h4 class="unit-name">{{ unit.name }}</h4>
+                  <div class="unit-owned-mobile">现有 {{ getUnitCount(unit.id) }}</div>
+                </div>
+              </template>
 
-            <UnitHoverContent :unit="unit" />
-          </HoverCard>
-          
-          <!-- 属性信息网格 -->
-          <div class="unit-stats-grid">
-            <div class="stat-item">
-              <div class="stat-label">攻击</div>
-              <div class="stat-value">{{ unit.attack }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">步防</div>
-              <div class="stat-value">{{ unit.infantryDefense }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">骑防</div>
-              <div class="stat-value">{{ unit.cavalryDefense }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">速度</div>
-              <div class="stat-value">{{ unit.speed }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">运载</div>
-              <div class="stat-value">{{ unit.carryCapacity }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">口粮</div>
-              <div class="stat-value">{{ unit.unitType === 'special' ? 0 : 2 }}</div>
+              <UnitHoverContent :unit="unit" />
+            </HoverCard>
+            
+            <!-- 属性信息网格 -->
+            <div class="unit-stats-grid">
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">⚔️</span><span class="stat-text">攻击</span></div>
+                <div class="stat-value">{{ unit.attack }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🛡️</span><span class="stat-text">步防</span></div>
+                <div class="stat-value">{{ unit.infantryDefense }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🐎</span><span class="stat-text">骑防</span></div>
+                <div class="stat-value">{{ unit.cavalryDefense }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">💨</span><span class="stat-text">速度</span></div>
+                <div class="stat-value">{{ unit.speed }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🎒</span><span class="stat-text">运载</span></div>
+                <div class="stat-value">{{ unit.carryCapacity }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label"><span class="stat-icon">🍚</span><span class="stat-text">口粮</span></div>
+                <div class="stat-value">{{ unit.unitType === 'special' ? 0 : 2 }}</div>
+              </div>
             </div>
           </div>
           
@@ -195,236 +198,192 @@ export default {
 
 <style scoped>
 .unit-detail-tabs {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 28px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  margin: 20px 0;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-/* 当前阵营显示样式 */
 .current-faction-display {
-  background: rgba(35, 124, 72, 0.1);
-  padding: 24px;
-  border-bottom: 2px solid rgba(35, 124, 72, 0.3);
-  backdrop-filter: blur(10px);
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.92);
   position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .faction-info {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 20px 32px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid #237C48;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(35, 124, 72, 0.25);
-  transition: all 0.3s ease;
-}
-
-.faction-info:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(35, 124, 72, 0.35);
-  border-color: #FFB900;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
+  border: 1px solid rgba(199, 210, 254, 0.95);
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .faction-icon {
-  font-size: 28px;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
-  transition: all 0.3s ease;
-}
-
-.faction-info:hover .faction-icon {
-  transform: scale(1.1) rotate(5deg);
-  filter: drop-shadow(0 4px 8px rgba(255, 185, 0, 0.5));
+  font-size: 20px;
+  line-height: 1;
 }
 
 .faction-name {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 800;
-  color: #ffffff;
-  margin-right: 12px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  letter-spacing: 1px;
+  color: #111827;
+  margin-right: 8px;
 }
 
 .faction-desc {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.8);
-  font-style: italic;
-  max-width: 350px;
-  text-align: center;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+  color: #6b7280;
+  max-width: 360px;
   line-height: 1.4;
 }
 
-/* Tab 头部样式 */
 .tab-header {
   display: flex;
-  background: rgba(24, 24, 27, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 2px solid #237C48;
-  border-radius: 12px 12px 0 0;
-  overflow: hidden;
+  gap: 6px;
+  padding: 8px 18px 0;
+  overflow: auto hidden;
+  scrollbar-width: none;
+  background: transparent;
 }
 
 .tab-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 20px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-bottom: 3px solid transparent;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  position: relative;
-  overflow: hidden;
-}
-
-.tab-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(35, 124, 72, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.tab-item:hover {
-  background: rgba(35, 124, 72, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-2px);
-}
-
-.tab-item:hover::before {
-  left: 100%;
-}
-
-.tab-item.active {
-  background: linear-gradient(135deg, #237C48 0%, #2d8f56 100%);
-  border-bottom-color: #FFB900;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(35, 124, 72, 0.3);
-  transform: translateY(-2px);
-}
-
-.tab-icon {
-  font-size: 20px;
-  margin-right: 10px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  transition: all 0.3s ease;
-}
-
-.tab-item.active .tab-icon {
-  transform: scale(1.1);
-  filter: drop-shadow(0 2px 8px rgba(255, 185, 0, 0.5));
-}
-
-.tab-text {
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.tab-item.active .tab-text {
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Tab 内容样式 */
-.tab-content {
-  padding: 20px;
-  background: transparent;
-}
-
-/* 兵种网格布局 */
-.units-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  padding: 16px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* 当只有1-3个卡片时不拉长，靠左展示 */
-.units-grid:has(.unit-card:nth-child(1):nth-last-child(1)) {
-  grid-template-columns: 260px;
-  justify-content: start;
-}
-
-.units-grid:has(.unit-card:nth-child(2):nth-last-child(1)) {
-  grid-template-columns: repeat(2, 260px);
-  justify-content: start;
-}
-
-.units-grid:has(.unit-card:nth-child(3):nth-last-child(1)) {
-  grid-template-columns: repeat(3, 260px);
-  justify-content: start;
-}
-
-/* 兵种卡片 - 毛玻璃效果 */
-.unit-card {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  min-height: 190px;
-  will-change: transform, box-shadow;
-}
-
-.unit-card:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 32px rgba(255, 185, 0, 0.25);
-  border-color: rgba(255, 185, 0, 0.4);
-}
-
-/* 兵种名称栏 */
-.unit-title-bar {
-  background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
-  color: #18181B;
-  padding: 8px 12px;
-  border-radius: 8px;
-  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.2);
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 16px;
+  background: #f8fafc;
+  color: #6b7280;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.tab-item:hover {
+  color: #111827;
+  background: #eef2ff;
+}
+
+.tab-item.active {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 12px 22px rgba(79, 70, 229, 0.18);
+}
+
+.tab-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.tab-text {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.tab-content {
+  padding: 14px 18px 18px;
+  background: transparent;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.units-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.units-grid:has(.unit-card:nth-child(1):nth-last-child(1)) {
+  grid-template-columns: minmax(0, 320px);
+  justify-content: start;
+}
+
+.units-grid:has(.unit-card:nth-child(2):nth-last-child(1)) {
+  grid-template-columns: repeat(2, minmax(0, 320px));
+  justify-content: start;
+}
+
+.units-grid:has(.unit-card:nth-child(3):nth-last-child(1)) {
+  grid-template-columns: repeat(3, minmax(0, 320px));
+  justify-content: start;
+}
+
+.unit-card {
+  background: #ffffff;
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 22px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.unit-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(165, 180, 252, 0.9);
+  box-shadow: 0 14px 28px rgba(99, 102, 241, 0.08);
+}
+
+.unit-title-bar {
+  background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+  color: #111827;
+  padding: 10px 12px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border: 1px solid rgba(224, 231, 255, 0.95);
+}
+
+.unit-owned-mobile {
+  display: none;
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6366f1;
 }
 
 .unit-help {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 14px;
+  right: 14px;
 }
 
 .unit-help-trigger {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
   border: 0;
   color: white;
-  background: #237c48;
+  background: #6366f1;
   font-weight: 700;
+  box-shadow: 0 8px 16px rgba(79, 70, 229, 0.16);
 }
 
 .unit-title-hover {
@@ -432,165 +391,170 @@ export default {
 }
 
 .unit-icon {
-  font-size: 16px;
+  font-size: 17px;
+  line-height: 1;
 }
 
 .unit-name {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  color: #111827;
 }
 
-/* 属性网格 */
 .unit-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  flex: 1;
 }
 
 .stat-item {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 6px;
-  padding: 8px 6px;
-  text-align: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 185, 0, 0.2);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.stat-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.15);
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 7px 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  min-width: 0;
 }
 
 .stat-label {
-  font-size: 10px;
-  color: #666;
+  font-size: 11px;
+  color: #64748b;
   font-weight: 600;
-  margin-bottom: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .stat-value {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 800;
-  color: #18181B;
-  display: block;
+  color: #111827;
+  display: inline;
 }
 
-/* 当前数量 */
+.stat-icon {
+  line-height: 1;
+}
+
 .unit-count {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 6px 12px;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .count-label {
-  font-size: 11px;
-  color: #666;
+  font-size: 12px;
+  color: #64748b;
   font-weight: 600;
 }
 
 .count-value {
   font-size: 14px;
   font-weight: 800;
-  color: #FFB900;
+  color: #4f46e5;
 }
 
-/* 征募按钮 */
 .recruit-button {
-  background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
-  color: #18181B;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(255, 185, 0, 0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  will-change: transform, box-shadow;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 12px 20px rgba(79, 70, 229, 0.18);
 }
 
 .recruit-button:hover {
-  background: linear-gradient(135deg, #FFA000 0%, #FF8F00 100%);
-  transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(79, 70, 229, 0.24);
 }
 
 .recruit-button:active {
-  transform: translateY(0) scale(1.02);
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
 }
 
 @media (max-width: 1024px) {
   .units-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 12px;
   }
 }
 
 @media (max-width: 768px) {
   .unit-detail-tabs {
-    margin: 12px 0;
-    border-radius: 12px;
+    border-radius: 22px;
   }
 
   .current-faction-display {
-    padding: 14px;
+    padding: 12px 12px 10px;
   }
 
   .faction-info {
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
-    padding: 14px;
+    padding: 12px;
+    justify-content: flex-start;
+    align-items: center;
+    border-radius: 18px;
   }
 
   .faction-name {
     margin-right: 0;
-    font-size: 18px;
+    font-size: 14px;
   }
 
   .faction-desc {
-    font-size: 13px;
+    font-size: 11px;
     max-width: none;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: none;
   }
 
   .unit-help {
-    top: 12px;
-    right: 12px;
+    top: 8px;
+    right: 8px;
   }
 
   .tab-header {
-    overflow-x: auto;
+    padding: 8px 12px 0;
+    gap: 5px;
+    overflow: visible;
   }
 
   .tab-item {
-    flex: none;
-    min-width: 120px;
-    padding: 12px 14px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 10px 6px;
+    border-radius: 14px;
   }
 
   .tab-icon {
-    margin-right: 6px;
-  }
-
-  .tab-text {
     font-size: 13px;
   }
 
+  .tab-text {
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .tab-content {
-    padding: 10px;
+    padding: 10px 12px 12px;
   }
 
   .units-grid,
@@ -598,27 +562,90 @@ export default {
   .units-grid:has(.unit-card:nth-child(2):nth-last-child(1)),
   .units-grid:has(.unit-card:nth-child(3):nth-last-child(1)) {
     grid-template-columns: 1fr;
-    padding: 6px;
+    gap: 8px;
+    margin: 0;
+    max-width: none;
   }
 
   .unit-card {
-    min-height: 0;
-    padding: 12px;
+    padding: 8px;
+    gap: 5px;
+    border-radius: 16px;
+  }
+
+  .unit-card-main {
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
     gap: 8px;
+    align-items: stretch;
+    min-width: 0;
   }
 
   .unit-title-bar {
-    padding: 8px 10px;
+    height: 100%;
+    min-height: 76px;
+    padding: 8px 6px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    border-radius: 14px;
+  }
+
+  .unit-name {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .unit-icon {
+    font-size: 18px;
+  }
+
+  .unit-owned-mobile {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #6366f1;
+  }
+
+  .unit-stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .stat-item {
+    padding: 5px 6px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    margin-bottom: 0;
+    color: #475569;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .stat-value {
+    font-size: 12px;
+    display: inline;
+    line-height: 1;
+  }
+
+  .stat-text {
+    display: none;
   }
 
   .unit-count {
-    padding: 8px 10px;
+    display: none;
   }
 
   .recruit-button {
     width: 100%;
-    padding: 10px 14px;
-    font-size: 13px;
+    padding: 9px 10px;
+    font-size: 12px;
+    border-radius: 12px;
   }
 }
 </style>

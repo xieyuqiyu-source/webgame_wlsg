@@ -1,6 +1,11 @@
 <template>
   <GamePageLayout page-class="city-view">
     <div class="content-area">
+      <div class="city-hero app-panel">
+        <div class="app-kicker">City Core</div>
+        <h1 class="app-page-title">城池发展</h1>
+        <p class="app-page-subtitle">集中处理资源生产、基础建设和城池扩张。整体布局改成移动端优先，先保证操作效率和信息密度。</p>
+      </div>
       <CityTabs :active-tab="activeTab" @tab-change="handleTabChange">
         <ResourceBuildingGrid
           v-if="activeTab === 'resource'"
@@ -52,6 +57,10 @@ export default {
 }
 
 .content-area {
-  @apply min-h-full;
+  @apply min-h-full space-y-5;
+}
+
+.city-hero {
+  @apply px-6 py-6;
 }
 </style>

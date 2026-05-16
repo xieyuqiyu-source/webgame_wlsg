@@ -427,22 +427,21 @@ export default {
 }
 
 .search-icon {
-  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400;
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2;
+  color: #94a3b8;
 }
 
 .search-input {
   @apply w-full pl-10 pr-4 py-3 rounded-lg transition-all duration-200;
-  background: rgba(16, 20, 24, 0.8);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  backdrop-filter: blur(10px);
-  color: #e5e7eb;
-  @apply placeholder-gray-400;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  color: #111827;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: rgba(34, 197, 94, 0.6);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .filter-buttons {
@@ -451,30 +450,29 @@ export default {
 
 .filter-btn {
   @apply px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200;
-  background: rgba(16, 20, 24, 0.6);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  backdrop-filter: blur(8px);
-  color: #9ca3af;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  color: #64748b;
 }
 
 .filter-btn:hover {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.4);
-  color: #22c55e;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #111827;
 }
 
 .filter-btn.active {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.5);
-  color: #22c55e;
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 12px 22px rgba(79, 70, 229, 0.18);
 }
 
 .dungeon-stats {
   @apply flex gap-6 p-4 rounded-lg;
-  background: rgba(16, 20, 24, 0.8);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .stat-item {
@@ -482,15 +480,17 @@ export default {
 }
 
 .stat-icon {
-  @apply text-green-400;
+  color: #6366f1;
 }
 
 .stat-label {
-  @apply text-sm text-gray-400;
+  @apply text-sm;
+  color: #64748b;
 }
 
 .stat-value {
-  @apply text-sm font-bold text-green-400;
+  @apply text-sm font-bold;
+  color: #111827;
 }
 
 .dungeon-grid {
@@ -499,18 +499,18 @@ export default {
 
 .dungeon-card {
   @apply rounded-lg p-4 cursor-pointer relative overflow-hidden;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform, box-shadow, border-color;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .dungeon-card:hover {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 30px rgba(34, 197, 94, 0.3);
-  border-color: rgba(34, 197, 94, 0.6);
-  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 28px rgba(99, 102, 241, 0.08);
+  border-color: rgba(165, 180, 252, 0.9);
+  background: #ffffff;
 }
 
 .dungeon-card.easy {
@@ -550,9 +550,9 @@ export default {
 }
 
 .dungeon-card.completed {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(107, 114, 128, 0.3);
-  opacity: 0.7;
+  background: #f8fafc;
+  border-color: rgba(203, 213, 225, 0.95);
+  opacity: 0.9;
 }
 
 .dungeon-card.completed:hover {
@@ -561,9 +561,9 @@ export default {
 }
 
 .dungeon-card.locked {
-  background: rgba(255, 255, 255, 0.02);
-  border-color: rgba(107, 114, 128, 0.2);
-  opacity: 0.5;
+  background: #f8fafc;
+  border-color: rgba(229, 231, 235, 0.92);
+  opacity: 0.72;
   cursor: not-allowed;
   filter: grayscale(0.5);
 }
@@ -601,12 +601,12 @@ export default {
 
 .dungeon-name {
   @apply font-semibold text-sm;
-  color: #e5e7eb;
+  color: #111827;
 }
 
 .dungeon-type {
   @apply text-xs;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .dungeon-level {
@@ -615,9 +615,9 @@ export default {
 
 .level-text {
   @apply text-xs font-medium px-2 py-1 rounded;
-  background: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid rgba(199, 210, 254, 0.95);
 }
 
 .dungeon-description {
@@ -626,7 +626,7 @@ export default {
 
 .description-text {
   @apply text-sm leading-relaxed;
-  color: #9ca3af;
+  color: #475569;
 }
 
 .dungeon-requirements {
@@ -635,11 +635,11 @@ export default {
 
 .requirement-item {
   @apply flex items-center gap-2 text-xs;
-  color: #9ca3af;
+  color: #475569;
 }
 
 .requirement-icon {
-  @apply text-green-400;
+  color: #6366f1;
 }
 
 .dungeon-rewards {
@@ -648,7 +648,7 @@ export default {
 
 .rewards-title {
   @apply text-sm font-medium mb-2;
-  color: #e5e7eb;
+  color: #111827;
 }
 
 .rewards-grid {
@@ -657,12 +657,12 @@ export default {
 
 .reward-item {
   @apply flex items-center gap-1 px-2 py-1 rounded text-xs;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: #f8fafc;
+  border: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .reward-amount {
-  color: #9ca3af;
+  color: #475569;
 }
 
 .dungeon-actions {
@@ -722,11 +722,11 @@ export default {
 
 .empty-title {
   @apply text-lg font-semibold mb-2;
-  color: #e5e7eb;
+  color: #111827;
 }
 
 .empty-text {
-  color: #9ca3af;
+  color: #64748b;
 }
 
 @keyframes pulse {

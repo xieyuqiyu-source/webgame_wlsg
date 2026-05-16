@@ -72,32 +72,30 @@ export default {
 }
 
 .tab-nav {
-  @apply flex bg-green-700 bg-opacity-80 rounded-t-md overflow-x-auto;
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  @apply flex overflow-x-auto rounded-[24px] p-1.5;
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .tab-button {
-  @apply px-4 py-3 cursor-pointer text-white text-sm font-bold transition-all duration-200 flex items-center gap-2 whitespace-nowrap flex-none;
-  @apply hover:text-yellow-500;
+  @apply px-4 py-3 cursor-pointer text-sm font-semibold transition-all duration-200 flex items-center gap-2 whitespace-nowrap flex-none rounded-[18px];
   background: transparent;
   border: none;
   justify-content: center;
+  color: #6b7280;
 }
 
 .tab-button.active {
-  @apply bg-green-600;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.18);
 }
 
 .tab-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
-}
-
-.tab-button.active:hover {
-  background: #237C48;
+  background: rgba(99, 102, 241, 0.06);
+  color: #111827;
 }
 
 .tab-icon {
@@ -106,32 +104,23 @@ export default {
 }
 
 .tab-label {
-  @apply font-bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  @apply font-semibold;
 }
 
 .tab-count {
-  @apply bg-yellow-500 text-black text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  @apply text-xs px-2 py-1 rounded-full min-w-[20px] text-center font-bold;
+  background: rgba(255, 255, 255, 0.88);
+  color: #4f46e5;
 }
 
 .tab-button.active .tab-count {
-  @apply bg-yellow-400;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .tab-content {
   @apply flex flex-col gap-4;
-  margin-top: 15px;
+  margin-top: 18px;
 }
 
 @media (min-width: 768px) {

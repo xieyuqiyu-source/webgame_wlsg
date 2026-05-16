@@ -31,3 +31,56 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.bottom-nav {
+  padding: 8px 10px 10px;
+  border-top: 1px solid rgba(226, 232, 240, 0.92);
+  background: rgba(248, 250, 252, 0.9);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.nav-button {
+  min-height: 44px;
+  padding: 6px 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  background: rgba(255, 255, 255, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(148, 163, 184, 0.55);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  color: #334155;
+}
+
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.9);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+</style>

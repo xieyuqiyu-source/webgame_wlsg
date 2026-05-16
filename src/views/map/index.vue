@@ -96,29 +96,44 @@ export default {
 }
 
 .content-area {
-  @apply min-h-full;
+  @apply min-h-full space-y-5;
 }
 
 .map-header {
-  @apply mb-4 flex items-start justify-between gap-4;
+  @apply flex items-start justify-between gap-4 px-6 py-6;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 28px;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 60px -24px rgba(15, 23, 42, 0.18);
 }
 
 .map-title {
-  @apply text-2xl font-bold text-white mb-1;
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text-main);
 }
 
 .map-subtitle {
-  @apply text-sm text-gray-300;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-subtle);
 }
 
 .debug-entry {
-  @apply inline-flex items-center justify-center rounded-md border border-green-600 px-4 py-2 text-sm font-medium text-green-200 transition-colors;
-  background: rgba(17, 24, 39, 0.55);
+  @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--brand);
+  border: 1px solid rgba(199, 210, 254, 0.9);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.08);
 }
 
 .debug-entry:hover {
-  @apply text-white border-green-500;
-  background: rgba(35, 124, 72, 0.25);
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
 @media (max-width: 768px) {

@@ -18,15 +18,6 @@
     </div>
 
     <div class="sidebar-content" v-show="isMobile || !isCollapsed">
-      <div v-if="isMobile" class="mobile-sidebar-header">
-        <div class="mobile-sidebar-title">功能菜单</div>
-        <button class="mobile-sidebar-close" type="button" @click="$emit('close-mobile')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.3 5.71L12 12L5.71 5.71L4.29 7.12L10.59 13.41L4.29 19.71L5.71 21.12L12 14.83L18.3 21.12L19.71 19.71L13.41 13.41L19.71 7.12L18.3 5.71Z" />
-          </svg>
-        </button>
-      </div>
-
       <div class="scrollable-content">
         <SidebarCityInfo
           :citycivilization="gameStore.citycivilization"
@@ -155,93 +146,109 @@ export default {
 <style>
 .sidebar-backdrop {
   @apply fixed inset-0 z-40;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(2px);
+  background: rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(8px);
 }
 
 .game-sidebar {
-  @apply fixed left-0 top-0 h-full z-50 transition-all duration-300;
-  width: 300px;
-  background: rgba(31, 41, 55, 0.95);
-  backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(35, 124, 72, 0.3);
-  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 50;
+  width: 296px;
+  height: calc(100dvh - 32px);
+  max-height: calc(100dvh - 32px);
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 24px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+  color: #111827;
+  font-family: 'Inter', 'PingFang SC', sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .game-sidebar.collapsed {
-  width: 60px;
+  width: 76px;
 }
 
 .sidebar-toggle {
-  @apply absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-full;
-  @apply bg-gray-700 hover:bg-gray-600 rounded-r-md p-2 cursor-pointer transition-colors;
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-left: none;
+  position: absolute;
+  right: -14px;
+  top: 40px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.96);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 .toggle-icon {
-  @apply text-white w-4 h-4 flex items-center justify-center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #4f46e5;
 }
 
 .sidebar-content {
   @apply h-full flex flex-col;
-}
-
-.mobile-sidebar-header {
-  @apply flex items-center justify-between px-4 py-3 text-white;
-  border-bottom: 1px solid rgba(35, 124, 72, 0.3);
-}
-
-.mobile-sidebar-title {
-  @apply text-sm font-semibold tracking-wide;
-}
-
-.mobile-sidebar-close {
-  @apply inline-flex h-9 w-9 items-center justify-center rounded-md text-white;
-  background: rgba(55, 65, 81, 0.75);
-  border: 1px solid rgba(35, 124, 72, 0.3);
+  min-height: 0;
 }
 
 .scrollable-content {
-  @apply flex-1 p-4 overflow-y-auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(35, 124, 72, 0.5) transparent;
+  @apply flex-1 overflow-y-auto px-2.5 py-2;
+  scrollbar-width: none;
+  min-width: 0;
 }
 
 .scrollable-content::-webkit-scrollbar {
-  width: 4px;
-}
-
-.scrollable-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollable-content::-webkit-scrollbar-thumb {
-  background: rgba(35, 124, 72, 0.5);
-  border-radius: 2px;
+  display: none;
 }
 
 .city-info-card {
-  @apply mb-6 p-4 rounded-md;
-  background: rgba(55, 65, 81, 0.5);
-  border: 1px solid rgba(35, 124, 72, 0.3);
+  @apply mb-2.5 rounded-[16px] p-3;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(255, 255, 255, 0.96) 100%);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
-.city-header {
-  @apply space-y-3;
+.city-header,
+.city-details {
+  @apply space-y-1.5;
 }
 
-.city-title-row {
-  @apply flex justify-between items-center mb-3;
+.city-title-row,
+.civilization-row,
+.warehouse-level,
+.current-coins,
+.current-boost-info,
+.option-header,
+.section-header,
+.army-info {
+  @apply flex items-center justify-between;
 }
 
 .city-title {
-  @apply text-white text-sm font-medium;
-  line-height: 20px;
+  @apply text-sm font-semibold;
+  color: #111827;
+  line-height: 18px;
 }
 
 .coins-display {
-  @apply flex items-center gap-1 cursor-pointer hover:bg-yellow-600 hover:bg-opacity-20 px-2 py-1 rounded transition-colors;
+  @apply flex items-center gap-1 rounded-xl px-2 py-1 transition-colors;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.88);
 }
 
 .coins-icon {
@@ -249,245 +256,153 @@ export default {
 }
 
 .coins-amount {
-  @apply text-yellow-400 text-sm font-bold;
-  color: #FFB900;
+  @apply text-sm font-bold;
+  color: #d97706;
 }
 
-.city-details {
-  @apply space-y-2;
-}
-
-.detail-item {
-  @apply flex items-center gap-2 text-white text-sm;
-  line-height: 20px;
-}
-
-.civilization-row {
-  @apply justify-between;
+.detail-item,
+.resource-item,
+.production-item,
+.tooltip-item {
+  @apply flex items-center gap-2 text-sm;
+  color: #6b7280;
+  line-height: 18px;
 }
 
 .civilization-left,
-.civilization-right {
+.civilization-right,
+.resource-info,
+.production-info,
+.production-details {
   @apply flex items-center gap-2;
+  min-width: 0;
 }
 
 .status-dot {
   @apply w-2 h-2 rounded-full flex-shrink-0;
 }
 
-.status-dot.red {
-  background-color: #FF6367;
-}
-
-.status-dot.yellow {
-  background-color: #FFB900;
-}
-
-.status-dot.green {
-  background-color: #237C48;
-}
-
-.status-dot.blue {
-  background-color: #3B82F6;
-}
+.status-dot.red { background: #ef4444; }
+.status-dot.yellow { background: #f59e0b; }
+.status-dot.green { background: #10b981; }
+.status-dot.blue { background: #3b82f6; }
 
 .section {
-  @apply mb-6;
+  @apply mb-2.5 rounded-[16px] p-2.5;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  min-width: 0;
 }
 
 .section-header {
-  @apply text-white font-medium text-sm mb-3 pb-2 flex justify-between items-center;
-  border-bottom: 1px solid #374151;
-  line-height: 24px;
+  @apply text-sm font-semibold mb-1.5 pb-1.5;
+  color: #111827;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.96);
+  line-height: 20px;
+  min-width: 0;
 }
 
 .army-count {
-  @apply text-green-600 text-sm cursor-pointer hover:text-green-500;
+  @apply text-sm cursor-pointer;
+  color: #4f46e5;
 }
 
 .resource-list,
-.production-list {
-  @apply space-y-2;
+.production-list,
+.warehouse-info,
+.boost-info,
+.boost-options,
+.gm-section,
+.army-grid {
+  @apply space-y-1;
 }
 
-.resource-item {
-  @apply flex justify-between items-center px-3;
-}
-
-.resource-info {
-  @apply flex items-center gap-2;
-}
-
-.resource-icon {
-  @apply w-4 h-4 rounded-sm flex-shrink-0;
-}
-
-.resource-icon-fallback {
-  @apply bg-gray-500;
-}
-
-.resource-name {
-  @apply text-white text-sm;
-  line-height: 24px;
-  width: 32px;
-}
-
-.resource-value {
-  @apply text-yellow-400 text-sm;
-  line-height: 24px;
+.resource-item,
+.production-item {
+  @apply px-2 py-1.5 rounded-xl;
+  min-width: 0;
 }
 
 .production-item {
-  @apply flex justify-between items-center px-3 relative;
+  position: relative;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
+  justify-content: space-between;
 }
 
 .production-item:hover {
-  background-color: rgba(55, 65, 81, 0.3);
+  background: rgba(99, 102, 241, 0.05);
 }
 
-.production-info {
-  @apply flex items-center gap-2;
-}
-
+.resource-icon,
 .production-icon {
-  @apply w-4 h-4 rounded-sm flex-shrink-0;
+  @apply w-3.5 h-3.5 rounded-sm flex-shrink-0;
 }
 
+.resource-icon-fallback,
 .production-icon-fallback {
-  @apply bg-gray-500;
+  @apply bg-gray-300;
 }
 
+.resource-name,
+.production-name,
+.warehouse-label {
+  @apply text-sm;
+  color: #6b7280;
+  min-width: 0;
+}
+
+.resource-name,
 .production-name {
-  @apply text-white text-sm;
-  line-height: 24px;
-  width: 32px;
+  width: auto;
+  flex: 0 1 auto;
 }
 
-.production-details {
-  @apply flex items-center gap-2;
+.resource-value,
+.warehouse-value {
+  @apply text-sm font-semibold;
+  color: #111827;
+  min-width: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .production-rate {
-  @apply text-red-400 text-sm;
-  line-height: 24px;
-  width: 80px;
+  @apply text-sm font-semibold;
+  color: #4f46e5;
+  width: auto;
+  max-width: 100%;
   text-align: right;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
-.upgrade-btn {
-  @apply bg-green-700 hover:bg-green-600 rounded p-1 cursor-pointer transition-colors;
-  @apply flex items-center justify-center;
-  width: 20px;
-  height: 20px;
-}
-
-/* 生产力提示框样式 */
-.production-tooltip {
-  @apply absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50;
-  @apply border border-green-500/50 rounded-md shadow-2xl;
-  @apply text-white text-sm;
-  min-width: 200px;
-  max-width: 280px;
-  /* 毛玻璃效果 */
-  background: rgba(31, 41, 55, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.production-tooltip .tooltip-arrow {
-  @apply absolute top-full left-1/2 transform -translate-x-1/2;
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid rgba(16, 185, 129, 0.5);
-}
-
-.production-tooltip .tooltip-header {
-  @apply px-3 py-2 text-white font-medium rounded-t-md;
-  background: rgba(34, 197, 94, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  font-size: 12px;
-}
-
-.production-tooltip .tooltip-content {
-  @apply p-3 space-y-2;
-}
-
-.production-tooltip .tooltip-item {
-  @apply flex justify-between items-center;
-  font-size: 11px;
-  line-height: 16px;
-  /* 不换行 */
-}
-
-.production-tooltip .tooltip-item.total {
-  @apply border-t border-white/20 pt-2 mt-2;
-  font-weight: 500;
-}
-
-.production-tooltip .tooltip-label {
-  @apply text-gray-300;
-}
-
-.production-tooltip .tooltip-value {
-  @apply text-white font-medium;
-}
-
-/* 淡入淡出动画 */
-.tooltip-fade-enter-active,
-.tooltip-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tooltip-fade-enter-from {
-  opacity: 0;
-  transform: translateX(-50%) translateY(8px) scale(0.95);
-}
-
-.tooltip-fade-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(8px) scale(0.95);
-}
-
-.tooltip-fade-enter-to,
-.tooltip-fade-leave-from {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
-}
-
-/* 资源标题区域样式 */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-/* 资源管理小圆点样式 */
 .resource-dots-container {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .resource-dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(226, 232, 240, 0.96);
 }
 
 .resource-dot:hover {
-  transform: scale(1.1);
+  transform: translateY(-1px);
 }
 
 .resource-dot.disabled {
@@ -495,30 +410,14 @@ export default {
   cursor: not-allowed;
 }
 
-.resource-dot.disabled:hover {
-  transform: none;
-}
-
-/* 一键爆仓小圆点 */
 .fill-dot {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #34d399, #059669);
   color: white;
 }
 
-.fill-dot:hover:not(.disabled) {
-  background: linear-gradient(135deg, #059669, #047857);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-}
-
-/* 容量加成小圆点 */
 .boost-dot {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #818cf8, #4f46e5);
   color: white;
-}
-
-.boost-dot:hover:not(.disabled) {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .boost-dot.active {
@@ -527,229 +426,67 @@ export default {
 }
 
 @keyframes pulse-boost {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45); }
+  50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
 }
 
 .resource-dot svg {
-  flex-shrink: 0;
   width: 12px;
   height: 12px;
 }
 
-/* 资源小圆点悬浮提示样式 */
-.resource-tooltip {
-  @apply absolute bottom-full mb-2;
-  @apply border border-green-500/50 rounded-md shadow-2xl;
-  @apply text-white text-sm;
-  min-width: 200px;
-  max-width: 280px;
-  z-index: 9999;
-  /* 向左偏移，避免被右侧遮挡 */
-  right: 0;
-  transform: translateX(-20px);
-  /* 毛玻璃效果 */
-  background: rgba(31, 41, 55, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+.boost-btn,
+.warehouse-upgrade-btn.enabled {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.18);
 }
 
-/* 移除三角形箭头样式 */
-
-.resource-tooltip .tooltip-content {
-  @apply p-3 space-y-2;
+.boost-btn {
+  @apply flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs transition-all duration-200;
 }
 
-.resource-tooltip .tooltip-item {
-  @apply flex flex-col space-y-1;
-  font-size: 12px;
-  line-height: 16px;
+.boost-btn.boost-active {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
 }
 
-.resource-tooltip .tooltip-item.active {
-  @apply text-green-400;
-}
-
-.resource-tooltip .tooltip-item.insufficient {
-  @apply text-red-400;
-}
-
-.resource-tooltip .tooltip-label {
-  @apply font-medium text-white;
-}
-
-.resource-tooltip .tooltip-value {
-  @apply text-gray-300;
-}
-
-/* 悬浮提示过渡动画 */
-.tooltip-fade-enter-active,
-.tooltip-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.tooltip-fade-enter-from,
-.tooltip-fade-leave-to {
-  opacity: 0;
-}
-
-/* 仓库管理样式 */
-.warehouse-info {
-  @apply space-y-3;
-}
-
-.warehouse-level {
-  @apply flex justify-between items-center;
-}
-
-.warehouse-label {
-  @apply text-sm text-gray-300;
-}
-
-.warehouse-value {
-  @apply text-sm text-white font-medium;
+.boost-text {
+  @apply font-semibold;
 }
 
 .warehouse-upgrade-btn {
-  @apply w-full px-3 py-2 text-xs rounded-md transition-all duration-200;
-}
-
-.warehouse-upgrade-btn.enabled {
-  @apply bg-blue-500 text-white hover:bg-blue-600;
+  @apply w-full px-2.5 py-1.5 text-xs rounded-xl transition-all duration-200;
 }
 
 .warehouse-upgrade-btn.disabled {
-  @apply bg-gray-600 text-gray-400 cursor-not-allowed;
+  background: rgba(226, 232, 240, 0.85);
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
-/* 仓库升级容器样式 */
 .warehouse-upgrade-container {
   @apply relative;
 }
 
-
-
-/* 浮动提醒样式 */
-.upgrade-tooltip {
-  @apply absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2;
-  @apply bg-gray-800 bg-opacity-95 backdrop-blur-sm;
-  @apply border border-green-500 border-opacity-50 rounded-lg;
-  @apply p-3 min-w-[200px] max-w-[280px];
-  @apply text-xs text-white;
-  @apply shadow-lg shadow-black/50;
-  @apply z-50;
-  animation: tooltipFadeIn 0.2s ease-out;
+.army-item {
+  @apply flex items-center gap-2 p-2 rounded-xl transition-all duration-200;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  min-width: 0;
 }
 
-.tooltip-arrow {
-  @apply absolute top-full left-1/2 transform -translate-x-1/2;
-  @apply w-0 h-0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid rgba(34, 197, 94, 0.5);
+.army-icon {
+  font-size: 1rem;
 }
 
-.tooltip-header {
-  @apply text-green-400 font-semibold mb-2 text-center;
+.army-name {
+  @apply text-sm font-medium;
+  color: #111827;
 }
 
-.tooltip-content {
-  @apply space-y-1;
-}
-
-.tooltip-item {
-  @apply flex flex-col;
-}
-
-.tooltip-item.upgrading {
-  @apply text-blue-400 text-center;
-}
-
-.tooltip-item.max-level {
-  @apply text-yellow-400 text-center;
-}
-
-.resource-requirement {
-  @apply flex justify-between items-center;
-  @apply py-1 px-2 rounded;
-  @apply bg-gray-700 bg-opacity-50;
-}
-
-.resource-requirement.insufficient {
-  @apply bg-red-900 bg-opacity-30 text-red-300;
-}
-
-.resource-requirement:not(.insufficient) {
-  @apply text-green-300;
-}
-
-.resource-name {
-  @apply font-medium;
-}
-
-.resource-amount {
-  @apply font-mono text-right;
-}
-
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-/* 底部导航样式 */
-.bottom-nav {
-  @apply flex-shrink-0 p-4;
-  border-top: 1px solid rgba(35, 124, 72, 0.3);
-  background: rgba(31, 41, 55, 0.95);
-}
-
-.nav-buttons {
-  @apply grid grid-cols-3 gap-2;
-}
-
-.nav-button {
-  @apply flex flex-col items-center justify-center p-3 rounded-md cursor-pointer transition-all duration-200;
-  background: rgba(55, 65, 81, 0.3);
-  border: 1px solid rgba(35, 124, 72, 0.2);
-  min-height: 60px;
-}
-
-.nav-button:hover {
-  background: rgba(35, 124, 72, 0.4);
-  border-color: rgba(35, 124, 72, 0.5);
-  transform: translateY(-1px);
-}
-
-.nav-button:active {
-  transform: translateY(0);
-}
-
-.nav-icon {
-  @apply text-green-400 mb-1;
-}
-
-.nav-button:hover .nav-icon {
-  @apply text-green-300;
-}
-
-.nav-label {
-  @apply text-white text-xs font-medium;
-  line-height: 16px;
-}
-
-/* 军队网格样式 */
-.army-grid {
-  @apply space-y-2 mt-3;
+.army-count-text {
+  @apply text-sm font-semibold;
+  color: #4f46e5;
 }
 
 .empty-army {
@@ -757,164 +494,288 @@ export default {
 }
 
 .empty-text {
-  @apply text-gray-400 text-sm;
+  @apply text-sm;
+  color: #94a3b8;
 }
 
-.army-item {
-  @apply flex items-center gap-2 p-2 rounded-md transition-all duration-200;
-  background: rgba(55, 65, 81, 0.3);
-  border: 1px solid rgba(35, 124, 72, 0.2);
+.resource-tooltip,
+.production-tooltip,
+.upgrade-tooltip {
+  min-width: 200px;
+  max-width: 240px;
+  z-index: 9999;
+  color: white;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(129, 140, 248, 0.24);
+  border-radius: 18px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(14px);
 }
 
-.army-item:hover {
-  background: rgba(35, 124, 72, 0.4);
-  border-color: rgba(35, 124, 72, 0.5);
+.resource-tooltip {
+  @apply absolute bottom-full mb-2 p-3;
+  right: 0;
+  transform: translateX(-12px);
 }
 
-.army-icon {
-  @apply text-green-400 text-lg;
+.production-tooltip {
+  @apply absolute bottom-full left-1/2 mb-2 z-50 p-3;
+  transform: translateX(-50%);
 }
 
-.army-info {
-  @apply flex-1 flex justify-between items-center;
+.upgrade-tooltip {
+  @apply absolute bottom-full left-1/2 mb-2 p-3 z-50;
+  transform: translateX(-50%);
 }
 
-.army-name {
-  @apply text-white text-sm;
+.production-tooltip .tooltip-arrow,
+.tooltip-arrow {
+  @apply absolute top-full left-1/2;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(15, 23, 42, 0.92);
 }
 
-.army-count-text {
-  @apply text-green-300 text-sm font-medium;
+.resource-tooltip .tooltip-content,
+.production-tooltip .tooltip-content,
+.upgrade-tooltip .tooltip-content {
+  @apply space-y-2;
 }
 
-/* 生产力加速按钮样式 */
-.boost-btn {
-  @apply flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all duration-200;
-  @apply bg-yellow-600 bg-opacity-20 text-yellow-400 border border-yellow-600 border-opacity-30;
-  @apply hover:bg-yellow-600 hover:bg-opacity-30 hover:border-opacity-50;
+.resource-tooltip .tooltip-item,
+.upgrade-tooltip .tooltip-item {
+  @apply flex flex-col space-y-1;
+  font-size: 12px;
+  line-height: 16px;
 }
 
-.boost-btn.boost-active {
-  @apply bg-green-600 bg-opacity-30 text-green-400 border-green-600;
-  @apply animate-pulse;
+.production-tooltip .tooltip-item {
+  @apply flex justify-between items-center;
+  font-size: 11px;
+  line-height: 16px;
 }
 
-.boost-text {
-  @apply font-medium;
+.production-tooltip .tooltip-item.total {
+  @apply border-t pt-2 mt-2;
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
-/* 生产力加速弹窗样式 */
+.tooltip-header,
+.resource-tooltip .tooltip-label,
+.production-tooltip .tooltip-value,
+.resource-tooltip .tooltip-label {
+  @apply font-semibold;
+}
+
+.production-tooltip .tooltip-label,
+.resource-tooltip .tooltip-value {
+  color: #cbd5e1;
+}
+
+.resource-tooltip .tooltip-label,
+.tooltip-header {
+  color: #fff;
+}
+
+.tooltip-item.active { color: #4ade80; }
+.tooltip-item.insufficient { color: #f87171; }
+.tooltip-item.upgrading { @apply text-center; color: #60a5fa; }
+.tooltip-item.max-level { @apply text-center; color: #fbbf24; }
+
+.resource-requirement {
+  @apply flex justify-between items-center rounded-xl px-2 py-1.5;
+  background: rgba(51, 65, 85, 0.72);
+}
+
+.resource-requirement.insufficient {
+  background: rgba(127, 29, 29, 0.35);
+  color: #fca5a5;
+}
+
+.resource-requirement:not(.insufficient) {
+  color: #86efac;
+}
+
+.resource-amount {
+  @apply font-mono text-right;
+}
+
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: all 0.22s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
 .boost-dialog-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
-  backdrop-filter: blur(4px);
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  background: rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(10px);
 }
 
 .boost-dialog {
-  @apply bg-gray-800 rounded-lg shadow-xl border border-gray-600 max-w-md w-full mx-4;
+  @apply w-full max-w-md overflow-y-auto rounded-[28px] mx-4;
   max-height: 80vh;
-  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(229, 231, 235, 0.96);
+  box-shadow: 0 24px 60px -22px rgba(15, 23, 42, 0.25);
 }
 
 .boost-dialog-header {
-  @apply flex justify-between items-center p-4 border-b border-gray-600;
+  @apply flex items-center justify-between px-5 py-4;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .boost-dialog-header h3 {
-  @apply text-white text-lg font-semibold;
+  @apply text-lg font-semibold;
+  color: #111827;
 }
 
 .close-btn {
-  @apply text-gray-400 hover:text-white text-2xl font-bold cursor-pointer transition-colors;
-  @apply w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-700;
+  @apply flex h-10 w-10 items-center justify-center rounded-full text-2xl font-bold transition-colors;
+  color: #6b7280;
 }
 
 .boost-dialog-content {
-  @apply p-4 space-y-4;
+  @apply p-5 space-y-4;
 }
 
-.boost-info {
-  @apply space-y-2;
+.boost-description,
+.coins-label,
+.option-description {
+  @apply text-sm;
+  color: #6b7280;
 }
 
-.boost-description {
-  @apply text-gray-300 text-sm;
+.coins-value,
+.option-cost {
+  @apply font-bold;
+  color: #4f46e5;
 }
 
-.current-coins {
-  @apply flex justify-between items-center p-2 bg-gray-700 rounded-md;
+.boost-option,
+.current-boost {
+  @apply rounded-2xl p-3 transition-all duration-200 border;
+  border-color: rgba(229, 231, 235, 0.92);
+  background: rgba(248, 250, 252, 0.92);
 }
 
-.coins-label {
-  @apply text-gray-400 text-sm;
-}
-
-.coins-value {
-  @apply text-yellow-400 font-bold;
-}
-
-.boost-options {
-  @apply space-y-2;
-}
-
-.boost-option {
-  @apply p-3 bg-gray-700 rounded-md cursor-pointer transition-all duration-200;
-  @apply border border-gray-600 hover:border-yellow-500 hover:bg-gray-600;
+.boost-option:hover {
+  border-color: rgba(129, 140, 248, 0.5);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08);
 }
 
 .boost-option.disabled {
-  @apply opacity-50 cursor-not-allowed;
-  @apply hover:border-gray-600 hover:bg-gray-700;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.option-header {
-  @apply flex justify-between items-center mb-1;
-}
-
-.option-duration {
-  @apply text-white font-semibold;
-}
-
-.option-cost {
-  @apply text-yellow-400 font-bold;
-}
-
-.option-description {
-  @apply text-gray-400 text-sm;
-}
-
-.current-boost {
-  @apply p-3 bg-green-900 bg-opacity-30 border border-green-600 border-opacity-50 rounded-md;
-}
-
-.current-boost-info {
-  @apply flex justify-between items-center mb-2;
-}
-
+.option-duration,
 .boost-status {
-  @apply text-green-400 font-semibold text-sm;
+  @apply font-semibold;
+  color: #111827;
 }
 
-.boost-remaining {
-  @apply text-green-300 text-sm;
-}
-
+.boost-remaining,
 .boost-note {
-  @apply text-green-200 text-xs opacity-80;
+  color: #16a34a;
 }
 
 @media (max-width: 1024px) {
   .game-sidebar {
-    width: min(88vw, 320px);
-    transform: translateX(-100%);
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+    left: 12px;
+    right: auto;
+    top: 12px;
+    width: min(286px, calc(100vw - 20px));
+    height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 24px);
+    transform: translateX(-110%);
   }
 
   .game-sidebar.mobile-open {
     transform: translateX(0);
   }
 
-  .scrollable-content {
-    @apply px-3 pb-4 pt-3;
+  .section {
+    border-radius: 16px;
+  }
+
+  .city-info-card {
+    padding: 10px;
+  }
+
+  .city-details .detail-item:nth-child(n + 2) {
+    display: none;
+  }
+
+  .production-item,
+  .resource-item,
+  .warehouse-level,
+  .warehouse-info,
+  .resource-info,
+  .production-info,
+  .production-details,
+  .army-item {
+    min-width: 0;
+  }
+
+  .resource-name,
+  .production-name,
+  .warehouse-label,
+  .resource-value,
+  .warehouse-value,
+  .production-rate,
+  .army-count-text,
+  .army-name,
+  .city-title,
+  .detail-item,
+  .section-header {
+    font-size: 12px;
+  }
+
+  .resource-item,
+  .production-item {
+    padding: 5px 7px;
+  }
+
+  .resource-dots-container {
+    gap: 6px;
+  }
+
+  .resource-dot {
+    width: 20px;
+    height: 20px;
+  }
+
+  .army-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .army-item {
+    align-items: center;
+  }
+
+  .army-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .army-name,
+  .army-count-text {
+    display: block;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 </style>

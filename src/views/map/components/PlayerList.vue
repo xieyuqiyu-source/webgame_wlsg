@@ -358,26 +358,25 @@ export default {
 
 .search-icon {
   @apply absolute left-3 top-1/2 transform -translate-y-1/2;
-  color: rgba(255, 255, 255, 0.6);
+  color: #94a3b8;
 }
 
 .search-input {
   @apply w-full pl-10 pr-4 py-3 rounded-lg transition-all duration-200;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  color: white;
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  color: #111827;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: #94a3b8;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #FFB900;
-  box-shadow: 0 0 0 2px rgba(255, 185, 0, 0.2);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  background: #ffffff;
 }
 
 .filter-buttons {
@@ -386,59 +385,56 @@ export default {
 
 .filter-btn {
   @apply px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.96);
+  color: #64748b;
+  border: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .filter-btn:hover {
-  background: rgba(255, 185, 0, 0.2);
-  border-color: #FFB900;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #111827;
   transform: translateY(-1px);
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, #FFB900 0%, #FFA000 100%);
-  color: #18181B;
-  border-color: #FFB900;
-  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.3);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 22px rgba(79, 70, 229, 0.18);
 }
 
-/* 在线统计样式 */
 .online-stats {
-  background: rgba(35, 124, 72, 0.1);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 20px;
   padding: 20px;
   display: flex;
   gap: 24px;
   flex-wrap: wrap;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .stat-item {
   @apply flex items-center gap-3;
-  background: rgba(255, 255, 255, 0.1);
+  background: #f8fafc;
   padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(35, 124, 72, 0.2);
+  border-radius: 14px;
+  border: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .stat-icon {
-  color: #FFB900;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  color: #6366f1;
 }
 
 .stat-label {
   @apply text-sm font-medium;
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
 }
 
 .stat-value {
   @apply text-sm font-bold;
-  color: #FFB900;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  color: #111827;
 }
 
 /* 玩家网格样式 */
@@ -447,22 +443,21 @@ export default {
 }
 
 .player-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(35, 124, 72, 0.3);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
   padding: 20px;
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  color: white;
+  color: #111827;
   position: relative;
   will-change: border-color, box-shadow;
 }
 
 .player-card:hover {
-  border-color: rgba(255, 185, 0, 0.4);
-  box-shadow: 0 6px 20px rgba(255, 185, 0, 0.1);
+  border-color: rgba(165, 180, 252, 0.9);
+  box-shadow: 0 14px 28px rgba(99, 102, 241, 0.08);
 }
 
 /* 玩家头部样式 */
@@ -517,18 +512,17 @@ export default {
 
 .player-name {
   @apply text-lg font-bold mb-1;
-  color: #FFB900;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #111827;
 }
 
 .player-level {
   @apply text-sm;
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
 }
 
 .last-active {
   @apply text-xs;
-  color: rgba(255, 255, 255, 0.6);
+  color: #94a3b8;
 }
 
 .player-status {
@@ -546,9 +540,9 @@ export default {
 }
 
 .status-badge.offline {
-  background: rgba(107, 114, 128, 0.3);
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(107, 114, 128, 0.5);
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid rgba(203, 213, 225, 0.9);
 }
 
 /* 城池信息样式 */
@@ -558,9 +552,9 @@ export default {
 
 .city-name {
   @apply flex items-center gap-2 text-sm p-3 rounded-lg;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: white;
+  background: #eef2ff;
+  border: 1px solid rgba(199, 210, 254, 0.95);
+  color: #111827;
   font-weight: bold;
 }
 
@@ -571,9 +565,10 @@ export default {
 
 .civilization-level {
   @apply text-sm p-2 rounded;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
+  background: #f8fafc;
+  color: #64748b;
   text-align: center;
+  border: 1px solid rgba(229, 231, 235, 0.92);
 }
 
 .civilization-text {
@@ -587,9 +582,9 @@ export default {
 
 .army-power {
   @apply flex items-center gap-2 text-sm p-3 rounded-lg;
-  background: rgba(255, 99, 103, 0.1);
-  border: 1px solid rgba(255, 99, 103, 0.2);
-  color: white;
+  background: #fef2f2;
+  border: 1px solid rgba(254, 202, 202, 0.95);
+  color: #111827;
   font-weight: bold;
 }
 
@@ -600,8 +595,8 @@ export default {
 
 .protection-status {
   @apply flex items-center gap-2 text-sm p-2 rounded;
-  background: rgba(255, 185, 0, 0.1);
-  border: 1px solid rgba(255, 185, 0, 0.2);
+  background: #fffbeb;
+  border: 1px solid rgba(253, 230, 138, 0.95);
 }
 
 .protection-icon {
@@ -653,9 +648,9 @@ export default {
 }
 
 .action-btn:disabled {
-  background: rgba(107, 114, 128, 0.2) !important;
-  border-color: rgba(107, 114, 128, 0.3) !important;
-  color: rgba(255, 255, 255, 0.4) !important;
+  background: #e5e7eb !important;
+  border-color: #e5e7eb !important;
+  color: #94a3b8 !important;
   cursor: not-allowed;
   transform: none !important;
   box-shadow: none !important;
@@ -679,12 +674,11 @@ export default {
 
 .empty-title {
   @apply text-xl font-bold mb-2;
-  color: #FFB900;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #111827;
 }
 
 .empty-text {
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
 }
 
 @media (max-width: 768px) {
