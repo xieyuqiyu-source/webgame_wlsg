@@ -150,8 +150,8 @@ const addTestMessage = () => {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fb;
-  padding: 8px;
+  background: #ffffff;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -159,13 +159,12 @@ const addTestMessage = () => {
 .page-header {
   background: #ffffff;
   padding: 18px 22px;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
-  margin-bottom: 16px;
+  box-shadow: none;
+  margin-bottom: 0;
 }
 
 .header-left {
@@ -241,8 +240,8 @@ const addTestMessage = () => {
   flex: 1;
   display: flex;
   min-height: 0;
-  gap: 16px;
-  background: transparent;
+  gap: 0;
+  background: #ffffff;
 }
 
 .message-list-panel {
@@ -250,7 +249,9 @@ const addTestMessage = () => {
   min-width: 350px;
   max-width: 500px;
   border: 1px solid #e5e7eb;
-  border-radius: 20px;
+  border-top: none;
+  border-left: none;
+  border-bottom: none;
   background: #ffffff;
   display: flex;
   flex-direction: column;
@@ -259,8 +260,9 @@ const addTestMessage = () => {
 
 .message-detail-panel {
   flex: 1;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
   background: #ffffff;
   display: flex;
   flex-direction: column;
@@ -281,7 +283,6 @@ const addTestMessage = () => {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
-    border-radius: 18px;
   }
   
   .header-left {
@@ -296,7 +297,7 @@ const addTestMessage = () => {
   
   .message-content {
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
   }
   
   .message-list-panel {
@@ -304,7 +305,8 @@ const addTestMessage = () => {
     max-width: none;
     min-width: 0;
     height: 46vh;
-    border-right: 1px solid #e5e7eb;
+    border-right: none;
+    border-left: none;
   }
   
   .message-detail-panel {
