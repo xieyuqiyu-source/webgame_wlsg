@@ -204,7 +204,7 @@ export default {
 }
 
 .scrollable-content {
-  @apply flex-1 overflow-y-auto px-3 py-3;
+  @apply flex-1 overflow-y-auto px-3 py-2.5;
   scrollbar-width: none;
   min-width: 0;
 }
@@ -222,7 +222,7 @@ export default {
 
 .city-header,
 .city-details {
-  @apply space-y-3;
+  @apply space-y-2;
 }
 
 .city-title-row,
@@ -239,7 +239,7 @@ export default {
 .city-title {
   @apply text-sm font-semibold;
   color: #111827;
-  line-height: 20px;
+  line-height: 18px;
 }
 
 .coins-display {
@@ -264,7 +264,7 @@ export default {
 .tooltip-item {
   @apply flex items-center gap-2 text-sm;
   color: #6b7280;
-  line-height: 20px;
+  line-height: 18px;
 }
 
 .civilization-left,
@@ -294,10 +294,10 @@ export default {
 }
 
 .section-header {
-  @apply text-sm font-semibold mb-3 pb-2;
+  @apply text-sm font-semibold mb-2 pb-2;
   color: #111827;
   border-bottom: 1px solid rgba(226, 232, 240, 0.96);
-  line-height: 24px;
+  line-height: 20px;
   min-width: 0;
 }
 
@@ -313,12 +313,12 @@ export default {
 .boost-options,
 .gm-section,
 .army-grid {
-  @apply space-y-2;
+  @apply space-y-1.5;
 }
 
 .resource-item,
 .production-item {
-  @apply px-3 py-2 rounded-2xl;
+  @apply px-2.5 py-1.5 rounded-2xl;
   min-width: 0;
 }
 
@@ -335,7 +335,7 @@ export default {
 
 .resource-icon,
 .production-icon {
-  @apply w-4 h-4 rounded-sm flex-shrink-0;
+  @apply w-3.5 h-3.5 rounded-sm flex-shrink-0;
 }
 
 .resource-icon-fallback,
@@ -453,7 +453,7 @@ export default {
 }
 
 .warehouse-upgrade-btn {
-  @apply w-full px-3 py-2.5 text-xs rounded-2xl transition-all duration-200;
+  @apply w-full px-3 py-2 text-xs rounded-2xl transition-all duration-200;
 }
 
 .warehouse-upgrade-btn.disabled {
@@ -467,14 +467,14 @@ export default {
 }
 
 .army-item {
-  @apply flex items-center gap-3 p-3 rounded-2xl transition-all duration-200;
+  @apply flex items-center gap-2 p-2.5 rounded-2xl transition-all duration-200;
   background: rgba(248, 250, 252, 0.9);
   border: 1px solid rgba(226, 232, 240, 0.92);
   min-width: 0;
 }
 
 .army-icon {
-  font-size: 1.125rem;
+  font-size: 1rem;
 }
 
 .army-name {
@@ -704,6 +704,14 @@ export default {
     border-radius: 16px;
   }
 
+  .city-info-card {
+    padding: 12px;
+  }
+
+  .city-details .detail-item:nth-child(n + 2) {
+    display: none;
+  }
+
   .production-item,
   .resource-item,
   .warehouse-level,
@@ -721,8 +729,50 @@ export default {
   .resource-value,
   .warehouse-value,
   .production-rate,
-  .army-count-text {
+  .army-count-text,
+  .army-name,
+  .city-title,
+  .detail-item,
+  .section-header {
     font-size: 12px;
+  }
+
+  .resource-item,
+  .production-item {
+    padding: 6px 8px;
+  }
+
+  .resource-dots-container {
+    gap: 6px;
+  }
+
+  .resource-dot {
+    width: 20px;
+    height: 20px;
+  }
+
+  .army-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .army-item {
+    align-items: center;
+  }
+
+  .army-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .army-name,
+  .army-count-text {
+    display: block;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 </style>
