@@ -7,6 +7,7 @@ import { useMessageStore } from './messageStore.js'
 import { resolveCombat } from '../../domain/combat/combatService.js'
 import { COMBAT_RULE_IDS } from '../../domain/combat/combatConstants.js'
 import { applyGeneralBonusesToUnit } from '../../domain/general/generalBonusResolver.js'
+import { resolvePlayerCombat } from '../../services/playerDirectoryService.js'
 
 const SORTIE_STATUS = {
   OUTBOUND: 'outbound',
@@ -336,7 +337,7 @@ export const useMilitaryStore = defineStore('military', {
       return { ok: true, task: this.sortieTask }
     },
 
-    progressSortieTask(now = Date.now()) {
+    async progressSortieTask(now = Date.now()) {
       if (!this.sortieTask) {
         this.restoreSortieState(now)
         return
@@ -348,7 +349,7 @@ export const useMilitaryStore = defineStore('military', {
       }
 
       if (this.sortieTask.status === SORTIE_STATUS.OUTBOUND) {
-        this.resolveSortieBattle(now)
+        await this.resolveSortieBattle(now)
         return
       }
 
@@ -357,7 +358,7 @@ export const useMilitaryStore = defineStore('military', {
       }
     },
 
-    resolveSortieBattle(now = Date.now()) {
+    async resolveSortieBattle(now = Date.now()) {
       if (!this.sortieTask) return
 
       const task = this.sortieTask
@@ -368,38 +369,58 @@ export const useMilitaryStore = defineStore('military', {
       const liveNpc = isNpcTarget ? npcStore.getNpcById(task.target.id) : null
       const defenderTarget = liveNpc || task.target
 
-      const result = resolveCombat({
-        ruleId: task.ruleId,
-        attackerArmy: {
-          faction: task.attacker.faction,
-          units: task.dispatchedUnits.map((unit) => ({ ...unit })),
-          playerInfo: {
-            userUUID: task.attacker.userUUID,
-            nickname: task.attacker.nickname
+      let result
+      if (isNpcTarget) {
+        result = resolveCombat({
+          ruleId: task.ruleId,
+          attackerArmy: {
+            faction: task.attacker.faction,
+            units: task.dispatchedUnits.map((unit) => ({ ...unit })),
+            playerInfo: {
+              userUUID: task.attacker.userUUID,
+              nickname: task.attacker.nickname
+            },
+            title: `${task.actionLabel}部队`
           },
-          title: `${task.actionLabel}部队`
-        },
-        defenderArmy: {
-          faction: defenderTarget.faction,
-          units: liveNpc?.defenseArmy?.units || task.target.defenseArmy?.units || [],
-          ...(isNpcTarget
-            ? {
-                npcInfo: {
-                  id: defenderTarget.id,
-                  name: defenderTarget.name
-                }
-              }
-            : {
-                playerInfo: {
-                  userUUID: defenderTarget.id,
-                  nickname: defenderTarget.name
-                }
-              }),
-          resources: { ...(liveNpc?.resources || task.target.resources || {}) },
-          defenderResources: { ...(liveNpc?.resources || task.target.resources || {}) },
-          title: `${defenderTarget.name}守军`
+          defenderArmy: {
+            faction: defenderTarget.faction,
+            units: liveNpc?.defenseArmy?.units || [],
+            npcInfo: {
+              id: defenderTarget.id,
+              name: defenderTarget.name
+            },
+            resources: { ...(liveNpc?.resources || {}) },
+            defenderResources: { ...(liveNpc?.resources || {}) },
+            title: `${defenderTarget.name}守军`
+          }
+        })
+      } else {
+        try {
+          const response = await resolvePlayerCombat(task.target.id, {
+            attackerId: task.attacker.userUUID,
+            ruleId: task.ruleId,
+            attacker: {
+              faction: task.attacker.faction,
+              nickname: task.attacker.nickname,
+              units: task.dispatchedUnits.map((unit) => ({ ...unit }))
+            }
+          })
+          result = response.result
+        } catch (error) {
+          notificationStore.addErrorNotification('玩家战斗失败', error.message || '后端结算失败，部队已原路返回')
+          this.sortieTask = {
+            ...task,
+            status: SORTIE_STATUS.RETURNING,
+            phaseEndsAt: now + task.returnDuration,
+            battleResult: null,
+            survivors: task.dispatchedUnits.map((unit) => ({ ...unit })),
+            loot: { wood: 0, soil: 0, iron: 0, food: 0 }
+          }
+          gameStore.saveGame()
+          this.queueSortieTimer()
+          return
         }
-      })
+      }
 
       if (isNpcTarget) {
         npcStore.attackNpc(defenderTarget.id, result)
@@ -449,6 +470,16 @@ export const useMilitaryStore = defineStore('military', {
       })
 
       const { stored, overflow } = gameStore.storeLootedResources(task.loot || {})
+      if (!task.battleResult) {
+        this.pendingBattleReport = null
+        this.sortieTask = null
+        this.sortieCooldownUntil = now + SORTIE_COOLDOWN_MS
+        notificationStore.addInfoNotification('部队归来', `${task.target.name} 的出征未完成结算，部队已完整返回`)
+        gameStore.saveGame()
+        this.queueSortieTimer()
+        return
+      }
+
       const finalReport = {
         ...task.battleResult,
         details: {

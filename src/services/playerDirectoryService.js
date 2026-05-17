@@ -50,3 +50,11 @@ export const scoutPlayer = async (userId) => {
     body: JSON.stringify({})
   })
 }
+
+export const resolvePlayerCombat = async (targetUserId, payload) => {
+  if (!targetUserId) throw new Error('目标玩家不能为空')
+  return requestJson(`/players/${encodeURIComponent(targetUserId)}/attack`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}

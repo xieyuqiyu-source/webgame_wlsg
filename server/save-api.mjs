@@ -2,6 +2,13 @@ import { createServer } from 'node:http'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  applyLossesToArmyMap,
+  enrichArmyMap,
+  normalizeResourceBundle,
+  resolveCombat,
+  subtractResources
+} from './pvp-combat.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -135,6 +142,23 @@ const savePlayerDirectory = async (players) => {
   await writeFile(PLAYER_DATA_FILE, JSON.stringify(players, null, 2), 'utf8')
 }
 
+const saveSaveRecord = async (userId, save, meta = {}) => {
+  await ensureDataDir()
+  await writeFile(
+    getSaveFilePath(userId),
+    JSON.stringify({
+      meta: {
+        ...meta,
+        userId,
+        updatedAt: new Date().toISOString(),
+        version: save?.version || GAME_SAVE_VERSION
+      },
+      save
+    }, null, 2),
+    'utf8'
+  )
+}
+
 const updatePlayerDirectory = async (updater) => {
   const operation = playerWriteQueue.then(async () => {
     const players = await loadPlayerDirectory()
@@ -164,7 +188,9 @@ const createPublicProfileFromSave = (userId, save) => {
     civilizationLevel: game.civilizationLevel || '',
     generalId: game.generalProgress?.id || '',
     armyPower: getArmyPower(military.army),
-    hasProtection: false
+    hasProtection: false,
+    resources: game.resources || {},
+    army: military.army || {}
   }
 }
 
@@ -259,6 +285,156 @@ const createScoutData = (player) => {
   }
 }
 
+const normalizeAttackerUnits = (units = []) => (
+  (Array.isArray(units) ? units : [])
+    .map((unit) => ({
+      ...unit,
+      id: String(unit?.id || ''),
+      name: String(unit?.name || unit?.id || ''),
+      attack: Math.max(0, Number(unit?.attack) || 0),
+      infantryDefense: Math.max(0, Number(unit?.infantryDefense) || 0),
+      cavalryDefense: Math.max(0, Number(unit?.cavalryDefense) || 0),
+      speed: Math.max(1, Number(unit?.speed) || 1),
+      carryCapacity: Math.max(0, Number(unit?.carryCapacity) || 0),
+      unitType: String(unit?.unitType || 'infantry'),
+      count: Math.max(0, Math.floor(Number(unit?.count) || 0))
+    }))
+    .filter((unit) => unit.id && unit.count > 0)
+)
+
+const buildDefenderFromSave = (userId, save) => {
+  const game = save?.game || {}
+  const military = save?.military || {}
+  return {
+    id: userId,
+    name: game.userNickname || '防守方',
+    faction: game.userFaction || 'unknown',
+    resources: normalizeResourceBundle(game.resources || {}),
+    armyMap: military.army || {},
+    units: enrichArmyMap(military.army || {}, game.userFaction)
+  }
+}
+
+const buildDefenderFromDirectory = (player) => ({
+  id: player.id,
+  name: player.name || '防守方',
+  faction: player.faction || 'unknown',
+  resources: normalizeResourceBundle(player.snapshot?.resources || {}),
+  armyMap: player.snapshot?.army || {},
+  units: enrichArmyMap(player.snapshot?.army || {}, player.faction)
+})
+
+const applyPvpResultToDirectoryPlayer = (player, result) => {
+  const plundered = result.details?.plundered || {}
+  const defenderLosses = result.defender?.losses || []
+  const previousSnapshot = player.snapshot || {}
+  const nextArmy = applyLossesToArmyMap(previousSnapshot.army || {}, defenderLosses)
+  const nextResources = subtractResources(previousSnapshot.resources || {}, plundered)
+  return {
+    ...player,
+    armyPower: getArmyPower(nextArmy),
+    snapshot: {
+      resources: nextResources,
+      army: nextArmy
+    },
+    updatedAt: new Date().toISOString()
+  }
+}
+
+const resolvePlayerCombatAuthoritatively = async (targetUserId, body) => {
+  const attackerId = String(body?.attackerId || '').trim()
+  if (!validateUserId(attackerId)) {
+    throw new Error('攻击方标识无效')
+  }
+  if (attackerId === targetUserId) {
+    throw new Error('不能攻击自己的城池')
+  }
+
+  const attackerUnits = normalizeAttackerUnits(body?.attacker?.units)
+  if (attackerUnits.length === 0) {
+    throw new Error('出征兵力不能为空')
+  }
+
+  return updatePlayerDirectory(async (players) => {
+    const targetSaveRecord = await loadSave(targetUserId)
+    const targetPlayer = players[targetUserId]
+    if (!targetSaveRecord.exists && !targetPlayer) {
+      throw new Error('目标玩家不存在')
+    }
+
+    const defender = targetSaveRecord.exists
+      ? buildDefenderFromSave(targetUserId, targetSaveRecord.save)
+      : buildDefenderFromDirectory(targetPlayer)
+
+    const result = resolveCombat({
+      ruleId: body?.ruleId,
+      attackerArmy: {
+        faction: String(body?.attacker?.faction || '').trim() || 'unknown',
+        units: attackerUnits,
+        playerInfo: {
+          userUUID: attackerId,
+          nickname: String(body?.attacker?.nickname || '攻击方').trim().slice(0, 40)
+        },
+        title: '玩家出征部队'
+      },
+      defenderArmy: {
+        faction: defender.faction,
+        units: defender.units,
+        playerInfo: {
+          userUUID: defender.id,
+          nickname: defender.name
+        },
+        resources: defender.resources,
+        defenderResources: defender.resources,
+        title: `${defender.name}守军`
+      }
+    })
+
+    const plundered = result.details?.plundered || {}
+    const defenderLosses = result.defender?.losses || []
+
+    if (targetSaveRecord.exists) {
+      const nextSave = {
+        ...targetSaveRecord.save,
+        game: {
+          ...(targetSaveRecord.save.game || {}),
+          resources: subtractResources(targetSaveRecord.save.game?.resources || {}, plundered)
+        },
+        military: {
+          ...(targetSaveRecord.save.military || {}),
+          army: applyLossesToArmyMap(targetSaveRecord.save.military?.army || {}, defenderLosses)
+        },
+        savedAt: new Date().toISOString()
+      }
+
+      await saveSaveRecord(targetUserId, nextSave, targetSaveRecord.meta)
+      const profile = createPublicProfileFromSave(targetUserId, nextSave)
+      if (profile) {
+        players[targetUserId] = {
+          ...(players[targetUserId] || {}),
+          ...normalizePublicProfile(targetUserId, profile),
+          createdAt: players[targetUserId]?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastSeenAt: players[targetUserId]?.lastSeenAt || null
+        }
+      }
+
+      return {
+        result,
+        targetMutated: true,
+        targetSource: 'save'
+      }
+    }
+
+    players[targetUserId] = applyPvpResultToDirectoryPlayer(targetPlayer, result)
+    return {
+      result,
+      targetMutated: true,
+      targetSource: 'directory'
+    }
+  })
+}
+
 const saveCloudPayload = async (userId, rawPayload) => {
   const normalizedSave = normalizeSavePayload(rawPayload)
   const meta = {
@@ -347,6 +523,18 @@ const server = createServer(async (request, response) => {
         ok: true,
         scoutedAt: Date.now(),
         scoutData: createScoutData(player)
+      })
+      return
+    }
+
+    const playerAttackMatch = pathname.match(/^\/api\/players\/([a-zA-Z0-9_-]{8,80})\/attack$/)
+    if (playerAttackMatch && request.method === 'POST') {
+      const [, targetUserId] = playerAttackMatch
+      const body = await readRequestBody(request)
+      const combatResult = await resolvePlayerCombatAuthoritatively(targetUserId, body)
+      json(response, 200, {
+        ok: true,
+        ...combatResult
       })
       return
     }
