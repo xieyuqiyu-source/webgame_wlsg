@@ -9,18 +9,17 @@
           `notification-${notification.type}`
         ]"
       >
-        <div class="notification-icon">
-          <NotificationIcons :name="getIcon(notification.type)" />
-        </div>
         <div class="notification-content">
           <div class="notification-title">{{ notification.title }}</div>
           <div class="notification-message">{{ notification.message }}</div>
         </div>
-        <button 
+        <button
           class="notification-close"
+          type="button"
+          aria-label="关闭通知"
           @click="removeNotification(notification.id)"
         >
-          ×
+          x
         </button>
       </div>
     </transition-group>
@@ -28,42 +27,22 @@
 </template>
 
 <script>
-import { defineComponent, computed } from 'vue'
-import { useNotificationStore } from '../store/modules/notificationStore'
+import { defineComponent } from 'vue'
 import { storeToRefs } from 'pinia'
-import NotificationIcons from './icons/NotificationIcons.vue'
+import { useNotificationStore } from '../store/modules/notificationStore'
 
 export default defineComponent({
   name: 'GlobalNotification',
-  components: {
-    NotificationIcons
-  },
   setup() {
     const notificationStore = useNotificationStore()
-    
-    // 使用 storeToRefs 确保响应式
     const { notifications } = storeToRefs(notificationStore)
-    
-    //=== 获取通知图标
-    const getIcon = (type) => {
-      const icons = {
-        success: 'CheckCircleIcon',
-        warning: 'ExclamationTriangleIcon', 
-        info: 'InformationCircleIcon',
-        error: 'XCircleIcon'
-      }
-      return icons[type] || 'InformationCircleIcon'
-    }
-    
-    //=== 移除通知
+
     const removeNotification = (id) => {
-      console.log('点击关闭通知，ID:', id)
       notificationStore.removeNotification(id)
     }
-    
+
     return {
       notifications,
-      getIcon,
       removeNotification
     }
   }
@@ -73,149 +52,84 @@ export default defineComponent({
 <style scoped>
 .notification-container {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  top: 34px;
+  right: 42px;
   z-index: 9999;
   pointer-events: none;
-  width: min(100vw - 32px, 392px);
+  width: min(100vw - 84px, 610px);
 }
 
 .notification-item {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) 28px;
+  grid-template-columns: minmax(0, 1fr) 28px;
   align-items: start;
-  column-gap: 12px;
+  column-gap: 18px;
   width: 100%;
-  padding: 14px 14px 14px 12px;
-  margin-bottom: 10px;
-  background: #ffffff;
-  border-radius: 18px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
-  border: 1px solid #dbe3ef;
+  min-height: 83px;
+  padding: 12px 18px 14px 14px;
+  margin-bottom: 12px;
+  border-radius: 7px;
   pointer-events: auto;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
-  overflow: hidden;
-  position: relative;
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
 .notification-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
+  transform: translateY(-1px);
 }
 
 .notification-success {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  background: #1f815f;
 }
 
 .notification-warning {
-  background: #fff7ed;
-  border-color: #fed7aa;
+  background: #9a650f;
 }
 
 .notification-info {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: #235a98;
 }
 
 .notification-error {
-  background: #fef2f2;
-  border-color: #fecaca;
-}
-
-.notification-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: 999px;
-}
-
-.notification-success::before {
-  background: #059669;
-}
-
-.notification-warning::before {
-  background: #d97706;
-}
-
-.notification-info::before {
-  background: #2563eb;
-}
-
-.notification-error::before {
-  background: #dc2626;
-}
-
-.notification-icon {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-}
-
-.notification-success .notification-icon {
-  color: #047857;
-}
-
-.notification-warning .notification-icon {
-  color: #b45309;
-}
-
-.notification-info .notification-icon {
-  color: #1d4ed8;
-}
-
-.notification-error .notification-icon {
-  color: #b91c1c;
+  background: #9a3d42;
 }
 
 .notification-content {
-  flex: 1;
   min-width: 0;
 }
 
 .notification-title {
+  margin-bottom: 4px;
+  color: #ffffff;
+  font-size: 24px;
   font-weight: 700;
-  font-size: 13px;
-  color: #0f172a;
-  margin-bottom: 3px;
-  line-height: 1.35;
+  line-height: 1.2;
 }
 
 .notification-message {
-  font-size: 12px;
-  color: #475569;
-  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 19px;
+  line-height: 1.35;
   word-wrap: break-word;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
 }
 
 .notification-close {
-  flex-shrink: 0;
+  display: flex;
   width: 28px;
   height: 28px;
-  border: none;
-  background: #e2e8f0;
-  color: #475569;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  transition: all 0.2s ease;
+  border: 0;
+  background: transparent;
+  color: rgba(8, 22, 18, 0.96);
+  cursor: pointer;
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  transition: opacity 0.2s ease;
 }
 
 .notification-close:hover {
-  background: #cbd5e1;
-  color: #0f172a;
+  opacity: 0.72;
 }
 
 .notification-enter-active {
@@ -250,36 +164,28 @@ export default defineComponent({
   }
 
   .notification-item {
+    grid-template-columns: minmax(0, 1fr) 24px;
+    min-height: 72px;
     margin-bottom: 8px;
-    grid-template-columns: 16px minmax(0, 1fr) 26px;
-    padding: 12px 12px 12px 10px;
-    border-radius: 16px;
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+    padding: 12px 14px;
   }
 
   .notification-item:nth-child(n + 3) {
     display: none;
   }
 
-  .notification-icon {
-    width: 16px;
-    height: 16px;
-    margin-top: 1px;
-  }
-
   .notification-title {
-    font-size: 12px;
+    font-size: 18px;
   }
 
   .notification-message {
-    font-size: 11px;
-    -webkit-line-clamp: 2;
+    font-size: 14px;
   }
 
   .notification-close {
-    width: 26px;
-    height: 26px;
-    font-size: 16px;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
   }
 
   .notification-enter-from {
