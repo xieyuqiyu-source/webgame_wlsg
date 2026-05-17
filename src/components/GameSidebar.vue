@@ -73,9 +73,12 @@
 
         <SidebarArmy
           :army="gameStore.army"
+          :general="gameStore.selectedGeneral"
+          :general-progress="gameStore.generalProgress"
           :get-unit-icon="getUnitIcon"
           :get-unit-name="getUnitName"
           :total-army-count="gameStore.totalArmyCount"
+          @general-click="handleNavClick('general')"
         />
       </div>
 

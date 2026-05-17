@@ -38,6 +38,12 @@ const NAV_ITEMS = [
     iconPath: 'M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.17L4 17.17V4H20V16Z'
   },
   {
+    key: 'general',
+    label: '将领',
+    route: '/general',
+    iconPath: 'M12 2A5 5 0 0 1 17 7A5 5 0 0 1 12 12A5 5 0 0 1 7 7A5 5 0 0 1 12 2M4 20C4 16.69 7.58 14 12 14S20 16.69 20 20V22H4V20Z'
+  },
+  {
     key: 'notification-test',
     label: '通知',
     route: '/notification-test',
