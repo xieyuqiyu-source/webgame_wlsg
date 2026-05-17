@@ -9,6 +9,7 @@
         :general="gameStore.selectedGeneral"
         :progress="gameStore.generalProgress"
         :exp-for-next-level="gameStore.generalExpForNextLevel"
+        :bonuses="gameStore.generalBonuses"
         @allocate="gameStore.allocateGeneralPoint"
       />
     </section>

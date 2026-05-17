@@ -76,8 +76,18 @@
         <div class="info-item">
           <span class="item-label">时间:</span>
           <div class="time-inline">
-            <span class="time-tag">单个: {{ formatTrainTime(gameStore.getActualTrainTime) }}</span>
-            <span class="time-tag">总计: {{ formatTrainTime(gameStore.getActualTrainTime) }}</span>
+            <span class="time-tag">基础: {{ formatTrainTime(baseSingleTrainTime) }}</span>
+            <span class="time-tag boosted">实际: {{ formatTrainTime(actualSingleTrainTime) }}</span>
+            <span class="time-tag">总计: {{ formatTrainTime(actualTotalTrainTime) }}</span>
+          </div>
+        </div>
+
+        <div v-if="hasRecruitmentBonus" class="info-item bonus-item">
+          <span class="item-label">将领:</span>
+          <div class="bonus-inline">
+            <span class="bonus-tag">{{ gameStore.selectedGeneral?.name }}</span>
+            <span class="bonus-copy">征兵速度 +{{ recruitmentSpeedPercent }}%</span>
+            <span class="bonus-copy">节省 {{ formatTrainTime(savedTotalTrainTime) }}</span>
           </div>
         </div>
       </div>
@@ -147,6 +157,19 @@ export default {
       })
       return cost
     })
+
+    const baseSingleTrainTime = computed(() => gameStore.getActualTrainTime)
+    const actualSingleTrainTime = computed(() => (
+      Math.floor(baseSingleTrainTime.value * gameStore.generalBonuses.recruitmentTimeMultiplier)
+    ))
+    const actualTotalTrainTime = computed(() => actualSingleTrainTime.value * recruitCount.value)
+    const savedTotalTrainTime = computed(() => (
+      Math.max(0, (baseSingleTrainTime.value * recruitCount.value) - actualTotalTrainTime.value)
+    ))
+    const recruitmentSpeedPercent = computed(() => (
+      Math.round((1 - gameStore.generalBonuses.recruitmentTimeMultiplier) * 100)
+    ))
+    const hasRecruitmentBonus = computed(() => recruitmentSpeedPercent.value > 0)
     
     //=== 检查是否可以征兵
     const canRecruit = computed(() => {
@@ -225,6 +248,12 @@ export default {
       recruitCount,
       maxRecruitableCount,
       totalCost,
+      baseSingleTrainTime,
+      actualSingleTrainTime,
+      actualTotalTrainTime,
+      savedTotalTrainTime,
+      recruitmentSpeedPercent,
+      hasRecruitmentBonus,
       canRecruit,
       increaseQuantity,
       decreaseQuantity,
@@ -390,6 +419,41 @@ export default {
   font-size: 11px;
   color: #FFB900;
   font-weight: bold;
+}
+
+.time-tag.boosted {
+  color: #7ee7a8;
+}
+
+.bonus-item {
+  border-color: rgba(126, 231, 168, 0.35);
+  background: rgba(35, 124, 72, 0.16);
+}
+
+.bonus-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.bonus-tag,
+.bonus-copy {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.bonus-tag {
+  color: #ffffff;
+  background: rgba(126, 231, 168, 0.18);
+}
+
+.bonus-copy {
+  color: #7ee7a8;
+  background: rgba(24, 24, 27, 0.3);
 }
 
 
