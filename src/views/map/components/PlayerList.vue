@@ -187,6 +187,7 @@ import { formatNumber } from '@/utils/formatters.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { useNotificationStore } from '@/store/modules/notificationStore.js'
 import { fetchPlayers, scoutPlayer } from '@/services/playerDirectoryService.js'
+import { getUnitById } from '@/config/factionConfig.js'
 import HoverCard from '@/components/hover/HoverCard.vue'
 import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
 
@@ -346,7 +347,20 @@ export default {
       try {
         const result = await scoutPlayer(player.id)
         player.scoutedAt = result.scoutedAt
-        player.scoutData = result.scoutData
+        player.scoutData = {
+          ...result.scoutData,
+          units: (result.scoutData?.units || []).map((unit) => ({
+            ...(getUnitById(unit.id) || {
+              name: unit.id,
+              attack: 0,
+              infantryDefense: 0,
+              cavalryDefense: 0,
+              speed: 0,
+              carryCapacity: 0
+            }),
+            ...unit
+          }))
+        }
         this.notificationStore.addSuccessNotification(
           '侦查成功',
           `已取得 ${player.name} 的城池情报`

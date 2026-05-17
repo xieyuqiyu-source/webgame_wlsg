@@ -2,7 +2,6 @@ import { createServer } from 'node:http'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { getUnitById } from '../src/config/factionConfig.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -240,16 +239,12 @@ const toPublicPlayer = (player) => {
 }
 
 const createScoutData = (player) => {
-  const units = Object.entries(player.snapshot?.army || {}).reduce((result, [unitId, count]) => {
-    const unit = getUnitById(unitId)
-    if (!unit || count <= 0) return result
-    result.push({
+  const units = Object.entries(player.snapshot?.army || {})
+    .filter(([, count]) => count > 0)
+    .map(([unitId, count]) => ({
       id: unitId,
-      ...unit,
       count
-    })
-    return result
-  }, [])
+    }))
 
   return {
     totalUnits: units.reduce((sum, unit) => sum + unit.count, 0),
