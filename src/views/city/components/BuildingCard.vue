@@ -61,10 +61,13 @@
           :is-max-level="currentLevel >= maxLevel"
           :is-upgrading="isUpgrading"
           :production-gain="productionGain"
+          :economy-bonus-percent="economyBonusPercent"
           :remaining-time-text="remainingTimeText"
           :resources="gameStore.resources"
           :title="buildingName"
           :upgrade-cost="upgradeCost"
+          :base-upgrade-duration-text="baseUpgradeDurationText"
+          :building-speed-percent="buildingSpeedPercent"
           :upgrade-duration-text="upgradeDurationText"
         />
         <div v-if="false" class="building-tooltip">
@@ -183,15 +186,23 @@ export default {
     })
     
     //=== 当前产出
-    const currentProduction = computed(() => {
+    const baseCurrentProduction = computed(() => {
       if (currentLevel.value === 0) return 0
       return calculateProduction(props.buildingType, currentLevel.value)
     })
 
-    const nextProduction = computed(() => {
-      if (currentLevel.value >= maxLevel.value) return currentProduction.value
+    const currentProduction = computed(() => (
+      Math.round(baseCurrentProduction.value * gameStore.generalBonuses.economyMultiplier)
+    ))
+
+    const baseNextProduction = computed(() => {
+      if (currentLevel.value >= maxLevel.value) return baseCurrentProduction.value
       return calculateProduction(props.buildingType, currentLevel.value + 1)
     })
+
+    const nextProduction = computed(() => (
+      Math.round(baseNextProduction.value * gameStore.generalBonuses.economyMultiplier)
+    ))
 
     const productionGain = computed(() => {
       return Math.max(0, nextProduction.value - currentProduction.value)
@@ -216,6 +227,18 @@ export default {
     const upgradeTime = computed(() => {
       return calculateUpgradeTime(props.buildingType, currentLevel.value)
     })
+
+    const actualUpgradeTime = computed(() => (
+      Math.floor(upgradeTime.value * gameStore.generalBonuses.buildingTimeMultiplier)
+    ))
+
+    const economyBonusPercent = computed(() => (
+      Math.round((gameStore.generalBonuses.economyMultiplier - 1) * 100)
+    ))
+
+    const buildingSpeedPercent = computed(() => (
+      Math.round((1 - gameStore.generalBonuses.buildingTimeMultiplier) * 100)
+    ))
     
     //=== 按钮样式类
     const getButtonClass = computed(() => {
@@ -261,15 +284,17 @@ export default {
       }
     })
 
-    const upgradeDurationText = computed(() => {
-      const seconds = upgradeTime.value
+    const formatDurationText = (seconds) => {
       const minutes = Math.floor(seconds / 60)
       const hours = Math.floor(minutes / 60)
 
       if (hours > 0) return `${hours}小时${minutes % 60}分钟`
       if (minutes > 0) return `${minutes}分钟${seconds % 60}秒`
       return `${seconds}秒`
-    })
+    }
+
+    const baseUpgradeDurationText = computed(() => formatDurationText(upgradeTime.value))
+    const upgradeDurationText = computed(() => formatDurationText(actualUpgradeTime.value))
     
     //=== 更新进度
     const updateProgress = () => {
@@ -350,12 +375,16 @@ export default {
       canUpgrade,
       isUpgrading,
       upgradeTime,
+      actualUpgradeTime,
+      economyBonusPercent,
+      buildingSpeedPercent,
       upgradeProgress,
       remainingTime,
       showTooltip,
       getButtonClass,
       getButtonText,
       remainingTimeText,
+      baseUpgradeDurationText,
       upgradeDurationText,
       upgradeBuilding,
       getResourceName

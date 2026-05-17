@@ -19,9 +19,21 @@
         <span>产量提升</span>
         <strong>+{{ productionGain }}/h</strong>
       </div>
+      <div v-if="economyBonusPercent > 0" class="hover-row bonus">
+        <span>将领产量加成</span>
+        <strong>+{{ economyBonusPercent }}%</strong>
+      </div>
       <div class="hover-row">
-        <span>升级耗时</span>
+        <span>基础耗时</span>
+        <strong>{{ baseUpgradeDurationText }}</strong>
+      </div>
+      <div class="hover-row">
+        <span>实际耗时</span>
         <strong>{{ upgradeDurationText }}</strong>
+      </div>
+      <div v-if="buildingSpeedPercent > 0" class="hover-row bonus">
+        <span>将领建设速度</span>
+        <strong>+{{ buildingSpeedPercent }}%</strong>
       </div>
       <div class="hover-divider"></div>
       <div
@@ -76,6 +88,18 @@ export default {
     upgradeDurationText: {
       type: String,
       required: true
+    },
+    baseUpgradeDurationText: {
+      type: String,
+      required: true
+    },
+    buildingSpeedPercent: {
+      type: Number,
+      default: 0
+    },
+    economyBonusPercent: {
+      type: Number,
+      default: 0
     }
   }
 }
@@ -120,6 +144,10 @@ export default {
 
 .hover-row.highlight strong {
   color: #4ade80;
+}
+
+.hover-row.bonus strong {
+  color: #7dd3fc;
 }
 
 .hover-row.insufficient,

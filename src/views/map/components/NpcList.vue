@@ -200,6 +200,7 @@
             </div>
           </div>
           <div v-if="npc.scoutData.resources" class="scout-resources">
+            <span v-if="scoutInsightActive" class="scout-bonus">{{ gameStore.selectedGeneral?.name }} 洞察生效</span>
             <span>木材 {{ npc.scoutData.resources.wood }}</span>
             <span>泥土 {{ npc.scoutData.resources.soil }}</span>
             <span>铁矿 {{ npc.scoutData.resources.iron }}</span>
@@ -271,6 +272,9 @@
           <div class="dispatch-summary">
             <span>可选兵种 {{ availableDispatchUnits.length }} 种</span>
             <span>已选总兵力 {{ selectedDispatchTotal }}</span>
+            <span v-if="selectedDispatchTotal > 0">运载 {{ selectedDispatchCarryCapacity }}</span>
+            <span v-if="carryBonusPercent > 0">{{ gameStore.selectedGeneral?.name }} 运载 +{{ carryBonusPercent }}%</span>
+            <span v-if="marchSpeedBonusPercent > 0">{{ gameStore.selectedGeneral?.name }} 行军 +{{ marchSpeedBonusPercent }}%</span>
           </div>
 
           <div class="dispatch-list">
@@ -278,6 +282,12 @@
               <div class="dispatch-unit-meta">
                 <div class="dispatch-unit-name">{{ unit.name }}</div>
                 <div class="dispatch-unit-stock">现有 {{ formatNumber(unit.available) }}</div>
+                <div v-if="unit.baseUnit.carryCapacity !== unit.carryCapacity" class="dispatch-unit-bonus">
+                  运载 {{ unit.baseUnit.carryCapacity }} -> {{ unit.carryCapacity }}
+                </div>
+                <div v-if="unit.baseUnit.speed !== unit.speed" class="dispatch-unit-bonus">
+                  速度 {{ unit.baseUnit.speed }} -> {{ unit.speed }}
+                </div>
               </div>
               <div class="dispatch-input-group">
                 <button class="dispatch-step" @click="adjustDispatchUnit(unit.id, -1)">-</button>
@@ -311,6 +321,7 @@
 <script>
 import { formatNumber } from '@/utils/formatters.js'
 import { getUnitById } from '@/config/factionConfig.js'
+import { applyGeneralBonusesToUnit } from '@/domain/general/generalBonusResolver.js'
 import { COMBAT_RULE_IDS } from '@/domain/combat/combatConstants.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { useMilitaryStore } from '@/store/modules/militaryStore.js'
@@ -448,7 +459,8 @@ export default {
         const unit = getUnitById(unitId)
         if (!unit) return result
         result.push({
-          ...unit,
+          ...applyGeneralBonusesToUnit(unit, this.gameStore.generalBonuses),
+          baseUnit: unit,
           available: count
         })
         return result
@@ -457,6 +469,24 @@ export default {
 
     selectedDispatchTotal() {
       return Object.values(this.dispatchSelections).reduce((sum, count) => sum + (Number(count) || 0), 0)
+    },
+
+    selectedDispatchCarryCapacity() {
+      return this.availableDispatchUnits.reduce((total, unit) => (
+        total + ((Number(this.dispatchSelections[unit.id]) || 0) * unit.carryCapacity)
+      ), 0)
+    },
+
+    carryBonusPercent() {
+      return Math.round((this.gameStore.generalBonuses.carryMultiplier - 1) * 100)
+    },
+
+    marchSpeedBonusPercent() {
+      return Math.round((this.gameStore.generalBonuses.marchSpeedMultiplier - 1) * 100)
+    },
+
+    scoutInsightActive() {
+      return this.gameStore.generalBonuses.scoutInsight > 0
     },
 
     activeSortieTask() {
@@ -1321,6 +1351,10 @@ export default {
   @apply flex flex-wrap gap-3 mt-3 text-xs font-semibold;
   color: #475569;
 }
+
+.scout-bonus {
+  color: #166534;
+}
  
  .unit-item {
    @apply flex items-center gap-2 text-xs px-2 py-1 rounded;
@@ -1477,6 +1511,12 @@ export default {
   margin-top: 4px;
   font-size: 12px;
   color: #6b7280;
+}
+
+.dispatch-unit-bonus {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #15803d;
 }
 
 .dispatch-input-group {

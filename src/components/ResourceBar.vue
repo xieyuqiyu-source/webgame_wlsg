@@ -28,6 +28,9 @@
       
       <!-- 仓库信息 -->
       <div class="flex items-center space-x-4">
+        <div v-if="economyBonusPercent > 0" class="general-bonus-chip">
+          {{ gameStore.selectedGeneral?.name }} 资源产量 +{{ economyBonusPercent }}%
+        </div>
         <div class="text-sm text-gray-600">
           <span class="font-medium">仓库等级:</span>
           <span class="ml-1 font-bold text-blue-600">{{ gameStore.warehouseLevel }}</span>
@@ -64,6 +67,9 @@
       <span v-for="(cost, resource) in warehouseUpgradeCost" :key="resource" class="mr-2">
         {{ getResourceName(resource) }}: {{ formatNumber(cost) }}
       </span>
+      <span class="mr-2">基础耗时: {{ formatDuration(warehouseBaseUpgradeTime) }}</span>
+      <span class="mr-2">实际耗时: {{ formatDuration(warehouseActualUpgradeTime) }}</span>
+      <span v-if="buildingSpeedPercent > 0">{{ gameStore.selectedGeneral?.name }} 建设速度 +{{ buildingSpeedPercent }}%</span>
     </div>
   </div>
 </template>
@@ -72,7 +78,7 @@
 import { computed } from 'vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { getResourceName, getResourceIcon } from '@/config/resources.js'
-import { calculateWarehouseUpgradeCost } from '@/config/gameConfig.js'
+import { calculateWarehouseUpgradeCost, calculateWarehouseUpgradeTime } from '@/config/gameConfig.js'
 
 export default {
   name: 'ResourceBar',
@@ -95,6 +101,27 @@ export default {
     const warehouseUpgradeCost = computed(() => {
       return calculateWarehouseUpgradeCost(gameStore.warehouseLevel)
     })
+
+    const economyBonusPercent = computed(() => (
+      Math.round((gameStore.generalBonuses.economyMultiplier - 1) * 100)
+    ))
+
+    const buildingSpeedPercent = computed(() => (
+      Math.round((1 - gameStore.generalBonuses.buildingTimeMultiplier) * 100)
+    ))
+
+    const warehouseBaseUpgradeTime = computed(() => calculateWarehouseUpgradeTime(gameStore.warehouseLevel))
+    const warehouseActualUpgradeTime = computed(() => (
+      Math.floor(warehouseBaseUpgradeTime.value * gameStore.generalBonuses.buildingTimeMultiplier)
+    ))
+
+    const formatDuration = (seconds) => {
+      const minutes = Math.floor(seconds / 60)
+      const hours = Math.floor(minutes / 60)
+      if (hours > 0) return `${hours}小时${minutes % 60}分钟`
+      if (minutes > 0) return `${minutes}分钟${seconds % 60}秒`
+      return `${seconds}秒`
+    }
     
     //=== 升级仓库操作
     const upgradeWarehouse = () => {
@@ -117,6 +144,11 @@ export default {
       getResourceName,
       formatNumber,
       warehouseUpgradeCost,
+      economyBonusPercent,
+      buildingSpeedPercent,
+      warehouseBaseUpgradeTime,
+      warehouseActualUpgradeTime,
+      formatDuration,
       upgradeWarehouse,
       togglePause
     }
@@ -141,5 +173,14 @@ button:not(:disabled):hover {
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.general-bonus-chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #166534;
+  background: #dcfce7;
+  font-size: 12px;
+  font-weight: 700;
 }
 </style>

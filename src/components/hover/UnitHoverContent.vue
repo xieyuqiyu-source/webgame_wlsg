@@ -7,23 +7,23 @@
     <div class="unit-hover-grid">
       <div class="unit-hover-stat">
         <span>攻击</span>
-        <strong>{{ unit.attack }}</strong>
+        <strong>{{ statText('attack') }}</strong>
       </div>
       <div class="unit-hover-stat">
         <span>步防</span>
-        <strong>{{ unit.infantryDefense }}</strong>
+        <strong>{{ statText('infantryDefense') }}</strong>
       </div>
       <div class="unit-hover-stat">
         <span>骑防</span>
-        <strong>{{ unit.cavalryDefense }}</strong>
+        <strong>{{ statText('cavalryDefense') }}</strong>
       </div>
       <div class="unit-hover-stat">
         <span>速度</span>
-        <strong>{{ unit.speed }}</strong>
+        <strong>{{ statText('speed') }}</strong>
       </div>
       <div class="unit-hover-stat wide">
         <span>运载量</span>
-        <strong>{{ unit.carryCapacity }}</strong>
+        <strong>{{ statText('carryCapacity') }}</strong>
       </div>
     </div>
   </div>
@@ -36,6 +36,18 @@ export default {
     unit: {
       type: Object,
       required: true
+    },
+    baseUnit: {
+      type: Object,
+      default: null
+    }
+  },
+  methods: {
+    statText(key) {
+      const current = this.unit[key]
+      const base = this.baseUnit?.[key]
+      if (base == null || base === current) return current
+      return `${base} -> ${current}`
     }
   }
 }

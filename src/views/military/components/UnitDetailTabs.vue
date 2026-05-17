@@ -65,7 +65,7 @@
                 </div>
               </template>
 
-              <UnitHoverContent :unit="unit" />
+              <UnitHoverContent :unit="unit" :base-unit="unit.baseUnit" />
             </HoverCard>
             
             <!-- 属性信息网格 -->
@@ -128,6 +128,7 @@
 import { UNIT_CATEGORIES, getFactionUnitsByType } from '@/config/factionConfig'
 import { getFactionConfig } from '@/config/factionConfig'
 import { useGameStore } from '@/store/modules/gameStore'
+import { applyGeneralBonusesToUnit } from '@/domain/general/generalBonusResolver.js'
 import HoverCard from '@/components/hover/HoverCard.vue'
 import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
 import TutorialHoverContent from '@/components/hover/TutorialHoverContent.vue'
@@ -167,7 +168,10 @@ export default {
     //=== currentUnits 当前阵营当前兵种类型的兵种列表
     currentUnits() {
       if (!this.gameStore.userFaction) return []
-      return getFactionUnitsByType(this.gameStore.userFaction, this.activeTab)
+      return getFactionUnitsByType(this.gameStore.userFaction, this.activeTab).map((unit) => ({
+        ...applyGeneralBonusesToUnit(unit, this.gameStore.generalBonuses),
+        baseUnit: unit
+      }))
     },
     //=== 获取兵种当前数量
     getUnitCount() {
