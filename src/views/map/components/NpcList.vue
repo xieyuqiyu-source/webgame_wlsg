@@ -547,7 +547,7 @@ export default {
     pendingBattleReport: {
       immediate: true,
       handler(report) {
-        if (!report) return
+        if (!report || this.$el?.offsetParent === null) return
         this.battleReportData = report
         this.battleReportVisible = true
         this.militaryStore.clearPendingBattleReport()

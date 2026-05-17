@@ -156,4 +156,98 @@ test.describe('game logic smoke', () => {
       food: 10000 - unit.cost.food * 2
     })
   })
+
+  test('online player plunder dispatch consumes selected troops and stores player target snapshot', async ({ page }) => {
+    await page.route('**/api/players**', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback()
+        return
+      }
+
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          players: [
+            {
+              id: 'target0001',
+              name: '目标玩家',
+              cityName: '目标玩家的城池',
+              faction: 'shu',
+              civilization: 260,
+              civilizationLevel: '村镇',
+              generalId: '',
+              armyPower: 5,
+              hasProtection: false,
+              lastActive: Date.now(),
+              isOnline: true
+            }
+          ]
+        })
+      })
+    })
+
+    await page.route('**/api/players/target0001/scout', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          scoutedAt: Date.now(),
+          scoutData: {
+            totalUnits: 5,
+            unitTypes: 1,
+            units: [
+              { id: 'tanLangYing', count: 5 }
+            ],
+            resources: {
+              wood: 1200,
+              soil: 800,
+              iron: 600,
+              food: 400
+            }
+          }
+        })
+      })
+    })
+
+    await seedGameState(page, {
+      army: {
+        qingZhouArmy: 10
+      }
+    })
+
+    await page.goto('/map')
+    await page.getByRole('button', { name: /玩家城池/ }).click()
+    await expect(page.getByRole('heading', { name: '目标玩家' })).toBeVisible()
+
+    const playerCard = page.locator('.player-card').filter({ hasText: '目标玩家' })
+    await playerCard.getByRole('button', { name: '侦查' }).click()
+    await expect(playerCard.getByText('侦查情报')).toBeVisible()
+
+    await playerCard.getByRole('button', { name: '掠夺' }).click()
+    await expect(page.locator('.dispatch-dialog')).toBeVisible()
+
+    await page.locator('.dispatch-input').fill('3')
+    await page.getByRole('button', { name: '确认掠夺' }).click()
+
+    await persistGameState(page)
+    const savedState = await readSavedGameState(page)
+
+    expect(savedState.army.qingZhouArmy).toBe(7)
+    expect(savedState.sortieTask).toMatchObject({
+      ruleId: 'PLUNDER_STRIKE',
+      target: {
+        type: 'player',
+        id: 'target0001',
+        name: '目标玩家',
+        faction: 'shu'
+      }
+    })
+    expect(savedState.sortieTask.target.resources).toEqual({
+      wood: 1200,
+      soil: 800,
+      iron: 600,
+      food: 400
+    })
+  })
 })

@@ -1,3 +1,5 @@
+import { createGeneralProgress } from '../../../src/config/generalConfig.js'
+
 const DEFAULT_UUID = '11111111-1111-4111-8111-111111111111'
 
 function clone(value) {
@@ -30,6 +32,7 @@ export function createGameState(overrides = {}) {
     userUUID: DEFAULT_UUID,
     userNickname: 'e2e_tester',
     userFaction: 'wei',
+    generalProgress: createGeneralProgress('wangHu'),
     isFirstTime: false,
     resources: {
       wood: 4800,
@@ -106,5 +109,14 @@ export async function persistGameState(page) {
 }
 
 export async function readSavedGameState(page) {
-  return page.evaluate(() => JSON.parse(window.localStorage.getItem('wlsg_game_data') || 'null'))
+  return page.evaluate(() => {
+    const savedData = JSON.parse(window.localStorage.getItem('wlsg_game_data') || 'null')
+    if (!savedData?.game) return savedData
+
+    return {
+      ...savedData.game,
+      ...(savedData.military || {}),
+      npc: savedData.npc
+    }
+  })
 }

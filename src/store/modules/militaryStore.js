@@ -26,12 +26,12 @@ const clearSortieTimer = () => {
 
 const clampDuration = (duration, min, max) => Math.min(max, Math.max(min, duration))
 
-const calculateSortieDurations = (units = [], npcLevel = 1) => {
+const calculateSortieDurations = (units = [], targetLevel = 1) => {
   const totalUnits = units.reduce((sum, unit) => sum + (unit.count || 0), 0)
   const weightedSpeed = units.reduce((sum, unit) => sum + ((unit.speed || 1) * (unit.count || 0)), 0)
   const averageSpeed = totalUnits > 0 ? (weightedSpeed / totalUnits) : 1
   const speedFactor = 12 / Math.max(4, averageSpeed)
-  const levelFactor = 1 + Math.max(0, (npcLevel || 1) - 1) * 0.03
+  const levelFactor = 1 + Math.max(0, (targetLevel || 1) - 1) * 0.03
   const outboundDuration = clampDuration(Math.round(18000 * speedFactor * levelFactor), 8000, 45000)
   const returnDuration = clampDuration(Math.round(outboundDuration * 0.8), 6000, 36000)
 
@@ -228,11 +228,14 @@ export const useMilitaryStore = defineStore('military', {
       }
     },
 
-    createSortieTask({ npc, ruleId, selections = {} }) {
+    createSortieTask({ npc, player, ruleId, selections = {} }) {
       const notificationStore = useNotificationStore()
       const gameStore = useGameStore()
 
-      if (!npc || !ruleId) {
+      const target = npc || player
+      const targetType = npc ? 'npc' : 'player'
+
+      if (!target || !ruleId) {
         return { ok: false, reason: 'invalid-target' }
       }
 
@@ -282,7 +285,7 @@ export const useMilitaryStore = defineStore('military', {
       })
 
       const now = Date.now()
-      const { outboundDuration, returnDuration } = calculateSortieDurations(dispatchedUnits, npc.level)
+      const { outboundDuration, returnDuration } = calculateSortieDurations(dispatchedUnits, target.level)
       const actionLabel = ruleId === COMBAT_RULE_IDS.PLUNDER_STRIKE ? '掠夺' : '攻击'
 
       this.sortieTask = {
@@ -295,10 +298,20 @@ export const useMilitaryStore = defineStore('military', {
         outboundDuration,
         returnDuration,
         target: {
-          id: npc.id,
-          name: npc.name,
-          faction: npc.faction,
-          level: npc.level
+          type: targetType,
+          id: target.id,
+          name: target.name,
+          faction: target.faction,
+          level: target.level || 1,
+          ...(targetType === 'player'
+            ? {
+                defenseArmy: {
+                  faction: target.faction,
+                  units: (target.defenseArmy?.units || []).map((unit) => ({ ...unit }))
+                },
+                resources: { ...(target.resources || {}) }
+              }
+            : {})
         },
         attacker: {
           faction: playerFaction,
@@ -317,7 +330,7 @@ export const useMilitaryStore = defineStore('military', {
 
       notificationStore.addInfoNotification(
         `${actionLabel}出征`,
-        `部队已出发前往 ${npc.name}，预计 ${Math.ceil(outboundDuration / 1000)} 秒后接敌`
+        `部队已出发前往 ${target.name}，预计 ${Math.ceil(outboundDuration / 1000)} 秒后接敌`
       )
 
       return { ok: true, task: this.sortieTask }
@@ -351,8 +364,9 @@ export const useMilitaryStore = defineStore('military', {
       const notificationStore = useNotificationStore()
       const npcStore = useNpcStore()
       const gameStore = useGameStore()
-      const liveNpc = npcStore.getNpcById(task.target.id)
-      const defenderNpc = liveNpc || task.target
+      const isNpcTarget = task.target.type !== 'player'
+      const liveNpc = isNpcTarget ? npcStore.getNpcById(task.target.id) : null
+      const defenderTarget = liveNpc || task.target
 
       const result = resolveCombat({
         ruleId: task.ruleId,
@@ -366,19 +380,30 @@ export const useMilitaryStore = defineStore('military', {
           title: `${task.actionLabel}部队`
         },
         defenderArmy: {
-          faction: defenderNpc.faction,
-          units: liveNpc?.defenseArmy?.units || [],
-          npcInfo: {
-            id: defenderNpc.id,
-            name: defenderNpc.name
-          },
-          resources: { ...(liveNpc?.resources || {}) },
-          defenderResources: { ...(liveNpc?.resources || {}) },
-          title: `${defenderNpc.name}守军`
+          faction: defenderTarget.faction,
+          units: liveNpc?.defenseArmy?.units || task.target.defenseArmy?.units || [],
+          ...(isNpcTarget
+            ? {
+                npcInfo: {
+                  id: defenderTarget.id,
+                  name: defenderTarget.name
+                }
+              }
+            : {
+                playerInfo: {
+                  userUUID: defenderTarget.id,
+                  nickname: defenderTarget.name
+                }
+              }),
+          resources: { ...(liveNpc?.resources || task.target.resources || {}) },
+          defenderResources: { ...(liveNpc?.resources || task.target.resources || {}) },
+          title: `${defenderTarget.name}守军`
         }
       })
 
-      npcStore.attackNpc(defenderNpc.id, result)
+      if (isNpcTarget) {
+        npcStore.attackNpc(defenderTarget.id, result)
+      }
 
       const lossesMap = (result.attacker?.losses || []).reduce((map, entry) => {
         map[entry.id] = entry.count || 0
@@ -404,7 +429,7 @@ export const useMilitaryStore = defineStore('military', {
       const statusText = result.battleResult === 'ATTACKER_VICTORY' ? '获胜' : '失利'
       notificationStore.addInfoNotification(
         `${task.actionLabel}${statusText}`,
-        `${defenderNpc.name} 战斗已结算，部队正在返程`
+        `${defenderTarget.name} 战斗已结算，部队正在返程`
       )
 
       gameStore.saveGame()
