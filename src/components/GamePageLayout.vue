@@ -112,7 +112,7 @@ export default {
 }
 
 .page-main.sidebar-collapsed {
-  margin-left: 92px;
+  margin-left: 72px;
 }
 
 .page-content {

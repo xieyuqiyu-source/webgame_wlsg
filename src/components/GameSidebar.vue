@@ -171,7 +171,20 @@ export default {
 }
 
 .game-sidebar.collapsed {
-  width: 76px;
+  width: 0;
+  height: 0;
+  max-height: none;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.game-sidebar.collapsed .sidebar-toggle {
+  left: 0;
+  right: auto;
+  top: 24px;
 }
 
 .sidebar-toggle {
