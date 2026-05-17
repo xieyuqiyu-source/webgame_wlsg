@@ -1,3 +1,5 @@
+import { getUnitById, getUnitUpkeep } from './factionConfig.js'
+
 export const GENERAL_ATTRIBUTE_KEYS = {
   COMMAND: 'command',
   MARTIAL: 'martial',
@@ -181,8 +183,23 @@ export const getGeneralsByFaction = (faction) => (
   Object.values(GENERAL_CONFIG).filter((general) => general.faction === faction)
 )
 
+export const GENERAL_EXP_REQUIREMENTS_BY_LEVEL = Object.freeze(
+  Array.from({ length: 100 }, (_, index) => {
+    const level = index + 1
+    return Math.max(100, level * level * 100)
+  })
+)
+
 export const getGeneralExpForNextLevel = (level = 1) => (
+  GENERAL_EXP_REQUIREMENTS_BY_LEVEL[Math.max(1, Math.floor(level)) - 1] ||
   Math.max(100, level * level * 100)
+)
+
+export const calculateGeneralExperienceFromLosses = (lossEntries = []) => (
+  (Array.isArray(lossEntries) ? lossEntries : []).reduce((total, entry) => {
+    const unit = getUnitById(entry?.id) || entry
+    return total + Math.max(0, Math.floor(entry?.count || 0)) * getUnitUpkeep(unit)
+  }, 0)
 )
 
 export const createGeneralProgress = (generalId) => {

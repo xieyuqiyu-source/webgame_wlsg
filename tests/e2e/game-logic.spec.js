@@ -10,8 +10,23 @@ import {
   readSavedGameState,
   seedGameState
 } from './helpers/gameState.js'
+import {
+  calculateGeneralExperienceFromLosses,
+  getGeneralExpForNextLevel
+} from '../../src/config/generalConfig.js'
 
 test.describe('game logic smoke', () => {
+  test('general experience is calculated from defeated unit upkeep', async () => {
+    expect(calculateGeneralExperienceFromLosses([
+      { id: 'greedyWolf', count: 5 },
+      { id: 'qilinGuard', count: 3 }
+    ])).toBe(16)
+    expect(calculateGeneralExperienceFromLosses([
+      { id: 'woodenOx', count: 4 }
+    ])).toBe(0)
+    expect(getGeneralExpForNextLevel(2)).toBe(400)
+  })
+
   test('building upgrade deducts resources and survives route switches', async ({ page }) => {
     await seedGameState(page)
     await page.goto('/city')

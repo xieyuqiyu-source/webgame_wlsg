@@ -268,6 +268,7 @@ export const useMessageStore = defineStore('message', {
       const attackerLosses = getLossTotal(report?.attacker?.losses)
       const defenderLosses = getLossTotal(report?.defender?.losses)
       const plunderedResources = report?.details?.plundered || {}
+      const generalExperience = Math.max(0, Math.floor(report?.details?.generalExperience || 0))
       const totalLoot = getResourceTotal(plunderedResources)
       const storedTotal = getResourceTotal(storedResources)
       const overflowTotal = getResourceTotal(overflowResources)
@@ -286,6 +287,9 @@ export const useMessageStore = defineStore('message', {
       if (overflowTotal > 0) {
         contentLines.push(`仓库不足未入仓：${formatResourceBundle(overflowResources)}`)
       }
+      if (generalExperience > 0) {
+        contentLines.push(`将领经验：+${generalExperience}`)
+      }
 
       return this.addMilitaryMessage(
         `${actionLabel}战报：${targetName}`,
@@ -297,6 +301,7 @@ export const useMessageStore = defineStore('message', {
           loot: formatResourceBundle(plunderedResources),
           storedLoot: formatResourceBundle(storedResources),
           overflowLoot: formatResourceBundle(overflowResources),
+          generalExperience,
           rawBattleReport: report
         }
       )

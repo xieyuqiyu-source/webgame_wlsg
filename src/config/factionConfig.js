@@ -707,6 +707,15 @@ export const getUnitById = (unitId) => {
   return null
 }
 
+export const getUnitUpkeep = (unit) => {
+  if (!unit) return 0
+  if (unit.upkeep != null) {
+    return Math.max(0, Math.floor(Number(unit.upkeep) || 0))
+  }
+
+  return unit.unitType === UNIT_TYPES.SPECIAL ? 0 : 2
+}
+
 /**
  * 计算兵种在指定阵营下的实际属性（应用阵营加成）
  * @param {string} factionType - 阵营类型

@@ -22,6 +22,7 @@
         <span>规则 {{ getRuleName(battleReportData?.ruleId) }}</span>
         <span>档位 {{ getBattleTierText(battleReportData?.details?.battleTier) }}</span>
         <span>攻防比 {{ formatNumber(battleReportData?.details?.powerRatio) }}</span>
+        <span v-if="battleReportData?.details?.generalExperience">将领经验 +{{ battleReportData.details.generalExperience }}</span>
       </div>
 
       <section class="resource-section">

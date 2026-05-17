@@ -92,7 +92,7 @@
               </div>
               <div class="stat-item">
                 <div class="stat-label"><span class="stat-icon">🍚</span><span class="stat-text">口粮</span></div>
-                <div class="stat-value">{{ unit.unitType === 'special' ? 0 : 2 }}</div>
+                <div class="stat-value">{{ getUnitUpkeep(unit) }}</div>
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@
 </template>
 
 <script>
-import { UNIT_CATEGORIES, getFactionUnitsByType } from '@/config/factionConfig'
+import { UNIT_CATEGORIES, getFactionUnitsByType, getUnitUpkeep } from '@/config/factionConfig'
 import { getFactionConfig } from '@/config/factionConfig'
 import { useGameStore } from '@/store/modules/gameStore'
 import { applyGeneralBonusesToUnit } from '@/domain/general/generalBonusResolver.js'
@@ -181,6 +181,7 @@ export default {
     }
   },
   methods: {
+    getUnitUpkeep,
     //=== handleTabChange 处理兵种类型切换
     handleTabChange(tabType) {
       this.activeTab = tabType

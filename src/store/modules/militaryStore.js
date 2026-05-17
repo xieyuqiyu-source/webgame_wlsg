@@ -8,6 +8,7 @@ import { resolveCombat } from '../../domain/combat/combatService.js'
 import { COMBAT_RULE_IDS } from '../../domain/combat/combatConstants.js'
 import { applyGeneralBonusesToUnit } from '../../domain/general/generalBonusResolver.js'
 import { resolvePlayerCombat } from '../../services/playerDirectoryService.js'
+import { calculateGeneralExperienceFromLosses } from '../../config/generalConfig.js'
 
 const SORTIE_STATUS = {
   OUTBOUND: 'outbound',
@@ -485,7 +486,8 @@ export const useMilitaryStore = defineStore('military', {
         details: {
           ...(task.battleResult?.details || {}),
           storedResources: stored,
-          overflowResources: overflow
+          overflowResources: overflow,
+          generalExperience: calculateGeneralExperienceFromLosses(task.battleResult?.defender?.losses || [])
         }
       }
 
@@ -500,11 +502,10 @@ export const useMilitaryStore = defineStore('military', {
       this.pendingBattleReport = finalReport
       this.sortieTask = null
       this.sortieCooldownUntil = now + SORTIE_COOLDOWN_MS
-      const earnedExp = Math.max(
-        10,
-        Math.floor((task.target.level || 1) * 8 + (task.battleResult?.details?.defenderTotalTroops || 0) * 0.05)
-      )
-      gameStore.addGeneralExperience(earnedExp)
+      const earnedExp = finalReport.details.generalExperience || 0
+      if (earnedExp > 0) {
+        gameStore.addGeneralExperience(earnedExp)
+      }
 
       const storedSummary = Object.values(stored).reduce((sum, amount) => sum + (amount || 0), 0)
       const overflowSummary = Object.values(overflow).reduce((sum, amount) => sum + (amount || 0), 0)
