@@ -2,6 +2,8 @@
 
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
+import { useMilitaryStore } from '@/store/modules/militaryStore.js'
+import { reportPlayerPresence } from '@/services/playerPresence.js'
 
 /**
  * 游戏定时器Hook
@@ -9,14 +11,17 @@ import { useGameStore } from '@/store/modules/gameStore.js'
  */
 export function useGameTimer() {
   const gameStore = useGameStore()
+  const militaryStore = useMilitaryStore()
   
   // 定时器引用
   const updateTimer = ref(null)
   const saveTimer = ref(null)
+  const presenceTimer = ref(null)
   
   // 定时器间隔配置
   const UPDATE_INTERVAL = 1000 // 1秒更新一次资源
   const SAVE_INTERVAL = 1000 * 60 * 5 // 5分钟自动保存一次
+  const PRESENCE_INTERVAL = 1000 * 30 // 30秒上报一次在线状态
   
   //=== 启动资源更新定时器
   const startUpdateTimer = () => {
@@ -40,6 +45,23 @@ export function useGameTimer() {
       console.log('游戏数据已自动保存')
     }, SAVE_INTERVAL)
   }
+
+  const sendPresence = async () => {
+    try {
+      await reportPlayerPresence(gameStore, militaryStore)
+    } catch (error) {
+      console.warn('在线状态上报失败:', error.message)
+    }
+  }
+
+  const startPresenceTimer = () => {
+    if (presenceTimer.value) {
+      clearInterval(presenceTimer.value)
+    }
+
+    sendPresence()
+    presenceTimer.value = setInterval(sendPresence, PRESENCE_INTERVAL)
+  }
   
   //=== 停止所有定时器
   const stopTimers = () => {
@@ -52,6 +74,11 @@ export function useGameTimer() {
       clearInterval(saveTimer.value)
       saveTimer.value = null
     }
+
+    if (presenceTimer.value) {
+      clearInterval(presenceTimer.value)
+      presenceTimer.value = null
+    }
   }
   
   //=== 重启定时器
@@ -59,6 +86,7 @@ export function useGameTimer() {
     stopTimers()
     startUpdateTimer()
     startSaveTimer()
+    startPresenceTimer()
   }
   
   //=== 处理页面可见性变化
@@ -74,6 +102,7 @@ export function useGameTimer() {
       gameStore.updateResources()
       startUpdateTimer()
       startSaveTimer()
+      startPresenceTimer()
       console.log('离线收益计算完成，定时器已重启')
     }
   }
@@ -94,6 +123,7 @@ export function useGameTimer() {
     // 启动定时器
     startUpdateTimer()
     startSaveTimer()
+    startPresenceTimer()
     
     // 监听页面可见性变化
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -117,6 +147,7 @@ export function useGameTimer() {
   return {
     startUpdateTimer,
     startSaveTimer,
+    startPresenceTimer,
     stopTimers,
     restartTimers
   }

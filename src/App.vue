@@ -5,6 +5,8 @@ import { useGameTimer } from './hooks/useGameTimer'
 import { useGameStore } from './store/modules/gameStore'
 import UserInitDialog from './components/UserInitDialog.vue'
 import GlobalNotification from './components/GlobalNotification.vue'
+import { useMilitaryStore } from './store/modules/militaryStore'
+import { reportPlayerPresence } from './services/playerPresence.js'
 
 export default {
   name: 'App',
@@ -14,6 +16,7 @@ export default {
   },
   setup() {
     const gameStore = useGameStore()
+    const militaryStore = useMilitaryStore()
     const route = useRoute()
     const showUserInitDialog = ref(false)
     const stagewiseToolbar = shallowRef(null)
@@ -26,6 +29,9 @@ export default {
     const handleUserInfoSubmit = (userInfo) => {
       gameStore.setUserInfo(userInfo.nickname, userInfo.faction, userInfo.generalId)
       showUserInitDialog.value = false
+      reportPlayerPresence(gameStore, militaryStore).catch((error) => {
+        console.warn('首次在线状态上报失败:', error.message)
+      })
     }
 
     const loadStagewise = async () => {

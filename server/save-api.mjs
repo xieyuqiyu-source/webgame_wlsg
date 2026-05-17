@@ -9,9 +9,12 @@ const __dirname = path.dirname(__filename)
 const PORT = Number(process.env.PORT || 18790)
 const HOST = process.env.HOST || '0.0.0.0'
 const DATA_DIR = process.env.DATA_DIR || path.resolve(__dirname, '../data/saves')
+const PLAYER_DATA_FILE = process.env.PLAYER_DATA_FILE || path.resolve(DATA_DIR, '../players.json')
 const MAX_BODY_SIZE = 1024 * 1024
 const USER_ID_PATTERN = /^[a-zA-Z0-9_-]{8,80}$/
 const GAME_SAVE_VERSION = 2
+const ONLINE_WINDOW_MS = 90 * 1000
+let playerWriteQueue = Promise.resolve()
 
 const isObject = (value) => value && typeof value === 'object' && !Array.isArray(value)
 
@@ -57,7 +60,7 @@ const json = (response, statusCode, payload) => {
   response.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,PUT,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
   })
   response.end(JSON.stringify(payload))
@@ -67,6 +70,10 @@ const getSaveFilePath = (userId) => path.join(DATA_DIR, `${userId}.json`)
 
 const ensureDataDir = async () => {
   await mkdir(DATA_DIR, { recursive: true })
+}
+
+const ensurePlayerDataDir = async () => {
+  await mkdir(path.dirname(PLAYER_DATA_FILE), { recursive: true })
 }
 
 const validateUserId = (userId) => {
@@ -112,6 +119,103 @@ const loadSave = async (userId) => {
   }
 }
 
+const loadPlayerDirectory = async () => {
+  try {
+    const raw = await readFile(PLAYER_DATA_FILE, 'utf8')
+    const parsed = JSON.parse(raw)
+    return isObject(parsed) ? parsed : {}
+  } catch (error) {
+    if (error.code === 'ENOENT') return {}
+    throw error
+  }
+}
+
+const savePlayerDirectory = async (players) => {
+  await ensurePlayerDataDir()
+  await writeFile(PLAYER_DATA_FILE, JSON.stringify(players, null, 2), 'utf8')
+}
+
+const updatePlayerDirectory = async (updater) => {
+  const operation = playerWriteQueue.then(async () => {
+    const players = await loadPlayerDirectory()
+    const result = await updater(players)
+    await savePlayerDirectory(players)
+    return result
+  })
+  playerWriteQueue = operation.catch(() => {})
+  return operation
+}
+
+const getArmyPower = (army = {}) => (
+  Object.values(army).reduce((sum, count) => sum + (Number(count) || 0), 0)
+)
+
+const createPublicProfileFromSave = (userId, save) => {
+  const game = save?.game || {}
+  const military = save?.military || {}
+  if (!game.userNickname || !game.userFaction) return null
+
+  return {
+    id: userId,
+    name: game.userNickname,
+    cityName: `${game.userNickname}的城池`,
+    faction: game.userFaction,
+    civilization: Number(game.citycivilization || 0),
+    civilizationLevel: game.civilizationLevel || '',
+    generalId: game.generalProgress?.id || '',
+    armyPower: getArmyPower(military.army),
+    hasProtection: false
+  }
+}
+
+const normalizePublicProfile = (userId, rawProfile = {}) => ({
+  id: userId,
+  name: String(rawProfile.name || '').trim().slice(0, 40),
+  cityName: String(rawProfile.cityName || '').trim().slice(0, 60),
+  faction: String(rawProfile.faction || '').trim(),
+  civilization: Math.max(0, Number(rawProfile.civilization) || 0),
+  civilizationLevel: String(rawProfile.civilizationLevel || '').trim().slice(0, 40),
+  generalId: String(rawProfile.generalId || '').trim().slice(0, 80),
+  armyPower: Math.max(0, Number(rawProfile.armyPower) || 0),
+  hasProtection: Boolean(rawProfile.hasProtection)
+})
+
+const upsertPlayerProfile = async (userId, rawProfile = {}, { touch = false } = {}) => {
+  const profile = normalizePublicProfile(userId, rawProfile)
+  if (!profile.name || !profile.faction) return null
+
+  return updatePlayerDirectory(async (players) => {
+    const previous = players[userId] || {}
+    const now = new Date().toISOString()
+    players[userId] = {
+      ...previous,
+      ...profile,
+      createdAt: previous.createdAt || now,
+      updatedAt: now,
+      lastSeenAt: touch ? now : (previous.lastSeenAt || null)
+    }
+    return players[userId]
+  })
+}
+
+const toPublicPlayer = (player) => {
+  const lastSeenAt = player.lastSeenAt || null
+  const lastSeenTime = lastSeenAt ? Date.parse(lastSeenAt) : 0
+  return {
+    id: player.id,
+    name: player.name,
+    cityName: player.cityName,
+    faction: player.faction,
+    civilization: player.civilization,
+    civilizationLevel: player.civilizationLevel,
+    generalId: player.generalId,
+    armyPower: player.armyPower,
+    hasProtection: player.hasProtection,
+    lastActive: lastSeenTime || 0,
+    isOnline: lastSeenTime > 0 && (Date.now() - lastSeenTime) <= ONLINE_WINDOW_MS
+  }
+}
+
 const saveCloudPayload = async (userId, rawPayload) => {
   const normalizedSave = normalizeSavePayload(rawPayload)
   const meta = {
@@ -128,6 +232,11 @@ const saveCloudPayload = async (userId, rawPayload) => {
     }, null, 2),
     'utf8'
   )
+
+  const profile = createPublicProfileFromSave(userId, normalizedSave)
+  if (profile) {
+    await upsertPlayerProfile(userId, profile)
+  }
 
   return {
     save: normalizedSave,
@@ -149,6 +258,35 @@ const server = createServer(async (request, response) => {
       json(response, 200, {
         status: 'ok',
         service: 'wlsg-save-api'
+      })
+      return
+    }
+
+    if (request.method === 'GET' && pathname === '/api/players') {
+      const players = await loadPlayerDirectory()
+      const excludeUserId = requestUrl.searchParams.get('excludeUserId')
+      json(response, 200, {
+        ok: true,
+        players: Object.values(players)
+          .filter((player) => player.id !== excludeUserId)
+          .map(toPublicPlayer)
+          .sort((left, right) => Number(right.isOnline) - Number(left.isOnline) || right.lastActive - left.lastActive)
+      })
+      return
+    }
+
+    const heartbeatMatch = pathname.match(/^\/api\/players\/([a-zA-Z0-9_-]{8,80})\/heartbeat$/)
+    if (heartbeatMatch && request.method === 'POST') {
+      const [, userId] = heartbeatMatch
+      const body = await readRequestBody(request)
+      const player = await upsertPlayerProfile(userId, body, { touch: true })
+      if (!player) {
+        json(response, 400, { error: '玩家资料不完整' })
+        return
+      }
+      json(response, 200, {
+        ok: true,
+        player: toPublicPlayer(player)
       })
       return
     }

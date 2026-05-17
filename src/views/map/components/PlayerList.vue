@@ -70,7 +70,7 @@
           </div>
           <div class="player-info">
             <h3 class="player-name">{{ player.name }}</h3>
-            <p class="player-level">等级 {{ player.level }}</p>
+            <p class="player-level">{{ player.civilizationLevel || '起步发展' }}</p>
             <p class="last-active">{{ getLastActiveText(player.lastActive) }}</p>
           </div>
           <div class="player-status">
@@ -130,6 +130,10 @@
         </div>
       </div>
     </div>
+
+    <div v-if="loadError" class="load-error">
+      {{ loadError }}
+    </div>
     
     <!-- 空状态 -->
     <div v-if="filteredPlayers.length === 0" class="empty-state">
@@ -144,9 +148,16 @@
 
 <script>
 import { formatNumber } from '@/utils/formatters.js'
+import { useGameStore } from '@/store/modules/gameStore.js'
+import { fetchPlayers } from '@/services/playerDirectoryService.js'
 
 export default {
   name: 'PlayerList',
+  setup() {
+    return {
+      gameStore: useGameStore()
+    }
+  },
   data() {
     return {
       //=== searchQuery 搜索关键词
@@ -163,7 +174,9 @@ export default {
         { key: 'wu', label: '吴' }
       ],
       //=== players 玩家数据
-      players: []
+      players: [],
+      loadError: '',
+      onlineTimer: null
     }
   },
   computed: {
@@ -203,9 +216,7 @@ export default {
     }
   },
   mounted() {
-    //=== 生成随机玩家数据
-    this.generatePlayers()
-    //=== 定时更新在线状态
+    this.loadPlayers()
     this.startOnlineStatusUpdate()
   },
   beforeUnmount() {
@@ -215,56 +226,20 @@ export default {
     }
   },
   methods: {
-    //=== generatePlayers 生成随机玩家数据
-    generatePlayers() {
-      const factions = ['wei', 'shu', 'wu']
-      const playerNames = [
-        '曹操', '刘备', '孙权', '诸葛亮', '关羽', '张飞', '赵云', '马超', '黄忠',
-        '周瑜', '陆逊', '甘宁', '太史慈', '吕蒙', '司马懿', '夏侯惇', '张辽',
-        '徐晃', '于禁', '乐进', '张郃', '庞德', '魏延', '姜维', '马岱'
-      ]
-      const cityNames = [
-        '龙城', '凤凰城', '麒麟城', '白虎城', '玄武城', '青龙城', '朱雀城', '天狼城',
-        '神鹰城', '烈火城', '寒冰城', '雷霆城', '疾风城', '大地城', '星辰城'
-      ]
-      
-      this.players = []
-      
-      for (let i = 0; i < 30; i++) {
-        const faction = factions[Math.floor(Math.random() * factions.length)]
-        const name = playerNames[Math.floor(Math.random() * playerNames.length)] + (Math.floor(Math.random() * 999) + 1)
-        const cityName = cityNames[Math.floor(Math.random() * cityNames.length)] + (Math.floor(Math.random() * 999) + 1)
-        const level = Math.floor(Math.random() * 30) + 1
-        const isOnline = Math.random() > 0.6 // 40% 在线率
-        const hasProtection = level <= 5 && Math.random() > 0.7 // 低等级玩家有保护
-        
-        this.players.push({
-          id: `player_${i + 1}`,
-          name,
-          cityName,
-          faction,
-          level,
-          civilization: Math.floor(Math.random() * 1000) + 100,
-          armyPower: Math.floor(Math.random() * 200000) + 50000,
-          isOnline,
-          hasProtection,
-          lastActive: isOnline ? Date.now() : Date.now() - Math.floor(Math.random() * 24 * 60 * 60 * 1000) // 最近24小时内
-        })
+    async loadPlayers() {
+      try {
+        const result = await fetchPlayers(this.gameStore.userUUID)
+        this.players = result.players || []
+        this.loadError = ''
+      } catch (error) {
+        this.loadError = `玩家列表加载失败：${error.message}`
       }
     },
     
     //=== startOnlineStatusUpdate 开始在线状态更新
     startOnlineStatusUpdate() {
       this.onlineTimer = setInterval(() => {
-        // 随机更新一些玩家的在线状态
-        this.players.forEach(player => {
-          if (Math.random() < 0.1) { // 10% 概率改变状态
-            player.isOnline = !player.isOnline
-            if (!player.isOnline) {
-              player.lastActive = Date.now()
-            }
-          }
-        })
+        this.loadPlayers()
       }, 30000) // 每30秒更新一次
     },
     
@@ -280,6 +255,7 @@ export default {
     
     //=== getLastActiveText 获取最后活跃时间文本
     getLastActiveText(lastActive) {
+      if (!lastActive) return '暂无在线记录'
       const now = Date.now()
       const diff = now - lastActive
       const minutes = Math.floor(diff / (1000 * 60))
@@ -679,6 +655,14 @@ export default {
 
 .empty-text {
   color: #64748b;
+}
+
+.load-error {
+  padding: 12px 14px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
 }
 
 @media (max-width: 768px) {

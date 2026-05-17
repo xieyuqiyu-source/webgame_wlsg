@@ -697,6 +697,8 @@ export const useGameStore = defineStore('game', {
         userUUID: this.userUUID,
         userNickname: this.userNickname,
         userFaction: this.userFaction,
+        citycivilization: this.citycivilization,
+        civilizationLevel: this.civilizationLevel?.level || '',
         generalProgress: this.generalProgress,
         isFirstTime: this.isFirstTime,
         resources: this.resources,
