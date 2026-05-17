@@ -62,6 +62,7 @@ export const normalizeSavePayload = (rawData, legacyNpcData = null) => {
         userUUID: rawData.userUUID,
         userNickname: rawData.userNickname,
         userFaction: rawData.userFaction,
+        generalProgress: rawData.generalProgress,
         isFirstTime: rawData.isFirstTime,
         resources: rawData.resources,
         coins: rawData.coins,

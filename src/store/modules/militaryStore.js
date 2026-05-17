@@ -6,6 +6,7 @@ import { useNpcStore } from './npcStore.js'
 import { useMessageStore } from './messageStore.js'
 import { resolveCombat } from '../../domain/combat/combatService.js'
 import { COMBAT_RULE_IDS } from '../../domain/combat/combatConstants.js'
+import { applyGeneralBonusesToUnit } from '../../domain/general/generalBonusResolver.js'
 
 const SORTIE_STATUS = {
   OUTBOUND: 'outbound',
@@ -258,10 +259,10 @@ export const useMilitaryStore = defineStore('military', {
         if (available < count) return result
         const unit = getUnitById(unitId)
         if (!unit) return result
-        result.push({
-          ...unit,
-          count
-        })
+        result.push(applyGeneralBonusesToUnit(
+          { ...unit, count },
+          gameStore.generalBonuses
+        ))
         return result
       }, [])
 
@@ -443,6 +444,11 @@ export const useMilitaryStore = defineStore('military', {
       this.pendingBattleReport = finalReport
       this.sortieTask = null
       this.sortieCooldownUntil = now + SORTIE_COOLDOWN_MS
+      const earnedExp = Math.max(
+        10,
+        Math.floor((task.target.level || 1) * 8 + (task.battleResult?.details?.defenderTotalTroops || 0) * 0.05)
+      )
+      gameStore.addGeneralExperience(earnedExp)
 
       const storedSummary = Object.values(stored).reduce((sum, amount) => sum + (amount || 0), 0)
       const overflowSummary = Object.values(overflow).reduce((sum, amount) => sum + (amount || 0), 0)
@@ -493,7 +499,7 @@ export const useMilitaryStore = defineStore('military', {
         gameStore.resources[resource] -= totalCost[resource]
       })
 
-      const baseTrainTime = this.getActualTrainTime
+      const baseTrainTime = Math.floor(this.getActualTrainTime * gameStore.generalBonuses.recruitmentTimeMultiplier)
       const trainTime = baseTrainTime * count
       const startTime = Date.now()
 

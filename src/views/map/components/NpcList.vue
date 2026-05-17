@@ -199,6 +199,12 @@
               <span class="unit-count">{{ formatNumber(unit.count) }}</span>
             </div>
           </div>
+          <div v-if="npc.scoutData.resources" class="scout-resources">
+            <span>木材 {{ npc.scoutData.resources.wood }}</span>
+            <span>泥土 {{ npc.scoutData.resources.soil }}</span>
+            <span>铁矿 {{ npc.scoutData.resources.iron }}</span>
+            <span>粮食 {{ npc.scoutData.resources.food }}</span>
+          </div>
         </div>
         </div>
         
@@ -1307,9 +1313,14 @@ export default {
    color: #94a3b8;
  }
  
- .army-details {
-   @apply flex flex-wrap gap-2;
- }
+.army-details {
+  @apply flex flex-wrap gap-2;
+}
+
+.scout-resources {
+  @apply flex flex-wrap gap-3 mt-3 text-xs font-semibold;
+  color: #475569;
+}
  
  .unit-item {
    @apply flex items-center gap-2 text-xs px-2 py-1 rounded;

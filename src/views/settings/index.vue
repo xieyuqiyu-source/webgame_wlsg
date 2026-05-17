@@ -11,6 +11,17 @@
         <div class="settings-section">
           <h2 class="section-title">数据管理</h2>
           <div class="settings-grid">
+            <div class="setting-card">
+              <div class="setting-content">
+                <h3 class="setting-title">当前将领</h3>
+                <GeneralProfile
+                  :general="gameStore.selectedGeneral"
+                  :progress="gameStore.generalProgress"
+                  :exp-for-next-level="gameStore.generalExpForNextLevel"
+                  @allocate="gameStore.allocateGeneralPoint"
+                />
+              </div>
+            </div>
             <!-- 数据备份与恢复 -->
             <div class="setting-card">
               <div class="setting-icon">
@@ -313,6 +324,7 @@
 
 <script>
 import GamePageLayout from '@/components/GamePageLayout.vue'
+import GeneralProfile from '@/components/general/GeneralProfile.vue'
 import { useGameStore } from '@/store/modules/gameStore.js'
 import { getResourceName } from '@/config/resources.js'
 import { getFactionConfig } from '@/config/factionConfig.js'
@@ -322,7 +334,8 @@ import { ref } from 'vue'
 export default {
   name: 'SettingsView',
   components: {
-    GamePageLayout
+    GamePageLayout,
+    GeneralProfile
   },
   setup() {
     const gameStore = useGameStore()

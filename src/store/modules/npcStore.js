@@ -311,6 +311,7 @@ export const useNpcStore = defineStore('npc', {
     scoutNpc(npcId, scoutData) {
       const npc = this.getNpcById(npcId)
       if (!npc) return false
+      const gameStore = useGameStore()
 
       // 更新侦查信息
       npc.scoutedAt = Date.now()
@@ -332,7 +333,11 @@ export const useNpcStore = defineStore('npc', {
         npc.scoutData.unitTypes = npc.defenseArmy.units.length
       }
 
-      useGameStore().saveGame()
+      if (gameStore.generalBonuses.scoutInsight >= 1) {
+        npc.scoutData.resources = cloneResources(npc.resources)
+      }
+
+      gameStore.saveGame()
       return true
     },
 

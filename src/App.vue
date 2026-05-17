@@ -24,7 +24,7 @@ export default {
     useGameTimer()
 
     const handleUserInfoSubmit = (userInfo) => {
-      gameStore.setUserInfo(userInfo.nickname, userInfo.faction)
+      gameStore.setUserInfo(userInfo.nickname, userInfo.faction, userInfo.generalId)
       showUserInitDialog.value = false
     }
 
@@ -43,7 +43,7 @@ export default {
     }
 
     onMounted(() => {
-      if (gameStore.isFirstTime) {
+      if (gameStore.isFirstTime || !gameStore.generalProgress) {
         showUserInitDialog.value = true
       }
 

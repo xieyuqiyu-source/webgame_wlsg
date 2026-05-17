@@ -3,67 +3,69 @@
     <div class="dialog-container">
       <div class="dialog-header">
         <h2 class="dialog-title">欢迎来到三国争霸</h2>
-        <p class="dialog-subtitle">请设置您的游戏信息</p>
+        <p class="dialog-subtitle">设置玩家信息，选择阵营与出仕将领</p>
       </div>
-      
+
       <div class="dialog-content">
-        <!-- 昵称输入 -->
         <div class="form-group">
           <label class="form-label">玩家昵称</label>
-          <input 
-            v-model="nickname" 
-            type="text" 
+          <input
+            v-model="nickname"
+            type="text"
             class="form-input"
             placeholder="请输入您的昵称"
             maxlength="20"
             @keyup.enter="handleSubmit"
-          />
+          >
           <div v-if="nicknameError" class="error-message">{{ nicknameError }}</div>
         </div>
-        
-        <!-- 阵营选择 -->
+
         <div class="form-group">
           <label class="form-label">选择阵营</label>
           <div class="faction-grid">
-            <div 
-              v-for="faction in factions" 
+            <button
+              v-for="faction in factions"
               :key="faction.id"
+              type="button"
               class="faction-card"
-              :class="{ 'selected': selectedFaction === faction.id }"
+              :class="{ selected: selectedFaction === faction.id }"
               @click="selectFaction(faction.id)"
             >
               <div class="faction-icon">{{ faction.icon }}</div>
               <div class="faction-name">{{ faction.name }}</div>
               <div class="faction-description">{{ faction.description }}</div>
               <div class="faction-slogan">{{ faction.slogan }}</div>
-              
-              <!-- 阵营特性展示 -->
-              <div class="faction-traits">
-                <div class="trait-item" v-if="faction.traits.economyBonus !== 1">
-                  <span class="trait-icon">💰</span>
-                  <span class="trait-text">经济 {{ faction.traits.economyBonus > 1 ? '+' : '' }}{{ Math.round((faction.traits.economyBonus - 1) * 100) }}%</span>
-                </div>
-                <div class="trait-item" v-if="faction.traits.militaryBonus !== 1">
-                  <span class="trait-icon">⚔️</span>
-                  <span class="trait-text">军事 {{ faction.traits.militaryBonus > 1 ? '+' : '' }}{{ Math.round((faction.traits.militaryBonus - 1) * 100) }}%</span>
-                </div>
-                <div class="trait-item" v-if="faction.traits.buildingBonus !== 1">
-                  <span class="trait-icon">🏗️</span>
-                  <span class="trait-text">建筑速度 {{ faction.traits.buildingBonus > 1 ? '+' : '' }}{{ Math.round((faction.traits.buildingBonus - 1) * 100) }}%</span>
-                </div>
-              </div>
-            </div>
+            </button>
           </div>
           <div v-if="factionError" class="error-message">{{ factionError }}</div>
         </div>
+
+        <div v-if="selectedFaction" class="form-group">
+          <label class="form-label">选择将领</label>
+          <div class="general-grid">
+            <button
+              v-for="general in availableGenerals"
+              :key="general.id"
+              type="button"
+              class="general-card"
+              :class="{ selected: selectedGeneralId === general.id }"
+              @click="selectGeneral(general.id)"
+            >
+              <div class="general-name">{{ general.name }}</div>
+              <div class="general-title">{{ general.title }}</div>
+              <div class="general-description">{{ general.description }}</div>
+              <div class="general-trait">
+                <strong>{{ general.trait.name }}</strong>
+                <span>{{ general.trait.description }}</span>
+              </div>
+            </button>
+          </div>
+          <div v-if="generalError" class="error-message">{{ generalError }}</div>
+        </div>
       </div>
-      
+
       <div class="dialog-footer">
-        <button 
-          class="btn btn-primary"
-          @click="handleSubmit"
-          :disabled="!canSubmit"
-        >
+        <button class="btn btn-primary" type="button" :disabled="!canSubmit" @click="handleSubmit">
           开始游戏
         </button>
       </div>
@@ -72,8 +74,9 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { getAllFactions } from '../config/factionConfig.js'
+import { getGeneralsByFaction } from '../config/generalConfig.js'
 
 export default {
   name: 'UserInitDialog',
@@ -91,79 +94,92 @@ export default {
   setup(props, { emit }) {
     const nickname = ref('')
     const selectedFaction = ref(null)
-    const factions = ref([])
+    const selectedGeneralId = ref(null)
     const nicknameError = ref('')
     const factionError = ref('')
-    
-    // 计算属性
-    const canSubmit = computed(() => {
-      return nickname.value.trim().length >= 2 && selectedFaction.value
-    })
-    
-    // 方法
+    const generalError = ref('')
+    const factions = getAllFactions()
+
+    const availableGenerals = computed(() => (
+      selectedFaction.value ? getGeneralsByFaction(selectedFaction.value) : []
+    ))
+
+    const canSubmit = computed(() => (
+      nickname.value.trim().length >= 2 &&
+      selectedFaction.value &&
+      selectedGeneralId.value
+    ))
+
     const selectFaction = (factionId) => {
       selectedFaction.value = factionId
+      selectedGeneralId.value = null
       factionError.value = ''
+      generalError.value = ''
     }
-    
+
+    const selectGeneral = (generalId) => {
+      selectedGeneralId.value = generalId
+      generalError.value = ''
+    }
+
     const validateForm = () => {
       let isValid = true
-      
-      // 验证昵称
-      if (!nickname.value.trim()) {
+      const trimmedNickname = nickname.value.trim()
+
+      if (!trimmedNickname) {
         nicknameError.value = '请输入昵称'
         isValid = false
-      } else if (nickname.value.trim().length < 2) {
-        nicknameError.value = '昵称至少需要2个字符'
-        isValid = false
-      } else if (nickname.value.trim().length > 20) {
-        nicknameError.value = '昵称不能超过20个字符'
+      } else if (trimmedNickname.length < 2) {
+        nicknameError.value = '昵称至少需要 2 个字符'
         isValid = false
       } else {
         nicknameError.value = ''
       }
-      
-      // 验证阵营
+
       if (!selectedFaction.value) {
         factionError.value = '请选择一个阵营'
         isValid = false
       } else {
         factionError.value = ''
       }
-      
+
+      if (!selectedGeneralId.value) {
+        generalError.value = '请选择一位将领'
+        isValid = false
+      } else {
+        generalError.value = ''
+      }
+
       return isValid
     }
-    
+
     const handleSubmit = () => {
-      if (validateForm()) {
-        emit('submit', {
-          nickname: nickname.value.trim(),
-          faction: selectedFaction.value
-        })
-      }
+      if (!validateForm()) return
+      emit('submit', {
+        nickname: nickname.value.trim(),
+        faction: selectedFaction.value,
+        generalId: selectedGeneralId.value
+      })
     }
-    
+
     const handleOverlayClick = () => {
-      if (props.allowClose) {
-        emit('close')
-      }
+      if (props.allowClose) emit('close')
     }
-    
-    // 生命周期
-    onMounted(() => {
-      factions.value = getAllFactions()
-    })
-    
+
     return {
-      nickname,
-      selectedFaction,
-      factions,
-      nicknameError,
-      factionError,
+      availableGenerals,
       canSubmit,
-      selectFaction,
+      factionError,
+      factions,
+      generalError,
+      handleOverlayClick,
       handleSubmit,
-      handleOverlayClick
+      nickname,
+      nicknameError,
+      selectFaction,
+      selectGeneral,
+      selectedFaction,
+      selectedGeneralId
     }
   }
 }
@@ -172,57 +188,44 @@ export default {
 <style scoped>
 .dialog-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
 }
 
 .dialog-container {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  max-width: 800px;
-  width: 90vw;
+  width: min(960px, 90vw);
   max-height: 90vh;
   overflow-y: auto;
-  animation: dialogSlideIn 0.3s ease-out;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-@keyframes dialogSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.dialog-header,
+.dialog-footer {
+  padding: 20px 24px;
+  text-align: center;
 }
 
 .dialog-header {
-  padding: 24px 24px 16px;
-  text-align: center;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .dialog-title {
+  margin: 0 0 8px;
+  color: #1f2937;
   font-size: 24px;
   font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px;
 }
 
 .dialog-subtitle {
-  font-size: 16px;
-  color: #6b7280;
   margin: 0;
+  color: #6b7280;
 }
 
 .dialog-content {
@@ -235,171 +238,122 @@ export default {
 
 .form-label {
   display: block;
+  margin-bottom: 8px;
+  color: #374151;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 8px;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px 16px;
+  box-sizing: border-box;
   border: 2px solid #d1d5db;
   border-radius: 8px;
+  padding: 12px 16px;
   font-size: 16px;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
 }
 
-.form-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.error-message {
-  color: #dc2626;
-  font-size: 14px;
-  margin-top: 4px;
+.faction-grid,
+.general-grid {
+  display: grid;
+  gap: 16px;
 }
 
 .faction-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-.faction-card {
+.general-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.faction-card,
+.general-card {
   border: 2px solid #e5e7eb;
   border-radius: 12px;
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
+  padding: 18px;
   background: #f9fafb;
+  text-align: left;
+  cursor: pointer;
 }
 
-.faction-card:hover {
-  border-color: #9ca3af;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.faction-card.selected {
+.faction-card.selected,
+.general-card.selected {
   border-color: #3b82f6;
   background: #eff6ff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .faction-icon {
-  font-size: 32px;
+  margin-bottom: 10px;
+  font-size: 28px;
   text-align: center;
-  margin-bottom: 12px;
 }
 
-.faction-name {
+.faction-name,
+.general-name {
+  color: #1f2937;
   font-size: 18px;
   font-weight: 700;
-  text-align: center;
-  margin-bottom: 8px;
-  color: #1f2937;
 }
 
-.faction-description {
-  font-size: 14px;
+.faction-description,
+.general-description {
+  margin-top: 8px;
   color: #6b7280;
-  text-align: center;
-  margin-bottom: 12px;
-  line-height: 1.4;
-}
-
-.faction-slogan {
-  font-size: 12px;
-  color: #9ca3af;
-  text-align: center;
-  font-style: italic;
-  margin-bottom: 16px;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 12px;
-}
-
-.faction-traits {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
-
-.trait-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  border: 1px solid #e5e7eb;
-}
-
-.trait-icon {
   font-size: 14px;
 }
 
-.trait-text {
-  color: #059669;
+.faction-slogan,
+.general-title {
+  margin-top: 8px;
+  color: #4f46e5;
+  font-size: 12px;
   font-weight: 600;
 }
 
+.general-trait {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  color: #374151;
+  font-size: 13px;
+}
+
+.error-message {
+  margin-top: 6px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
 .dialog-footer {
-  padding: 16px 24px 24px;
-  text-align: center;
   border-top: 1px solid #e5e7eb;
 }
 
 .btn {
-  padding: 12px 32px;
-  border: none;
+  min-width: 120px;
+  border: 0;
   border-radius: 8px;
+  padding: 12px 32px;
   font-size: 16px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 120px;
 }
 
 .btn-primary {
+  color: #ffffff;
   background: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn:disabled {
-  background: #9ca3af;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  background: #9ca3af;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .dialog-container {
     width: 95vw;
-    margin: 20px;
   }
-  
-  .faction-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .dialog-title {
-    font-size: 20px;
-  }
-  
+
   .dialog-content {
     padding: 16px;
   }

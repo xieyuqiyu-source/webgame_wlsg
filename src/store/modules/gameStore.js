@@ -15,6 +15,8 @@ import {
 } from '../../config/gameConfig.js'
 import { calculateCivilization, getCivilizationLevel } from '../../config/civilizationConfig.js'
 import { getUserUUID, setStoredUserUUID } from '../../utils/uuid.js'
+import { createGeneralProgress, getGeneralById, getGeneralExpForNextLevel } from '../../config/generalConfig.js'
+import { resolveGeneralBonuses } from '../../domain/general/generalBonusResolver.js'
 import { useNotificationStore } from './notificationStore.js'
 import { useMilitaryStore } from './militaryStore.js'
 import { useNpcStore } from './npcStore.js'
@@ -28,6 +30,7 @@ export const useGameStore = defineStore('game', {
     //=== 用户信息
     userNickname: '',           // 用户昵称
     userFaction: null,          // 用户阵营
+    generalProgress: null,      // 当前将领成长数据
     isFirstTime: true,          // 是否首次进入游戏
     
     //=== 资源数据 - 初始化为满仓状态（1级仓库容量4800）
@@ -120,6 +123,7 @@ export const useGameStore = defineStore('game', {
           if (level > 0) { // 只计算已建造的建筑（等级大于0）
             // 传入玩家阵营信息以应用经济加成
             let productionAmount = calculateProduction(buildingType, level, state.userFaction)
+            productionAmount *= resolveGeneralBonuses(state.generalProgress).economyMultiplier
             
             // 应用生产力加速效果
             if (state.productionBoost.isActive && state.productionBoost.endTime > Date.now()) {
@@ -276,6 +280,12 @@ export const useGameStore = defineStore('game', {
     isRecruiting: () => useMilitaryStore().isRecruiting,
 
     getActualTrainTime: () => useMilitaryStore().getActualTrainTime,
+
+    selectedGeneral: (state) => getGeneralById(state.generalProgress?.id),
+
+    generalBonuses: (state) => resolveGeneralBonuses(state.generalProgress),
+
+    generalExpForNextLevel: (state) => getGeneralExpForNextLevel(state.generalProgress?.level || 1),
     
     /**
      * 检查生产力加速是否激活
@@ -458,7 +468,10 @@ export const useGameStore = defineStore('game', {
       }
       
       const cost = calculateUpgradeCost(buildingType, this.buildings[buildingType][buildingIndex])
-      const upgradeTime = calculateUpgradeTime(buildingType, this.buildings[buildingType][buildingIndex])
+      const upgradeTime = Math.floor(
+        calculateUpgradeTime(buildingType, this.buildings[buildingType][buildingIndex]) *
+        this.generalBonuses.buildingTimeMultiplier
+      )
       
       // 扣除资源
       Object.keys(cost).forEach(resource => {
@@ -611,7 +624,10 @@ export const useGameStore = defineStore('game', {
       }
       
       const cost = calculateWarehouseUpgradeCost(this.warehouseLevel)
-      const upgradeTime = calculateWarehouseUpgradeTime(this.warehouseLevel)
+      const upgradeTime = Math.floor(
+        calculateWarehouseUpgradeTime(this.warehouseLevel) *
+        this.generalBonuses.buildingTimeMultiplier
+      )
       
       // 扣除资源
       Object.keys(cost).forEach(resource => {
@@ -668,9 +684,10 @@ export const useGameStore = defineStore('game', {
     /**
      * 设置用户信息
      */
-    setUserInfo(nickname, faction) {
+    setUserInfo(nickname, faction, generalId) {
       this.userNickname = nickname
       this.userFaction = faction
+      this.generalProgress = createGeneralProgress(generalId)
       this.isFirstTime = false
       this.saveGame() // 立即保存用户信息
     },
@@ -680,6 +697,7 @@ export const useGameStore = defineStore('game', {
         userUUID: this.userUUID,
         userNickname: this.userNickname,
         userFaction: this.userFaction,
+        generalProgress: this.generalProgress,
         isFirstTime: this.isFirstTime,
         resources: this.resources,
         coins: this.coins,
@@ -729,6 +747,9 @@ export const useGameStore = defineStore('game', {
       }
       if (gameData.userFaction) {
         this.userFaction = gameData.userFaction
+      }
+      if (gameData.generalProgress) {
+        this.generalProgress = gameData.generalProgress
       }
       if (gameData.hasOwnProperty('isFirstTime')) {
         this.isFirstTime = gameData.isFirstTime
@@ -912,6 +933,40 @@ export const useGameStore = defineStore('game', {
 
     accelerateRecruitment(taskId) {
       return useMilitaryStore().accelerateRecruitment(taskId)
+    },
+
+    addGeneralExperience(amount) {
+      if (!this.generalProgress || amount <= 0) return false
+
+      this.generalProgress.exp += Math.floor(amount)
+      let leveledUp = false
+
+      while (this.generalProgress.exp >= this.generalExpForNextLevel) {
+        this.generalProgress.exp -= this.generalExpForNextLevel
+        this.generalProgress.level += 1
+        this.generalProgress.unspentPoints += 2
+        leveledUp = true
+      }
+
+      if (leveledUp) {
+        useNotificationStore().addSuccessNotification(
+          '将领升级',
+          `${this.selectedGeneral?.name || '将领'} 已升至 ${this.generalProgress.level} 级，可分配属性点`
+        )
+      }
+
+      this.saveGame()
+      return true
+    },
+
+    allocateGeneralPoint(attributeKey) {
+      if (!this.generalProgress || this.generalProgress.unspentPoints <= 0) return false
+      if (!Object.hasOwn(this.generalProgress.attributes, attributeKey)) return false
+
+      this.generalProgress.attributes[attributeKey] += 1
+      this.generalProgress.unspentPoints -= 1
+      this.saveGame()
+      return true
     },
     
     /**
@@ -1146,6 +1201,7 @@ export const useGameStore = defineStore('game', {
       this.userUUID = getUserUUID() // 生成新的UUID
       this.userNickname = ''
       this.userFaction = null
+      this.generalProgress = null
       this.isFirstTime = true
       
       // 重置资源为满仓状态（1级仓库容量4800）
