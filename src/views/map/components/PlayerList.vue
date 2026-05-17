@@ -111,11 +111,11 @@
         
         <!-- 操作按钮 -->
         <div class="player-actions">
-          <button class="action-btn scout" @click.stop="handleScout(player)">
+          <button class="action-btn scout" :disabled="player.scouting" @click.stop="handleScout(player)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
             </svg>
-            侦查
+            {{ player.scouting ? '侦查中' : '侦查' }}
           </button>
           <button 
             class="action-btn attack" 
@@ -127,6 +127,42 @@
             </svg>
             {{ player.hasProtection ? '保护中' : '攻击' }}
           </button>
+        </div>
+
+        <div v-if="player.scoutedAt && player.scoutData" class="scout-result" @click.stop>
+          <div class="scout-result-header">
+            <div>
+              <span>侦查情报</span>
+              <span class="scout-time">{{ getScoutTimeText(player.scoutedAt) }}</span>
+            </div>
+            <div class="army-summary">
+              <span>总兵力: {{ player.scoutData.totalUnits }}</span>
+              <span>{{ player.scoutData.unitTypes }}种兵种</span>
+            </div>
+          </div>
+          <div v-if="player.scoutData.units.length" class="army-details">
+            <div v-for="unit in player.scoutData.units" :key="unit.id" class="unit-item">
+              <HoverCard
+                density="compact"
+                :show="hoveredScoutUnitKey === `${player.id}:${unit.id}`"
+                @mouseenter="hoveredScoutUnitKey = `${player.id}:${unit.id}`"
+                @mouseleave="hoveredScoutUnitKey = null"
+              >
+                <template #trigger>
+                  <span class="unit-name">{{ unit.name }}</span>
+                </template>
+                <UnitHoverContent :unit="unit" />
+              </HoverCard>
+              <span class="unit-count">{{ formatNumber(unit.count) }}</span>
+            </div>
+          </div>
+          <div v-else class="empty-army">城内暂无驻军</div>
+          <div class="scout-resources">
+            <span>木材 {{ formatNumber(player.scoutData.resources.wood) }}</span>
+            <span>泥土 {{ formatNumber(player.scoutData.resources.soil) }}</span>
+            <span>铁矿 {{ formatNumber(player.scoutData.resources.iron) }}</span>
+            <span>粮食 {{ formatNumber(player.scoutData.resources.food) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -149,13 +185,21 @@
 <script>
 import { formatNumber } from '@/utils/formatters.js'
 import { useGameStore } from '@/store/modules/gameStore.js'
-import { fetchPlayers } from '@/services/playerDirectoryService.js'
+import { useNotificationStore } from '@/store/modules/notificationStore.js'
+import { fetchPlayers, scoutPlayer } from '@/services/playerDirectoryService.js'
+import HoverCard from '@/components/hover/HoverCard.vue'
+import UnitHoverContent from '@/components/hover/UnitHoverContent.vue'
 
 export default {
   name: 'PlayerList',
+  components: {
+    HoverCard,
+    UnitHoverContent
+  },
   setup() {
     return {
-      gameStore: useGameStore()
+      gameStore: useGameStore(),
+      notificationStore: useNotificationStore()
     }
   },
   data() {
@@ -176,7 +220,8 @@ export default {
       //=== players 玩家数据
       players: [],
       loadError: '',
-      onlineTimer: null
+      onlineTimer: null,
+      hoveredScoutUnitKey: null
     }
   },
   computed: {
@@ -229,7 +274,13 @@ export default {
     async loadPlayers() {
       try {
         const result = await fetchPlayers(this.gameStore.userUUID)
-        this.players = result.players || []
+        const existingPlayers = new Map(this.players.map((player) => [player.id, player]))
+        this.players = (result.players || []).map((player) => ({
+          ...player,
+          scoutedAt: existingPlayers.get(player.id)?.scoutedAt || null,
+          scoutData: existingPlayers.get(player.id)?.scoutData || null,
+          scouting: false
+        }))
         this.loadError = ''
       } catch (error) {
         this.loadError = `玩家列表加载失败：${error.message}`
@@ -271,6 +322,13 @@ export default {
         return '1天前'
       }
     },
+
+    getScoutTimeText(scoutedAt) {
+      return new Date(scoutedAt).toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    },
     
     //=== formatNumber 格式化数字
     formatNumber,
@@ -282,9 +340,22 @@ export default {
     },
     
     //=== handleScout 处理侦查事件
-    handleScout(player) {
-      console.log('侦查玩家:', player)
-      // TODO: 实现侦查功能
+    async handleScout(player) {
+      if (player.scouting) return
+      player.scouting = true
+      try {
+        const result = await scoutPlayer(player.id)
+        player.scoutedAt = result.scoutedAt
+        player.scoutData = result.scoutData
+        this.notificationStore.addSuccessNotification(
+          '侦查成功',
+          `已取得 ${player.name} 的城池情报`
+        )
+      } catch (error) {
+        this.notificationStore.addErrorNotification('侦查失败', error.message)
+      } finally {
+        player.scouting = false
+      }
     },
     
     //=== handleAttack 处理攻击事件
@@ -655,6 +726,87 @@ export default {
 
 .empty-text {
   color: #64748b;
+}
+
+.scout-result {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid rgba(229, 231, 235, 0.92);
+}
+
+.scout-result-header,
+.scout-result-header > div,
+.army-summary,
+.army-details,
+.scout-resources {
+  display: flex;
+  align-items: center;
+}
+
+.scout-result-header {
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.scout-result-header > div,
+.army-summary {
+  gap: 8px;
+}
+
+.scout-time {
+  color: #4f46e5;
+  font-size: 11px;
+}
+
+.army-summary {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.army-details {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.unit-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  color: #334155;
+  background: #fff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  font-size: 12px;
+}
+
+.unit-name {
+  font-weight: 700;
+}
+
+.unit-count {
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+.empty-army {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.scout-resources {
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .load-error {

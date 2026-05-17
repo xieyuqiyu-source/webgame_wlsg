@@ -42,3 +42,11 @@ export const sendPlayerHeartbeat = async (userId, profile) => {
     body: JSON.stringify(profile)
   })
 }
+
+export const scoutPlayer = async (userId) => {
+  if (!userId) throw new Error('目标玩家不能为空')
+  return requestJson(`/players/${encodeURIComponent(userId)}/scout`, {
+    method: 'POST',
+    body: JSON.stringify({})
+  })
+}

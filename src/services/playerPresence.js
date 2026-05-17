@@ -8,7 +8,9 @@ export const buildPlayerPresenceProfile = (gameStore, militaryStore) => ({
   civilizationLevel: gameStore.civilizationLevel?.level || '',
   generalId: gameStore.generalProgress?.id || '',
   armyPower: militaryStore.totalArmyCount,
-  hasProtection: false
+  hasProtection: false,
+  resources: { ...gameStore.resources },
+  army: { ...militaryStore.army }
 })
 
 export const reportPlayerPresence = async (gameStore, militaryStore) => {

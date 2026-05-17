@@ -2,6 +2,7 @@ import { createServer } from 'node:http'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { getUnitById } from '../src/config/factionConfig.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -168,17 +169,39 @@ const createPublicProfileFromSave = (userId, save) => {
   }
 }
 
-const normalizePublicProfile = (userId, rawProfile = {}) => ({
-  id: userId,
-  name: String(rawProfile.name || '').trim().slice(0, 40),
-  cityName: String(rawProfile.cityName || '').trim().slice(0, 60),
-  faction: String(rawProfile.faction || '').trim(),
-  civilization: Math.max(0, Number(rawProfile.civilization) || 0),
-  civilizationLevel: String(rawProfile.civilizationLevel || '').trim().slice(0, 40),
-  generalId: String(rawProfile.generalId || '').trim().slice(0, 80),
-  armyPower: Math.max(0, Number(rawProfile.armyPower) || 0),
-  hasProtection: Boolean(rawProfile.hasProtection)
-})
+const normalizePublicProfile = (userId, rawProfile = {}) => {
+  const profile = {
+    id: userId,
+    name: String(rawProfile.name || '').trim().slice(0, 40),
+    cityName: String(rawProfile.cityName || '').trim().slice(0, 60),
+    faction: String(rawProfile.faction || '').trim(),
+    civilization: Math.max(0, Number(rawProfile.civilization) || 0),
+    civilizationLevel: String(rawProfile.civilizationLevel || '').trim().slice(0, 40),
+    generalId: String(rawProfile.generalId || '').trim().slice(0, 80),
+    armyPower: Math.max(0, Number(rawProfile.armyPower) || 0),
+    hasProtection: Boolean(rawProfile.hasProtection)
+  }
+
+  if (isObject(rawProfile.resources) || isObject(rawProfile.army)) {
+    profile.snapshot = {
+      resources: isObject(rawProfile.resources) ? {
+        wood: Math.max(0, Number(rawProfile.resources.wood) || 0),
+        soil: Math.max(0, Number(rawProfile.resources.soil) || 0),
+        iron: Math.max(0, Number(rawProfile.resources.iron) || 0),
+        food: Math.max(0, Number(rawProfile.resources.food) || 0)
+      } : null,
+      army: isObject(rawProfile.army)
+        ? Object.fromEntries(
+          Object.entries(rawProfile.army)
+            .map(([unitId, count]) => [unitId, Math.max(0, Number(count) || 0)])
+            .filter(([, count]) => count > 0)
+        )
+        : {}
+    }
+  }
+
+  return profile
+}
 
 const upsertPlayerProfile = async (userId, rawProfile = {}, { touch = false } = {}) => {
   const profile = normalizePublicProfile(userId, rawProfile)
@@ -213,6 +236,31 @@ const toPublicPlayer = (player) => {
     hasProtection: player.hasProtection,
     lastActive: lastSeenTime || 0,
     isOnline: lastSeenTime > 0 && (Date.now() - lastSeenTime) <= ONLINE_WINDOW_MS
+  }
+}
+
+const createScoutData = (player) => {
+  const units = Object.entries(player.snapshot?.army || {}).reduce((result, [unitId, count]) => {
+    const unit = getUnitById(unitId)
+    if (!unit || count <= 0) return result
+    result.push({
+      id: unitId,
+      ...unit,
+      count
+    })
+    return result
+  }, [])
+
+  return {
+    totalUnits: units.reduce((sum, unit) => sum + unit.count, 0),
+    unitTypes: units.length,
+    units,
+    resources: player.snapshot?.resources || {
+      wood: 0,
+      soil: 0,
+      iron: 0,
+      food: 0
+    }
   }
 }
 
@@ -287,6 +335,23 @@ const server = createServer(async (request, response) => {
       json(response, 200, {
         ok: true,
         player: toPublicPlayer(player)
+      })
+      return
+    }
+
+    const scoutMatch = pathname.match(/^\/api\/players\/([a-zA-Z0-9_-]{8,80})\/scout$/)
+    if (scoutMatch && request.method === 'POST') {
+      const [, userId] = scoutMatch
+      const players = await loadPlayerDirectory()
+      const player = players[userId]
+      if (!player) {
+        json(response, 404, { error: '目标玩家不存在' })
+        return
+      }
+      json(response, 200, {
+        ok: true,
+        scoutedAt: Date.now(),
+        scoutData: createScoutData(player)
       })
       return
     }
