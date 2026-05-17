@@ -8,6 +8,7 @@
           'notification-item',
           `notification-${notification.type}`
         ]"
+        @click="removeNotification(notification.id)"
       >
         <div class="notification-content">
           <div class="notification-title">{{ notification.title }}</div>
@@ -17,7 +18,7 @@
           class="notification-close"
           type="button"
           aria-label="关闭通知"
-          @click="removeNotification(notification.id)"
+          @click.stop="removeNotification(notification.id)"
         >
           x
         </button>
@@ -52,23 +53,24 @@ export default defineComponent({
 <style scoped>
 .notification-container {
   position: fixed;
-  top: 34px;
-  right: 42px;
+  top: 22px;
+  right: 22px;
   z-index: 9999;
   pointer-events: none;
-  width: min(100vw - 84px, 610px);
+  width: min(100vw - 44px, 420px);
 }
 
 .notification-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 28px;
+  grid-template-columns: minmax(0, 1fr) 24px;
   align-items: start;
-  column-gap: 18px;
+  column-gap: 12px;
   width: 100%;
-  min-height: 83px;
-  padding: 12px 18px 14px 14px;
-  margin-bottom: 12px;
+  min-height: 64px;
+  padding: 11px 14px;
+  margin-bottom: 10px;
   border-radius: 7px;
+  cursor: pointer;
   pointer-events: auto;
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
@@ -98,31 +100,31 @@ export default defineComponent({
 }
 
 .notification-title {
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: #ffffff;
-  font-size: 24px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .notification-message {
   color: rgba(255, 255, 255, 0.96);
-  font-size: 19px;
+  font-size: 14px;
   line-height: 1.35;
   word-wrap: break-word;
 }
 
 .notification-close {
   display: flex;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   align-items: center;
   justify-content: center;
   border: 0;
   background: transparent;
   color: rgba(8, 22, 18, 0.96);
   cursor: pointer;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 300;
   line-height: 1;
   transition: opacity 0.2s ease;
@@ -165,7 +167,7 @@ export default defineComponent({
 
   .notification-item {
     grid-template-columns: minmax(0, 1fr) 24px;
-    min-height: 72px;
+    min-height: 60px;
     margin-bottom: 8px;
     padding: 12px 14px;
   }
@@ -175,11 +177,11 @@ export default defineComponent({
   }
 
   .notification-title {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .notification-message {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .notification-close {
